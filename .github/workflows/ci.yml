@@ -25,16 +25,16 @@ jobs:
         with:
           python-version: "3.12"
       - name: Instalar
-        run: pip install -e "services/common[dev]" -e "services/ingestor[dev]"
+        run: pip install -e "desenvolvimento/backend/services/common[dev]" -e "desenvolvimento/backend/services/ingestor[dev]"
       - name: Lint
-        run: ruff check services db && ruff format --check services db
+        run: ruff check desenvolvimento/backend && ruff format --check desenvolvimento/backend
       - name: Testes
-        run: pytest services -q
+        run: pytest desenvolvimento/backend/services -q
       - name: Contraste do design
         run: python3 .claude/skills/farol-system/scripts/verificar-contraste.py
   docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cp .env.example .env
-      - run: docker compose build
+      - run: cp desenvolvimento/.env.example desenvolvimento/.env
+      - run: docker compose -f desenvolvimento/docker-compose.yml build

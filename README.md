@@ -18,6 +18,10 @@ A pergunta que o sistema responde é operacional e veio do coordenador da Defesa
 | [Padrão de desenvolvimento](docs/padrao-de-desenvolvimento.md) | Git, commits, Python, TypeScript, API, testes, CI, segurança e definição de pronto |
 | [Farol DS](.claude/skills/farol-system/SKILL.md) | Sistema de design inspirado na Defesa Civil de SC: fundamentos, tokens, componentes e guia visual |
 
+## Código
+
+Todo o desenvolvimento fica em [`desenvolvimento/`](desenvolvimento/README.md), separado em `backend/` e `frontend/`.
+
 ## Situação por fase do plano de ensino
 
 ### Fase 1 (15 por cento)

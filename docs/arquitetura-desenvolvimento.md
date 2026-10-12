@@ -89,80 +89,31 @@ O pacote `common` é compartilhado pelos três serviços Python e concentra o ac
 
 ```
 .
-├── docker-compose.yml
-├── docker-compose.override.yml       # ajustes de desenvolvimento
-├── .env.example
 ├── README.md
 ├── docs/                             # documentação da disciplina
 │   ├── especificacao-completa.md
 │   ├── fontes-de-dados.md
 │   ├── arquitetura-desenvolvimento.md
+│   ├── plano-de-acao.md
+│   ├── padrao-de-desenvolvimento.md
 │   ├── radian.md
+│   ├── adr/                          # decisões arquiteturais
 │   └── img/
-├── db/
-│   └── migrations/                   # migrações SQL versionadas (Alembic)
-├── services/
-│   ├── common/                       # pacote compartilhado
-│   │   ├── pyproject.toml
-│   │   └── src/common/
-│   │       ├── config.py             # leitura de variáveis de ambiente
-│   │       ├── db.py                 # engine e sessão SQLAlchemy
-│   │       ├── models.py             # entidades ORM
-│   │       └── schemas.py            # contratos Pydantic
-│   ├── ingestor/
-│   │   ├── Dockerfile
-│   │   ├── pyproject.toml
-│   │   └── src/ingestor/
-│   │       ├── main.py               # agendador
-│   │       ├── adapters/
-│   │       │   ├── base.py           # interface do adaptador
-│   │       │   ├── dcsc_graphql.py
-│   │       │   ├── dcsc_rest.py
-│   │       │   ├── dcsc_barragens.py
-│   │       │   ├── openmeteo_forecast.py
-│   │       │   ├── openmeteo_archive.py
-│   │       │   └── ana_hidroweb.py
-│   │       ├── normalize.py          # conversão para o formato interno
-│   │       └── quality.py            # validação de plausibilidade
-│   ├── modelo/
-│   │   ├── Dockerfile
-│   │   ├── pyproject.toml
-│   │   └── src/modelo/
-│   │       ├── features.py           # montagem das variáveis
-│   │       ├── correlacao.py         # análise de correlação defasada
-│   │       ├── treino.py             # treino por horizonte
-│   │       ├── validacao.py          # walk-forward e baselines
-│   │       └── registry.py           # publicação e versionamento
-│   └── api/
-│       ├── Dockerfile
-│       ├── pyproject.toml
-│       └── src/api/
-│           ├── main.py
-│           ├── routers/
-│           │   ├── estacoes.py
-│           │   ├── leituras.py
-│           │   ├── previsao.py
-│           │   ├── simulacao.py
-│           │   ├── ocorrencias.py
-│           │   ├── alertas.py
-│           │   └── admin.py
-│           ├── services/
-│           │   ├── risco.py          # classificação por limiar
-│           │   ├── inferencia.py     # aplicação do modelo publicado
-│           │   └── push.py           # envio de notificação
-│           └── auth.py
-└── web/
-    ├── Dockerfile
-    ├── package.json
-    ├── vite.config.ts
-    ├── public/
-    │   ├── manifest.webmanifest
-    │   └── sw.js                     # service worker, push e cache
-    └── src/
-        ├── pages/                    # Painel, Previsao, Simulacao, Mapa, Inscricao
-        ├── components/
-        ├── hooks/
-        └── lib/api.ts
+├── .claude/skills/farol-system/      # design system (tokens, componentes, guia visual)
+└── desenvolvimento/
+    ├── docker-compose.yml            # sobe tudo: db, migrate, ingestor (e api, web nas próximas etapas)
+    ├── .env.example
+    ├── backend/
+    │   ├── db/
+    │   │   └── migrations/           # migrações SQL versionadas (Alembic)
+    │   └── services/
+    │       ├── common/               # pacote compartilhado
+    │       │   └── src/common/       # config, db, models, schemas, enums, logs, seed
+    │       ├── ingestor/
+    │       │   └── src/ingestor/     # main (agendador), adapters/, quality, gravar, coleta, carga_inicial
+    │       ├── modelo/               # (Sprint 2) features, correlação, treino, validação
+    │       └── api/                  # (Sprint 1) routers, services de risco e push
+    └── frontend/                     # (Sprint 1) React, Vite e TypeScript: PWA
 ```
 
 ---
@@ -522,6 +473,7 @@ Pré-requisito único: Docker Desktop instalado e rodando.
 ```bash
 git clone <url-do-repositorio>
 cd Projeto_Integrador_2
+cd desenvolvimento
 cp .env.example .env        # no Windows: copy .env.example .env
 docker compose up --build
 ```
