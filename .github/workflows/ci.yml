@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: pgetulio
+          POSTGRES_USER: pgetulio
+          POSTGRES_PASSWORD: troque_esta_senha
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pgetulio"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar
+        run: pip install -e "services/common[dev]" -e "services/ingestor[dev]"
+      - name: Lint
+        run: ruff check services db && ruff format --check services db
+      - name: Testes
+        run: pytest services -q
+      - name: Contraste do design
+        run: python3 .claude/skills/farol-system/scripts/verificar-contraste.py
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose build

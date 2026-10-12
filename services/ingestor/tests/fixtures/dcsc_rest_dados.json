@@ -1,0 +1,30 @@
+{
+ "codigo": "DCSC-00043",
+ "dataInicial": "2026-10-12T18:00:00.000-03:00",
+ "dataFinal": "2026-10-12T18:20:00.000-03:00",
+ "dados": [
+  {
+   "timestamp": "2026-10-12T21:00:00.000Z",
+   "chuva_acumulada_mm": 0,
+   "rio_nivel_m": 1.76,
+   "rio_nivel_alt": null
+  },
+  {
+   "timestamp": "2026-10-12T21:05:00.000Z",
+   "chuva_acumulada_mm": 0.2,
+   "rio_nivel_m": 1.76,
+   "rio_nivel_alt": null
+  },
+  {
+   "timestamp": "2026-10-12T21:10:00.000Z",
+   "chuva_acumulada_mm": 0,
+   "rio_nivel_m": null,
+   "rio_nivel_alt": null
+  }
+ ],
+ "nome": "PCD Presidente Getúlio",
+ "rio": "Rio dos Índios",
+ "latitude": -27.045497,
+ "longitude": -49.624281,
+ "projecao": "ESPG:4326"
+}

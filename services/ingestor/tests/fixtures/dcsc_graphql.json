@@ -1,0 +1,227 @@
+{
+ "data": {
+  "tags_data": {
+   "qualle_meteorologia": [
+    {
+     "codigo": "DCSC-00042",
+     "name": {
+      "prefix": "DCSC-00042",
+      "general": "Barragem Norte José Boiteux",
+      "local": ""
+     },
+     "timestamp": "2026-10-12T20:00:00.000+00:00",
+     "position": {
+      "bacia": null,
+      "latitude": -26.89246940612793,
+      "longitude": -49.68235778808594
+     },
+     "data": {
+      "rio": {
+       "rio_nome": {
+        "value": "Itajaí do Norte"
+       },
+       "rio_nivel": {
+        "value": null
+       }
+      },
+      "chuva": {
+       "acumulado": {
+        "h001": {
+         "value": null
+        },
+        "h003": {
+         "value": null
+        },
+        "h006": {
+         "value": null
+        },
+        "h012": {
+         "value": null
+        },
+        "h024": {
+         "value": null
+        },
+        "h048": {
+         "value": null
+        },
+        "h072": {
+         "value": null
+        },
+        "h168": {
+         "value": null
+        }
+       }
+      }
+     }
+    },
+    {
+     "codigo": "DCSC-00021",
+     "name": {
+      "prefix": "DCSC-00021",
+      "general": "SDC-SC José Boiteux",
+      "local": ""
+     },
+     "timestamp": "2026-10-12T22:16:37.290+00:00",
+     "position": {
+      "bacia": "SC - Rio Itajaí",
+      "latitude": -26.95484161376953,
+      "longitude": -49.63359069824219
+     },
+     "data": {
+      "rio": {
+       "rio_nome": {
+        "value": null
+       },
+       "rio_nivel": {
+        "value": 2.4600000381469727
+       }
+      },
+      "chuva": {
+       "acumulado": {
+        "h001": {
+         "value": 0.4000000059604645
+        },
+        "h003": {
+         "value": 0.4000000059604645
+        },
+        "h006": {
+         "value": 0.4000000059604645
+        },
+        "h012": {
+         "value": 0.4000000059604645
+        },
+        "h024": {
+         "value": 0.4000000059604645
+        },
+        "h048": {
+         "value": 1.399999976158142
+        },
+        "h072": {
+         "value": 4
+        },
+        "h168": {
+         "value": 42.20000076293945
+        }
+       }
+      }
+     }
+    },
+    {
+     "codigo": "DCSC-00043",
+     "name": {
+      "prefix": "DCSC-00043",
+      "general": "SDC-SC Presidente Getúlio",
+      "local": ""
+     },
+     "timestamp": "2026-10-12T22:16:35.713+00:00",
+     "position": {
+      "bacia": "SC - Rio Itajaí",
+      "latitude": -27.04549789428711,
+      "longitude": -49.62428283691406
+     },
+     "data": {
+      "rio": {
+       "rio_nome": {
+        "value": null
+       },
+       "rio_nivel": {
+        "value": 1.75
+       }
+      },
+      "chuva": {
+       "acumulado": {
+        "h001": {
+         "value": 0.20000000298023224
+        },
+        "h003": {
+         "value": 0.20000000298023224
+        },
+        "h006": {
+         "value": 0.20000000298023224
+        },
+        "h012": {
+         "value": 0.20000000298023224
+        },
+        "h024": {
+         "value": 0.4000000059604645
+        },
+        "h048": {
+         "value": 1.600000023841858
+        },
+        "h072": {
+         "value": 2.5999999046325684
+        },
+        "h168": {
+         "value": 40.20000076293945
+        }
+       }
+      }
+     }
+    },
+    {
+     "codigo": "DCSC-00037",
+     "name": {
+      "prefix": "DCSC-00037",
+      "general": "SDC-SC Dona Emma",
+      "local": ""
+     },
+     "timestamp": "2026-10-12T22:16:44.746+00:00",
+     "position": {
+      "bacia": "SC - Rio Itajaí",
+      "latitude": -26.98598861694336,
+      "longitude": -49.72978973388672
+     },
+     "data": {
+      "rio": null,
+      "chuva": {
+       "acumulado": {
+        "h001": {
+         "value": 1.2699999809265137
+        },
+        "h003": {
+         "value": 1.2699999809265137
+        },
+        "h006": {
+         "value": 1.3200000524520874
+        },
+        "h012": {
+         "value": 1.4800000190734863
+        },
+        "h024": {
+         "value": 1.4800000190734863
+        },
+        "h048": {
+         "value": 1.4800000190734863
+        },
+        "h072": {
+         "value": 6.889999866485596
+        },
+        "h168": {
+         "value": 61.130001068115234
+        }
+       }
+      }
+     }
+    },
+    {
+     "codigo": "DCSC-00999",
+     "name": {
+      "prefix": "DCSC-00999",
+      "general": "Sintetica",
+      "local": ""
+     },
+     "timestamp": null,
+     "position": {
+      "bacia": null,
+      "latitude": 0,
+      "longitude": 0
+     },
+     "data": {
+      "rio": null,
+      "chuva": null
+     }
+    }
+   ]
+  }
+ }
+}
