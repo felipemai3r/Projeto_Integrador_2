@@ -4,10 +4,11 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from common.db import sessao
 from common.enums import StatusColeta
-from common.schemas import LeituraBruta
+from sqlalchemy.orm import Session
 
 from ingestor.erros import ContratoQuebrado, FonteIndisponivel
 from ingestor.gravar import gravar, registrar_log
@@ -15,15 +16,20 @@ from ingestor.gravar import gravar, registrar_log
 log = logging.getLogger("ingestor.coleta")
 
 
-def executar(fonte_codigo: str, buscar: Callable[[], list[LeituraBruta]]) -> StatusColeta:
-    """Roda `buscar`, grava o resultado e registra o log. Nunca propaga excecao de fonte."""
+Gravador = Callable[[Session, str, list[Any], datetime], tuple[int, int]]
+
+
+def executar(
+    fonte_codigo: str, buscar: Callable[[], list[Any]], gravador: Gravador = gravar
+) -> StatusColeta:
+    """Roda `buscar`, grava com `gravador` e registra o log. Nunca propaga excecao de fonte."""
     t0 = time.monotonic()
     agora = datetime.now(UTC)
     status, registros, mensagem = StatusColeta.FALHA, 0, None
     try:
         leituras = buscar()
         with sessao() as s:
-            inseridas, descartadas = gravar(s, fonte_codigo, leituras, agora)
+            inseridas, descartadas = gravador(s, fonte_codigo, leituras, agora)
         registros = inseridas
         status = StatusColeta.SUCESSO if inseridas else StatusColeta.VAZIO
         mensagem = f"{len(leituras)} lidas, {inseridas} novas, {descartadas} descartadas"

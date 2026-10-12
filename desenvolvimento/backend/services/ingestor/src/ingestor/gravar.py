@@ -4,8 +4,8 @@ from collections import defaultdict
 from datetime import datetime
 
 from common.enums import Qualidade, StatusColeta
-from common.models import Estacao, Fonte, Leitura, LogColeta
-from common.schemas import LeituraBruta
+from common.models import Estacao, Fonte, Leitura, LogColeta, PrevisaoChuva
+from common.schemas import LeituraBruta, PrevisaoChuvaBruta
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -86,6 +86,37 @@ def gravar(
         ).all()
         inseridas += len(novas)
     return inseridas, descartadas
+
+
+def gravar_previsoes(
+    s: Session, fonte_codigo: str, previsoes: list[PrevisaoChuvaBruta], agora: datetime
+) -> tuple[int, int]:
+    """Grava previsoes de chuva. Mesma assinatura de `gravar`: (inseridas, descartadas=0)."""
+    ids = {e.codigo: e.id for e in s.scalars(select(Estacao).where(Estacao.ativa))}
+    linhas = [
+        {
+            "estacao_id": ids[p.estacao_codigo],
+            "gerado_em": p.gerado_em,
+            "valido_para": p.valido_para,
+            "chuva_mm": p.chuva_mm,
+            "probabilidade": p.probabilidade,
+            "modelo_fonte": p.modelo_fonte,
+        }
+        for p in previsoes
+        if p.estacao_codigo in ids
+    ]
+    inseridas = 0
+    for i in range(0, len(linhas), LOTE):
+        novas = s.execute(
+            insert(PrevisaoChuva)
+            .values(linhas[i : i + LOTE])
+            .on_conflict_do_nothing(
+                index_elements=["estacao_id", "gerado_em", "valido_para", "modelo_fonte"]
+            )
+            .returning(PrevisaoChuva.id)
+        ).all()
+        inseridas += len(novas)
+    return inseridas, 0
 
 
 def registrar_log(

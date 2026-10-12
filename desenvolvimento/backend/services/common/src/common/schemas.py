@@ -26,3 +26,16 @@ class ResultadoColeta(BaseModel):
     leituras: list[LeituraBruta]
     duracao_ms: int
     iniciado_em: datetime
+
+
+class PrevisaoChuvaBruta(BaseModel):
+    """Chuva prevista para uma estacao em um instante futuro, por modelo."""
+
+    model_config = ConfigDict(frozen=True)
+
+    estacao_codigo: str
+    gerado_em: AwareDatetime
+    valido_para: AwareDatetime
+    chuva_mm: float
+    probabilidade: float | None = None
+    modelo_fonte: str

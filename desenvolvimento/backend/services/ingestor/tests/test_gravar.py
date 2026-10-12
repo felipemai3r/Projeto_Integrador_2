@@ -94,3 +94,29 @@ def test_log_de_coleta_e_gravado(s: Session) -> None:
     s.commit()
     log = s.scalars(select(LogColeta)).one()
     assert (log.registros, log.status, log.duracao_ms) == (9, "sucesso", 120)
+
+
+def test_grava_previsoes_sem_duplicar(s: Session) -> None:
+    from common.models import PrevisaoChuva
+    from common.schemas import PrevisaoChuvaBruta
+
+    from ingestor.gravar import gravar_previsoes
+
+    semear(s)
+    s.commit()
+    prev = [
+        PrevisaoChuvaBruta(
+            estacao_codigo="DCSC-00037",
+            gerado_em=AGORA,
+            valido_para=AGORA + timedelta(hours=h),
+            chuva_mm=1.0 * h,
+            probabilidade=None,
+            modelo_fonte="openmeteo_best_match",
+        )
+        for h in (1, 2, 3)
+    ]
+    assert gravar_previsoes(s, "openmeteo_forecast", prev, AGORA) == (3, 0)
+    s.commit()
+    assert gravar_previsoes(s, "openmeteo_forecast", prev, AGORA) == (0, 0)
+    s.commit()
+    assert s.scalar(select(func.count()).select_from(PrevisaoChuva)) == 3

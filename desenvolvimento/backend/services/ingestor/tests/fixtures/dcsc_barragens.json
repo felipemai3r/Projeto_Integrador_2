@@ -1,0 +1,35 @@
+{
+ "success": true,
+ "message": "Dados retornados com sucesso!",
+ "data": {
+  "barragemNorte": {
+   "ultimaLeitura": "2026-10-12T17:00:00.000-03:00",
+   "limites": {
+    "minimo": 256,
+    "vertedouro": 302.7
+   },
+   "comportas": {
+    "galeria": true,
+    "tulipa258": false,
+    "tulipa264": true
+   },
+   "historico": [
+    {
+     "timestamp": "2026-10-12T17:00:00.000-03:00",
+     "nivel": 273.95,
+     "nivel_porc": 14.88
+    },
+    {
+     "timestamp": "2026-10-12T07:00:00.000-03:00",
+     "nivel": 274.5,
+     "nivel_porc": 15.96
+    },
+    {
+     "timestamp": "2026-10-11T17:00:00.000-03:00",
+     "nivel": 275.25,
+     "nivel_porc": 17.46
+    }
+   ]
+  }
+ }
+}

@@ -25,6 +25,10 @@ class Variavel(StrEnum):
     CHUVA_H168_MM = "chuva_h168_mm"
     RESERVATORIO_M = "reservatorio_m"
     RESERVATORIO_PCT = "reservatorio_pct"
+    # Estado das comportas da Barragem Norte: 1 = aberta, 0 = fechada
+    COMPORTA_GALERIA = "comporta_galeria"
+    COMPORTA_TULIPA258 = "comporta_tulipa258"
+    COMPORTA_TULIPA264 = "comporta_tulipa264"
 
 
 class Qualidade(StrEnum):
