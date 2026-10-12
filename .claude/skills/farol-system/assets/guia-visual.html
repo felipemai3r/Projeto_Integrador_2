@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farol DS, guia visual</title>
+<link rel="stylesheet" href="farol.css">
+<style>
+  /* Estilos da página do guia: só tokens. */
+  .g-header { background: var(--fa-color-surface-brand); color: var(--fa-color-content-on-brand);
+    border-bottom: 4px solid var(--fa-color-brand-sinal); padding: var(--fa-space-inset-lg) 0; }
+  .g-header h1 { margin: 0; font: var(--fa-type-titulo-lg-weight) var(--fa-type-titulo-lg-size)/var(--fa-type-titulo-lg-line-height) var(--fa-font-family-base); }
+  .g-header p { margin: var(--fa-space-4) 0 0; font-size: var(--fa-type-texto-sm-size); opacity: .9; }
+  .g-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--fa-space-16); flex-wrap: wrap; }
+  main { padding-block: var(--fa-space-section-sm); }
+  section { margin-bottom: var(--fa-space-section-md); }
+  h2 { font: var(--fa-type-titulo-lg-weight) var(--fa-type-titulo-lg-size)/var(--fa-type-titulo-lg-line-height) var(--fa-font-family-base); margin: 0 0 var(--fa-space-stack-sm); }
+  h3 { font: var(--fa-type-titulo-sm-weight) var(--fa-type-titulo-sm-size)/var(--fa-type-titulo-sm-line-height) var(--fa-font-family-base); margin: var(--fa-space-stack-md) 0 var(--fa-space-stack-xs); }
+  p.apoio { color: var(--fa-color-content-secondary); margin: 0 0 var(--fa-space-stack-sm); max-width: var(--fa-container-text); }
+  .grid { display: grid; gap: var(--fa-space-16); grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .sw { border: 1px solid var(--fa-color-border-default); border-radius: var(--fa-shape-surface-sm); overflow: hidden; background: var(--fa-color-surface-base); }
+  .sw i { display: block; height: 48px; }
+  .sw span { display: block; padding: var(--fa-space-8); font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size)/var(--fa-type-rotulo-sm-line-height) var(--fa-font-family-base); color: var(--fa-color-content-secondary); }
+  .ramp { display: grid; grid-template-columns: repeat(10, 1fr); border-radius: var(--fa-shape-surface-sm); overflow: hidden; border: 1px solid var(--fa-color-border-default); margin-bottom: var(--fa-space-8); }
+  .ramp i { height: 40px; }
+  .ramp-l { display: flex; align-items: center; gap: var(--fa-space-8); font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size)/1 var(--fa-font-family-base); margin: var(--fa-space-12) 0 var(--fa-space-4); }
+
+  /* RiskBadge */
+  .rb { display: inline-flex; align-items: center; gap: var(--fa-space-8); padding: var(--fa-space-8) var(--fa-space-12);
+    border-radius: var(--fa-shape-status-pill); font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size)/1 var(--fa-font-family-base); }
+  .rb svg { width: var(--fa-icon-size-default); height: var(--fa-icon-size-default); flex: none; }
+  .rb--lg { padding: var(--fa-space-12) var(--fa-space-16); font-size: var(--fa-type-rotulo-lg-size); }
+  .rb--lg svg { width: var(--fa-icon-size-comfortable); height: var(--fa-icon-size-comfortable); }
+  .rb[data-f="normal"] { background: var(--fa-risk-normal-solid); color: var(--fa-risk-normal-on-solid); }
+  .rb[data-f="observacao"] { background: var(--fa-risk-observacao-solid); color: var(--fa-risk-observacao-on-solid); }
+  .rb[data-f="atencao"] { background: var(--fa-risk-atencao-solid); color: var(--fa-risk-atencao-on-solid); }
+  .rb[data-f="alerta"] { background: var(--fa-risk-alerta-solid); color: var(--fa-risk-alerta-on-solid); }
+  .rb[data-f="desatualizado"] { background: var(--fa-risk-desatualizado-solid); color: var(--fa-risk-desatualizado-on-solid); }
+  .rb[data-f="indisponivel"] { background: var(--fa-risk-indisponivel-solid); color: var(--fa-risk-indisponivel-on-solid); }
+  .rb--soft[data-f="normal"] { background: var(--fa-risk-normal-surface); color: var(--fa-risk-normal-content); box-shadow: inset 0 0 0 1px var(--fa-risk-normal-border); }
+  .rb--soft[data-f="observacao"] { background: var(--fa-risk-observacao-surface); color: var(--fa-risk-observacao-content); box-shadow: inset 0 0 0 1px var(--fa-risk-observacao-border); }
+  .rb--soft[data-f="atencao"] { background: var(--fa-risk-atencao-surface); color: var(--fa-risk-atencao-content); box-shadow: inset 0 0 0 1px var(--fa-risk-atencao-border); }
+  .rb--soft[data-f="alerta"] { background: var(--fa-risk-alerta-surface); color: var(--fa-risk-alerta-content); box-shadow: inset 0 0 0 1px var(--fa-risk-alerta-border); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--fa-space-12); align-items: center; margin-bottom: var(--fa-space-12); }
+
+  /* StationCard */
+  .cards { display: grid; gap: var(--fa-space-16); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .sc { background: var(--fa-color-surface-base); border: 1px solid var(--fa-color-border-default); border-left-width: 4px;
+    border-radius: var(--fa-shape-surface-md); padding: var(--fa-space-inset-lg); box-shadow: var(--fa-elevation-card); }
+  .sc[data-f="normal"] { border-left-color: var(--fa-risk-normal-border); }
+  .sc[data-f="observacao"] { border-left-color: var(--fa-risk-observacao-border); }
+  .sc[data-f="atencao"] { border-left-color: var(--fa-risk-atencao-border); }
+  .sc[data-f="alerta"] { border-left-color: var(--fa-risk-alerta-border); }
+  .sc__top { display: flex; justify-content: space-between; align-items: center; gap: var(--fa-space-8); margin-bottom: var(--fa-space-12); }
+  .sc__nome { font: var(--fa-type-titulo-sm-weight) var(--fa-type-titulo-sm-size)/var(--fa-type-titulo-sm-line-height) var(--fa-font-family-base); margin: 0; }
+  .sc__nivel { font: var(--fa-type-dado-xl-weight) var(--fa-type-dado-xl-size)/var(--fa-type-dado-xl-line-height) var(--fa-font-family-base); letter-spacing: var(--fa-type-dado-xl-tracking); margin: 0; }
+  .sc__nivel small { font-size: var(--fa-type-titulo-md-size); font-weight: var(--fa-font-weight-medium); color: var(--fa-color-content-secondary); margin-left: var(--fa-space-4); }
+  .sc__tend { display: flex; align-items: center; gap: var(--fa-space-8); margin: var(--fa-space-8) 0 var(--fa-space-12); color: var(--fa-color-content-secondary); font-size: var(--fa-type-texto-md-size); }
+  .sc__tend svg { width: var(--fa-icon-size-default); height: var(--fa-icon-size-default); }
+  .stamp { display: flex; align-items: center; gap: var(--fa-space-8); color: var(--fa-color-content-tertiary); font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size)/1.4 var(--fa-font-family-base); }
+  .stamp svg { width: var(--fa-icon-size-compact); height: var(--fa-icon-size-compact); flex: none; }
+  .stale { display: flex; gap: var(--fa-space-8); padding: var(--fa-space-inset-md); border-radius: var(--fa-shape-surface-sm);
+    background: var(--fa-risk-desatualizado-surface); color: var(--fa-risk-desatualizado-content); border: 1px solid var(--fa-risk-desatualizado-border);
+    margin-bottom: var(--fa-space-12); font-size: var(--fa-type-texto-sm-size); }
+  .stale svg { width: var(--fa-icon-size-default); height: var(--fa-icon-size-default); flex: none; }
+
+  /* Gauge */
+  .gauge { position: relative; height: 16px; border-radius: var(--fa-shape-structure-sm); overflow: hidden; display: flex; margin: var(--fa-space-8) 0 var(--fa-space-4); border: 1px solid var(--fa-color-border-default); }
+  .gauge i { height: 100%; }
+  .gauge-m { position: relative; height: 24px; font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size)/1 var(--fa-font-family-base); color: var(--fa-color-content-secondary); }
+  .gauge-m span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .pin { position: absolute; top: -4px; width: 4px; height: 24px; background: var(--fa-color-content-primary); border-radius: 2px; transform: translateX(-50%); }
+
+  /* Botões */
+  .btn { min-height: var(--fa-target-min); padding: 0 var(--fa-space-20); border-radius: var(--fa-shape-control-md); border: 1px solid transparent;
+    font: var(--fa-type-rotulo-lg-weight) var(--fa-type-rotulo-lg-size)/1 var(--fa-font-family-base); cursor: pointer; display: inline-flex; align-items: center; gap: var(--fa-space-8);
+    transition-property: background-color, border-color; transition-duration: var(--fa-motion-fast); transition-timing-function: var(--fa-easing-standard); }
+  .btn--primary { background: var(--fa-color-action-primary); color: var(--fa-color-action-on); }
+  .btn--primary:hover { background: var(--fa-color-action-hover); }
+  .btn--secondary { background: transparent; color: var(--fa-color-action-primary); border-color: var(--fa-color-border-strong); }
+  .btn--secondary:hover { background: var(--fa-color-state-hover-action); }
+  .btn--accent { background: var(--fa-color-accent); color: var(--fa-color-accent-on); min-height: var(--fa-target-comfortable); border-radius: var(--fa-shape-control-lg); }
+  .btn--accent:hover { background: var(--fa-color-accent-hover); }
+  .btn--danger { background: var(--fa-color-feedback-danger-border); color: var(--fa-color-surface-base); }
+  .field { display: grid; gap: var(--fa-space-4); max-width: var(--fa-container-narrow); }
+  .field label { font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size)/1.25 var(--fa-font-family-base); }
+  .field input { min-height: var(--fa-target-min); padding: 0 var(--fa-space-12); border-radius: var(--fa-shape-control-md);
+    border: 1px solid var(--fa-color-border-strong); background: var(--fa-color-surface-base); color: var(--fa-color-content-primary);
+    font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size)/1 var(--fa-font-family-base); }
+  .field small { color: var(--fa-color-content-tertiary); font-size: var(--fa-type-texto-sm-size); }
+  .notice { display: flex; gap: var(--fa-space-12); padding: var(--fa-space-inset-md) var(--fa-space-inset-lg); border-radius: var(--fa-shape-surface-md);
+    background: var(--fa-color-feedback-info-surface); color: var(--fa-color-feedback-info-content); border: 1px solid var(--fa-color-feedback-info-border); max-width: var(--fa-container-text); }
+  .notice svg { width: var(--fa-icon-size-default); height: var(--fa-icon-size-default); flex: none; margin-top: 2px; }
+  .legend { display: flex; gap: var(--fa-space-24); flex-wrap: wrap; font-size: var(--fa-type-texto-sm-size); color: var(--fa-color-content-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: var(--fa-space-8); }
+  .legend svg { width: 40px; height: 12px; }
+  .chart { background: var(--fa-color-surface-base); border: 1px solid var(--fa-color-border-default); border-radius: var(--fa-shape-surface-md); padding: var(--fa-space-inset-lg); }
+  .tw { display: grid; gap: var(--fa-space-8); }
+  .tw > div { display: flex; align-items: baseline; gap: var(--fa-space-16); border-bottom: 1px solid var(--fa-color-border-subtle); padding-bottom: var(--fa-space-8); }
+  .tw code { flex: none; width: 120px; color: var(--fa-color-content-tertiary); font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size)/1 var(--fa-font-family-base); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-oct" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c4 5 7 8 7 11.5a7 7 0 0 1-14 0C5 10.5 8 7.5 12 2.5Z"/></symbol>
+  </defs>
+</svg>
+
+<header class="g-header">
+  <div class="fa-container g-bar">
+    <div>
+      <h1>Farol DS</h1>
+      <p>Sistema de design do projeto Presidente Getúlio. Inspirado na Defesa Civil de Santa Catarina.</p>
+    </div>
+    <button class="btn btn--secondary" id="tema" type="button" style="background: var(--fa-color-surface-base);">Alternar modo noite</button>
+  </div>
+</header>
+
+<main class="fa-container">
+
+<section>
+  <h2>1. Cor, paletas primitivas</h2>
+  <p class="apoio">Azul <b>Defesa</b> é ação e marca. Laranja <b>Sinal</b> é assinatura institucional e nunca indica risco. As demais famílias alimentam a escala de risco e o feedback de interface.</p>
+  <div id="ramps"></div>
+</section>
+
+<section>
+  <h2>2. Risco, a dimensão central</h2>
+  <p class="apoio">Quatro faixas e dois estados de dado. Cor nunca vem sozinha: sempre ícone e texto.</p>
+  <h3>Selo sólido</h3>
+  <div class="row">
+    <span class="rb" data-f="normal"><svg aria-hidden="true"><use href="#i-check"/></svg>Normal</span>
+    <span class="rb" data-f="observacao"><svg aria-hidden="true"><use href="#i-eye"/></svg>Observação</span>
+    <span class="rb" data-f="atencao"><svg aria-hidden="true"><use href="#i-warn"/></svg>Atenção</span>
+    <span class="rb" data-f="alerta"><svg aria-hidden="true"><use href="#i-oct"/></svg>Alerta</span>
+    <span class="rb" data-f="desatualizado"><svg aria-hidden="true"><use href="#i-clock"/></svg>Dado desatualizado</span>
+    <span class="rb" data-f="indisponivel"><svg aria-hidden="true"><use href="#i-off"/></svg>Indisponível</span>
+  </div>
+  <h3>Selo suave</h3>
+  <div class="row">
+    <span class="rb rb--soft" data-f="normal"><svg aria-hidden="true"><use href="#i-check"/></svg>Normal</span>
+    <span class="rb rb--soft" data-f="observacao"><svg aria-hidden="true"><use href="#i-eye"/></svg>Observação</span>
+    <span class="rb rb--soft" data-f="atencao"><svg aria-hidden="true"><use href="#i-warn"/></svg>Atenção</span>
+    <span class="rb rb--soft" data-f="alerta"><svg aria-hidden="true"><use href="#i-oct"/></svg>Alerta</span>
+  </div>
+  <h3>Exemplo: cartão de estação (StationCard)</h3>
+  <div class="cards">
+    <article class="sc" data-f="atencao">
+      <div class="sc__top"><h4 class="sc__nome">Rio dos Índios</h4>
+        <span class="rb rb--lg" data-f="atencao"><svg aria-hidden="true"><use href="#i-warn"/></svg>Atenção</span></div>
+      <p class="sc__nivel fa-num">4,62<small>m</small></p>
+      <div class="sc__tend"><svg aria-hidden="true"><use href="#i-up"/></svg><span>Subindo 12 cm por hora</span></div>
+      <div class="gauge" role="img" aria-label="Nível 4,62 metros, entre atenção e alerta">
+        <i style="flex: 40; background: var(--fa-risk-normal-surface)"></i>
+        <i style="flex: 10; background: var(--fa-risk-observacao-surface)"></i>
+        <i style="flex: 10; background: var(--fa-risk-atencao-surface)"></i>
+        <i style="flex: 12; background: var(--fa-risk-alerta-surface)"></i>
+        <span class="pin" style="left: 69%"></span>
+      </div>
+      <div class="gauge-m" aria-hidden="true"><span style="left:0%; transform:none">0</span><span style="left:49%">4,00</span><span style="left:63%">4,50</span><span style="left:88%">5,50</span></div>
+      <div class="stamp"><svg aria-hidden="true"><use href="#i-db"/></svg>Fonte: Defesa Civil de SC · DCSC-00043 · medido às 14:35</div>
+    </article>
+    <article class="sc" data-f="normal">
+      <div class="sc__top"><h4 class="sc__nome">Ribeirão Revólver</h4>
+        <span class="rb rb--lg" data-f="normal"><svg aria-hidden="true"><use href="#i-check"/></svg>Normal</span></div>
+      <p class="sc__nivel fa-num">1,79<small>m</small></p>
+      <div class="sc__tend"><svg aria-hidden="true" style="transform: rotate(90deg)"><use href="#i-up"/></svg><span>Estável</span></div>
+      <div class="stamp"><svg aria-hidden="true"><use href="#i-db"/></svg>Fonte: Defesa Civil de SC · DCSC-00174 · medido às 14:35</div>
+    </article>
+    <article class="sc" style="border-left-color: var(--fa-risk-desatualizado-border)">
+      <div class="stale" role="status"><svg aria-hidden="true"><use href="#i-clock"/></svg><span>Dado desatualizado. Última leitura boa às 13:10. Não é possível confirmar a situação agora.</span></div>
+      <div class="sc__top"><h4 class="sc__nome">Rio dos Índios</h4>
+        <span class="rb rb--lg" data-f="desatualizado"><svg aria-hidden="true"><use href="#i-clock"/></svg>Desatualizado</span></div>
+      <p class="sc__nivel fa-num">3,10<small>m</small></p>
+      <div class="stamp"><svg aria-hidden="true"><use href="#i-db"/></svg>Fonte: Defesa Civil de SC · DCSC-00043 · medido às 13:10</div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>3. Séries de dado</h2>
+  <p class="apoio">Observado, estimado e cenário se distinguem por forma de traço, não só por cor (RF19).</p>
+  <div class="chart">
+    <svg viewBox="0 0 600 180" width="100%" role="img" aria-label="Exemplo: nível observado até agora e estimado com faixa de incerteza depois">
+      <rect x="300" y="30" width="300" height="110" fill="none"/>
+      <path d="M300 78 L360 66 L420 50 L480 38 L540 30 L600 28 L600 74 L540 82 L480 88 L420 90 L360 88 L300 78Z" fill="var(--fa-data-uncertainty)" opacity=".55"/>
+      <line x1="0" y1="52" x2="600" y2="52" stroke="var(--fa-risk-atencao-border)" stroke-dasharray="2 4"/>
+      <text x="6" y="46" font-size="11" fill="var(--fa-color-content-secondary)">Atenção 4,50 m</text>
+      <polyline points="0,130 60,126 120,120 180,108 240,96 300,78" fill="none" stroke="var(--fa-data-observed)" stroke-width="3" stroke-linecap="round"/>
+      <polyline points="300,78 360,76 420,68 480,60 540,54 600,50" fill="none" stroke="var(--fa-data-forecast)" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round"/>
+      <line x1="300" y1="10" x2="300" y2="150" stroke="var(--fa-color-border-strong)"/>
+      <text x="306" y="22" font-size="11" fill="var(--fa-color-content-secondary)">agora</text>
+    </svg>
+    <div class="legend">
+      <span><svg aria-hidden="true"><line x1="0" y1="6" x2="40" y2="6" stroke="var(--fa-data-observed)" stroke-width="3"/></svg>Observado</span>
+      <span><svg aria-hidden="true"><line x1="0" y1="6" x2="40" y2="6" stroke="var(--fa-data-forecast)" stroke-width="3" stroke-dasharray="8 5"/></svg>Estimado</span>
+      <span><svg aria-hidden="true"><rect width="40" height="12" fill="var(--fa-data-uncertainty)"/></svg>Faixa de incerteza</span>
+      <span><svg aria-hidden="true"><line x1="0" y1="6" x2="40" y2="6" stroke="var(--fa-data-scenario)" stroke-width="3" stroke-dasharray="8 5"/></svg>Cenário hipotético</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. Tipografia</h2>
+  <div class="tw">
+    <div><code>dado-xl 56</code><span class="fa-num" style="font: var(--fa-type-dado-xl-weight) var(--fa-type-dado-xl-size)/1 var(--fa-font-family-base)">4,62 m</span></div>
+    <div><code>dado-md 24</code><span class="fa-num" style="font: var(--fa-type-dado-md-weight) var(--fa-type-dado-md-size)/1.1 var(--fa-font-family-base)">1,79 m · 12 cm/h</span></div>
+    <div><code>titulo-xl 32</code><span style="font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size)/1.15 var(--fa-font-family-base)">Situação dos rios agora</span></div>
+    <div><code>titulo-md 20</code><span style="font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size)/1.25 var(--fa-font-family-base)">Chuva acumulada nos pontos a montante</span></div>
+    <div><code>texto-md 16</code><span style="font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size)/1.6 var(--fa-font-family-base)">Se a chuva continuar assim, o nível pode chegar a 5,10 m em 6 horas.</span></div>
+    <div><code>rotulo-md 14</code><span style="font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size)/1.25 var(--fa-font-family-base)">Dona Emma · José Boiteux · Witmarsum</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>5. Controles</h2>
+  <div class="row">
+    <button class="btn btn--primary" type="button">Ver previsão</button>
+    <button class="btn btn--secondary" type="button">Simular chuva</button>
+    <button class="btn btn--danger" type="button">Rejeitar registro</button>
+    <button class="btn btn--accent" type="button"><svg width="20" height="20" aria-hidden="true"><use href="#i-plus"/></svg>Registrar alagamento</button>
+  </div>
+  <p class="apoio">O botão laranja (destaque da marca) aparece uma vez por tela.</p>
+  <div class="field">
+    <label for="mm">Chuva em Dona Emma (mm em 24 horas)</label>
+    <input id="mm" type="number" value="60" inputmode="decimal">
+    <small>Digite um valor entre 0 e 300 mm.</small>
+  </div>
+  <h3>Aviso oficial (obrigatório onde há risco ou previsão)</h3>
+  <div class="notice" role="note"><svg aria-hidden="true"><use href="#i-info"/></svg><span>Estimativa de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio.</span></div>
+</section>
+
+</main>
+
+<script>
+  const fam = ['ardosia','defesa','sinal','vale','mare','ambar','brasa'];
+  const nome = {ardosia:'Ardósia (neutro)',defesa:'Defesa (azul, ação e marca)',sinal:'Sinal (laranja, assinatura)',vale:'Vale (verde, normal)',mare:'Maré (ciano, observação)',ambar:'Âmbar (amarelo, atenção)',brasa:'Brasa (vermelho, alerta)'};
+  const passos = [50,100,200,300,400,500,600,700,800,900];
+  const box = document.getElementById('ramps');
+  for (const f of fam) {
+    const l = document.createElement('div'); l.className = 'ramp-l'; l.textContent = nome[f]; box.appendChild(l);
+    const r = document.createElement('div'); r.className = 'ramp';
+    for (const p of passos) { const i = document.createElement('i'); i.style.background = `var(--fa-prim-${f}-${p})`; i.title = `${f}-${p}`; r.appendChild(i); }
+    box.appendChild(r);
+  }
+  const root = document.documentElement;
+  document.getElementById('tema').addEventListener('click', () => {
+    const atual = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    root.dataset.theme = atual === 'dark' ? 'light' : 'dark';
+  });
+</script>
+</body>
+</html>

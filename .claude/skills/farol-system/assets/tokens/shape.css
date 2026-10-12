@@ -1,0 +1,37 @@
+/* ============================================================
+   Farol DS — Dimensão 05 Forma
+   Âncora: 10px (o Arrow ancora em 8). Cantos um pouco mais
+   generosos para dedo grosso e leitura rápida em celular.
+   Pill (999px) é permitido em CHIP e BADGE de status/risco e na
+   trilha do switch. Nunca em botão, card ou campo.
+   ============================================================ */
+:root {
+  --fa-radius-0:    0px;
+  --fa-radius-4:    4px;
+  --fa-radius-6:    6px;
+  --fa-radius-10:   10px;
+  --fa-radius-14:   14px;
+  --fa-radius-20:   20px;
+  --fa-radius-28:   28px;
+  --fa-radius-pill: 999px;
+
+  /* controle: o que o usuário aciona */
+  --fa-shape-control-sm:   var(--fa-radius-6);    /* checkbox, radio */
+  --fa-shape-control-md:   var(--fa-radius-10);   /* botão, campo, select (âncora) */
+  --fa-shape-control-lg:   var(--fa-radius-14);   /* botão principal da tela */
+  --fa-shape-control-pill: var(--fa-radius-pill); /* switch */
+
+  /* superfície: o que contém conteúdo */
+  --fa-shape-surface-sm: var(--fa-radius-10);  /* tooltip, menu */
+  --fa-shape-surface-md: var(--fa-radius-14);  /* card, painel, aviso */
+  --fa-shape-surface-lg: var(--fa-radius-20);  /* modal, cartão de risco em destaque */
+  --fa-shape-surface-sheet: var(--fa-radius-28); /* canto superior do bottom sheet */
+
+  /* status: comunica estado */
+  --fa-shape-status-sm:   var(--fa-radius-4);    /* tag inline em tabela */
+  --fa-shape-status-pill: var(--fa-radius-pill); /* chip e badge de risco */
+
+  /* estrutura */
+  --fa-shape-structure-none: var(--fa-radius-0);
+  --fa-shape-structure-sm:   var(--fa-radius-4);  /* barra de progresso, skeleton */
+}

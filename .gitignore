@@ -1,0 +1,8 @@
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/farol-system/
+.DS_Store
+.env
+__pycache__/
+node_modules/

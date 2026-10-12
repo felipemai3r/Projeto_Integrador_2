@@ -1,0 +1,75 @@
+/* ============================================================
+   Farol DS — Dimensão 07 Movimento
+   Movimento aqui é calmo: a tela comunica risco e não pode
+   competir com a informação. Centro de gravidade 150ms, teto 400ms.
+   Assimetria: entrada (160ms) mais lenta que saída (120ms).
+   Transição genérica de todas as propriedades não existe: declare cada uma.
+
+   Três proibições de segurança:
+   1. Nada pisca. Nenhum elemento alterna mais de 1 vez por segundo.
+   2. Mudança de faixa de risco não anima cor em loop; no máximo um
+      destaque único de 250ms (--fa-motion-highlight).
+   3. prefers-reduced-motion zera deslocamento e escala.
+   ============================================================ */
+:root {
+  --fa-duration-0:   0ms;
+  --fa-duration-100: 100ms;
+  --fa-duration-120: 120ms;
+  --fa-duration-160: 160ms;
+  --fa-duration-250: 250ms;
+  --fa-duration-400: 400ms;
+
+  --fa-motion-fast:      var(--fa-duration-100);  /* hover, press */
+  --fa-motion-base:      var(--fa-duration-160);  /* entrada de elemento */
+  --fa-motion-exit:      var(--fa-duration-120);  /* saída de elemento */
+  --fa-motion-highlight: var(--fa-duration-250);  /* destaque único de dado novo */
+  --fa-motion-sheet:     var(--fa-duration-250);  /* bottom sheet, página */
+  --fa-motion-ceiling:   var(--fa-duration-400);
+
+  --fa-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fa-easing-enter:    cubic-bezier(0, 0, 0.2, 1);
+  --fa-easing-exit:     cubic-bezier(0.4, 0, 1, 1);
+}
+
+.fa-motion-hover {
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.fa-motion-press {
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.fa-motion-enter {
+  transition-property: opacity, transform;
+  transition-duration: var(--fa-motion-base);
+  transition-timing-function: var(--fa-easing-enter);
+}
+.fa-motion-exit {
+  transition-property: opacity, transform;
+  transition-duration: var(--fa-motion-exit);
+  transition-timing-function: var(--fa-easing-exit);
+}
+
+/* Destaque único quando um dado novo chega (sem loop) */
+@keyframes fa-highlight {
+  from { background-color: var(--fa-color-action-subtle); }
+  to   { background-color: transparent; }
+}
+.fa-motion-highlight {
+  animation: fa-highlight var(--fa-motion-highlight) var(--fa-easing-standard) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fa-motion-hover,
+  .fa-motion-press,
+  .fa-motion-enter,
+  .fa-motion-exit {
+    transition-duration: 0ms;
+    transform: none !important;
+  }
+  .fa-motion-highlight {
+    animation: none;
+  }
+}

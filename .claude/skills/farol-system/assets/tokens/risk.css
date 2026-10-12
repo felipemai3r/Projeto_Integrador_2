@@ -1,0 +1,151 @@
+/* ============================================================
+   Farol DS — Dimensão 02 Risco (a dimensão que o Arrow não tem)
+   Escala de risco do sistema, espelhando a da Defesa Civil
+   (RF32, RN01). Quatro faixas + dois estados de dado.
+
+   Mapeamento de cor ABERTO para validação com a Defesa Civil
+   (pendência PE05): o rascunho da equipe cita verde, amarelo e
+   vermelho; a faixa "observação" recebeu o ciano Maré para não
+   colidir com o laranja da marca. Trocar a cor de uma faixa é
+   mudar UMA linha neste arquivo.
+
+   Regra de ouro: cor nunca é o único canal. Toda faixa vem com
+   ícone e rótulo de texto (daltonismo, sol forte, tela baixa).
+   ============================================================ */
+:root {
+  /* normal, verde */
+  --fa-risk-normal-solid:     var(--fa-prim-vale-600);
+  --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-normal-surface:   var(--fa-prim-vale-100);
+  --fa-risk-normal-border:    var(--fa-prim-vale-600);
+  --fa-risk-normal-content:   var(--fa-prim-vale-800);
+
+  /* observação, ciano */
+  --fa-risk-observacao-solid:     var(--fa-prim-mare-700);
+  --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-observacao-surface:   var(--fa-prim-mare-100);
+  --fa-risk-observacao-border:    var(--fa-prim-mare-700);
+  --fa-risk-observacao-content:   var(--fa-prim-mare-800);
+
+  /* atenção, amarelo */
+  --fa-risk-atencao-solid:     var(--fa-prim-ambar-400);
+  --fa-risk-atencao-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-atencao-surface:   var(--fa-prim-ambar-100);
+  --fa-risk-atencao-border:    var(--fa-prim-ambar-700);
+  --fa-risk-atencao-content:   var(--fa-prim-ambar-800);
+
+  /* alerta, vermelho */
+  --fa-risk-alerta-solid:     var(--fa-prim-brasa-600);
+  --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-alerta-surface:   var(--fa-prim-brasa-100);
+  --fa-risk-alerta-border:    var(--fa-prim-brasa-600);
+  --fa-risk-alerta-content:   var(--fa-prim-brasa-800);
+
+  /* Estados do DADO (RN04, RNF04): não são faixas de risco */
+  --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-600);
+  --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-0);
+  --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-100);
+  --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-500);
+  --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-800);
+
+  --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-700);
+  --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-0);
+  --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-50);
+  --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-500);
+  --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-700);
+
+  /* Séries de dado nos gráficos (RF19: observado x estimado x cenário) */
+  --fa-data-observed:     var(--fa-prim-defesa-600);   /* linha cheia */
+  --fa-data-forecast:     var(--fa-prim-defesa-500);   /* tracejada */
+  --fa-data-uncertainty:  var(--fa-prim-defesa-200);   /* faixa de incerteza */
+  --fa-data-scenario:     var(--fa-prim-sinal-600);    /* tracejada, cenário hipotético */
+  --fa-data-rain:         var(--fa-prim-mare-600);     /* barras de chuva */
+  --fa-data-grid:         var(--fa-color-border-default);
+}
+
+:root[data-theme="dark"],
+:root.dark {
+  --fa-risk-normal-solid:     var(--fa-prim-vale-500);
+  --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-normal-surface:   var(--fa-prim-vale-900);
+  --fa-risk-normal-border:    var(--fa-prim-vale-400);
+  --fa-risk-normal-content:   var(--fa-prim-vale-100);
+
+  --fa-risk-observacao-solid:     var(--fa-prim-mare-400);
+  --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-observacao-surface:   var(--fa-prim-mare-900);
+  --fa-risk-observacao-border:    var(--fa-prim-mare-400);
+  --fa-risk-observacao-content:   var(--fa-prim-mare-100);
+
+  --fa-risk-atencao-surface:   var(--fa-prim-ambar-900);
+  --fa-risk-atencao-border:    var(--fa-prim-ambar-400);
+  --fa-risk-atencao-content:   var(--fa-prim-ambar-100);
+
+  --fa-risk-alerta-solid:     var(--fa-prim-brasa-300);
+  --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-alerta-surface:   var(--fa-prim-brasa-900);
+  --fa-risk-alerta-border:    var(--fa-prim-brasa-400);
+  --fa-risk-alerta-content:   var(--fa-prim-brasa-100);
+
+  --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-300);
+  --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-900);
+  --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-800);
+  --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-400);
+  --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-100);
+
+  --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-400);
+  --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-900);
+  --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-800);
+  --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-300);
+  --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-200);
+
+  --fa-data-observed:     var(--fa-prim-defesa-300);
+  --fa-data-forecast:     var(--fa-prim-defesa-300);
+  --fa-data-uncertainty:  var(--fa-prim-defesa-800);
+  --fa-data-scenario:     var(--fa-prim-sinal-300);
+  --fa-data-rain:         var(--fa-prim-mare-400);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-risk-normal-solid:     var(--fa-prim-vale-500);
+    --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-normal-surface:   var(--fa-prim-vale-900);
+    --fa-risk-normal-border:    var(--fa-prim-vale-400);
+    --fa-risk-normal-content:   var(--fa-prim-vale-100);
+
+    --fa-risk-observacao-solid:     var(--fa-prim-mare-400);
+    --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-observacao-surface:   var(--fa-prim-mare-900);
+    --fa-risk-observacao-border:    var(--fa-prim-mare-400);
+    --fa-risk-observacao-content:   var(--fa-prim-mare-100);
+
+    --fa-risk-atencao-surface:   var(--fa-prim-ambar-900);
+    --fa-risk-atencao-border:    var(--fa-prim-ambar-400);
+    --fa-risk-atencao-content:   var(--fa-prim-ambar-100);
+
+    --fa-risk-alerta-solid:     var(--fa-prim-brasa-300);
+    --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-alerta-surface:   var(--fa-prim-brasa-900);
+    --fa-risk-alerta-border:    var(--fa-prim-brasa-400);
+    --fa-risk-alerta-content:   var(--fa-prim-brasa-100);
+
+    --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-300);
+    --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-900);
+    --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-800);
+    --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-400);
+    --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-100);
+
+    --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-400);
+    --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-900);
+    --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-800);
+    --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-300);
+    --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-200);
+
+    --fa-data-observed:     var(--fa-prim-defesa-300);
+    --fa-data-forecast:     var(--fa-prim-defesa-300);
+    --fa-data-uncertainty:  var(--fa-prim-defesa-800);
+    --fa-data-scenario:     var(--fa-prim-sinal-300);
+    --fa-data-rain:         var(--fa-prim-mare-400);
+  }
+}

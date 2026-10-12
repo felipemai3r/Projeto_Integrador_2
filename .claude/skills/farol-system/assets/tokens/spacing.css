@@ -1,0 +1,43 @@
+/* ============================================================
+   Farol DS — Dimensão 04 Espaçamento
+   Base 4px; todo valor é múltiplo de 4. Três famílias semânticas
+   com nomes de papel: inset (dentro do componente), stack (entre
+   blocos) e section (entre seções). Alvo de toque mínimo: 44px.
+   ============================================================ */
+:root {
+  --fa-space-4:  4px;
+  --fa-space-8:  8px;
+  --fa-space-12: 12px;
+  --fa-space-16: 16px;
+  --fa-space-20: 20px;
+  --fa-space-24: 24px;
+  --fa-space-32: 32px;
+  --fa-space-40: 40px;
+  --fa-space-48: 48px;
+  --fa-space-64: 64px;
+  --fa-space-96: 96px;
+
+  /* inset: padding interno de componente */
+  --fa-space-inset-xs: var(--fa-space-4);
+  --fa-space-inset-sm: var(--fa-space-8);
+  --fa-space-inset-md: var(--fa-space-12);
+  --fa-space-inset-lg: var(--fa-space-16);
+  --fa-space-inset-xl: var(--fa-space-24);
+
+  /* stack: espaço entre blocos irmãos */
+  --fa-space-stack-xs: var(--fa-space-8);
+  --fa-space-stack-sm: var(--fa-space-16);
+  --fa-space-stack-md: var(--fa-space-24);
+  --fa-space-stack-lg: var(--fa-space-32);
+  --fa-space-stack-xl: var(--fa-space-48);
+
+  /* section: respiro entre seções da página */
+  --fa-space-section-sm: var(--fa-space-32);
+  --fa-space-section-md: var(--fa-space-48);
+  --fa-space-section-lg: var(--fa-space-64);
+  --fa-space-section-xl: var(--fa-space-96);
+
+  /* alvo de toque (WCAG 2.5.5 e uso com a mão molhada ou luva) */
+  --fa-target-min: 44px;
+  --fa-target-comfortable: 48px;
+}

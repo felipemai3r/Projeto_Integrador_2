@@ -1,0 +1,15 @@
+/* ============================================================
+   Farol DS — DNA (tokens) · agregador
+   Hierarquia: Fundamentos → Tokens → Componentes → Tela.
+   O build pronto, em um arquivo, é ../farol.css (gerado por
+   scripts/build.sh; não editar à mão).
+   ============================================================ */
+@import './color.css';
+@import './risk.css';
+@import './typography.css';
+@import './spacing.css';
+@import './shape.css';
+@import './elevation.css';
+@import './motion.css';
+@import './grid.css';
+@import './iconography.css';

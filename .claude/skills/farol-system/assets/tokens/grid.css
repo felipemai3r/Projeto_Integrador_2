@@ -1,0 +1,50 @@
+/* ============================================================
+   Farol DS — Dimensão 08 Grade e Layout
+   MOBILE-FIRST (o Arrow é desktop-first). O público é o morador
+   no celular, com rede ruim, durante a chuva. O desktop é o
+   segundo cenário: a Defesa Civil no centro de operações.
+   4 colunas no celular, 8 no tablet, 12 no desktop.
+   Primeira informação de risco: no máximo 2 níveis de navegação
+   a partir da tela inicial (RNF08).
+   ============================================================ */
+:root {
+  --fa-grid-columns-sm: 4;
+  --fa-grid-columns-md: 8;
+  --fa-grid-columns-lg: 12;
+
+  --fa-grid-gutter-sm: 16px;
+  --fa-grid-gutter-md: 24px;
+  --fa-grid-gutter-lg: 24px;
+
+  --fa-grid-margin-sm: 16px;
+  --fa-grid-margin-md: 32px;
+  --fa-grid-margin-lg: 40px;
+
+  /* Breakpoints (usar em media query: min-width). Base = 0, celular. */
+  --fa-bp-sm: 480px;
+  --fa-bp-md: 768px;
+  --fa-bp-lg: 1024px;
+  --fa-bp-xl: 1280px;
+
+  --fa-container-wide:    1280px;
+  --fa-container-content: 1120px;
+  --fa-container-text:    680px;
+  --fa-container-narrow:  440px;
+
+  /* respeita entalhe e barra de gestos do aparelho (PWA standalone) */
+  --fa-safe-top:    env(safe-area-inset-top, 0px);
+  --fa-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.fa-container {
+  width: 100%;
+  max-width: var(--fa-container-content);
+  margin-inline: auto;
+  padding-inline: var(--fa-grid-margin-sm);
+}
+@media (min-width: 768px) {
+  .fa-container { padding-inline: var(--fa-grid-margin-md); }
+}
+@media (min-width: 1024px) {
+  .fa-container { padding-inline: var(--fa-grid-margin-lg); }
+}

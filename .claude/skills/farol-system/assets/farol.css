@@ -1,0 +1,806 @@
+/* Farol DS — build agregado. GERADO a partir de tokens/*.css. Não editar. */
+
+/* ============================================================
+   Farol DS — Dimensão 01 Cor
+   Três camadas: primitivos → semânticos → modo noite.
+   Componentes consomem APENAS os semânticos (--fa-color-*) e os
+   tokens de risco (--fa-risk-*). Nunca primitivo, nunca hex.
+
+   Identidade: azul e laranja da Defesa Civil de Santa Catarina.
+   O azul é a cor de ação. O laranja é assinatura institucional
+   (faixa de marca, destaque pontual) e NUNCA significa risco.
+   Risco tem família própria em risk.css.
+
+   Todo par texto/fundo usado nos semânticos foi validado em
+   WCAG AA (4,5:1 para texto, 3:1 para componente de interface).
+   ============================================================ */
+:root {
+  /* ---------- Primitivos ---------- */
+  /* Ardósia: neutro frio, levemente azulado */
+  --fa-prim-ardosia-0:   #FFFFFF;
+  --fa-prim-ardosia-50:  #F3F5F7;
+  --fa-prim-ardosia-100: #E3E7ED;
+  --fa-prim-ardosia-200: #C9D0D9;
+  --fa-prim-ardosia-300: #A9B3C1;
+  --fa-prim-ardosia-400: #8894A5;
+  --fa-prim-ardosia-500: #677689;
+  --fa-prim-ardosia-600: #515F70;
+  --fa-prim-ardosia-700: #3D4A5C;
+  --fa-prim-ardosia-800: #273445;
+  --fa-prim-ardosia-900: #141F2E;
+
+  /* Defesa: azul institucional (ação e marca) */
+  --fa-prim-defesa-50:  #EDF4FD;
+  --fa-prim-defesa-100: #D6E7FA;
+  --fa-prim-defesa-200: #AFCFF4;
+  --fa-prim-defesa-300: #81B2E9;
+  --fa-prim-defesa-400: #4B91E2;
+  --fa-prim-defesa-500: #0A70E6;
+  --fa-prim-defesa-600: #055BBD;
+  --fa-prim-defesa-700: #064893;
+  --fa-prim-defesa-800: #063265;
+  --fa-prim-defesa-900: #051F3D;
+
+  /* Sinal: laranja de sinalização (assinatura da marca) */
+  --fa-prim-sinal-50:  #FFF3EB;
+  --fa-prim-sinal-100: #FFE2CC;
+  --fa-prim-sinal-200: #FDC59B;
+  --fa-prim-sinal-300: #FAA361;
+  --fa-prim-sinal-400: #F68128;
+  --fa-prim-sinal-500: #D5630B;
+  --fa-prim-sinal-600: #B35005;
+  --fa-prim-sinal-700: #8F3E00;
+  --fa-prim-sinal-800: #662C00;
+  --fa-prim-sinal-900: #3D1B00;
+
+  /* Vale: verde (situação normal) */
+  --fa-prim-vale-50:  #F0FAF4;
+  --fa-prim-vale-100: #DDF3E6;
+  --fa-prim-vale-200: #BDE5CD;
+  --fa-prim-vale-300: #92D3AC;
+  --fa-prim-vale-400: #5DC085;
+  --fa-prim-vale-500: #27A559;
+  --fa-prim-vale-600: #188644;
+  --fa-prim-vale-700: #107036;
+  --fa-prim-vale-800: #095327;
+  --fa-prim-vale-900: #043417;
+
+  /* Maré: ciano (observação, informação) */
+  --fa-prim-mare-50:  #EEF9FC;
+  --fa-prim-mare-100: #D8F0F8;
+  --fa-prim-mare-200: #B3E1EF;
+  --fa-prim-mare-300: #82CDE3;
+  --fa-prim-mare-400: #45BADE;
+  --fa-prim-mare-500: #02A3D4;
+  --fa-prim-mare-600: #0085AD;
+  --fa-prim-mare-700: #036C8C;
+  --fa-prim-mare-800: #045067;
+  --fa-prim-mare-900: #03313F;
+
+  /* Âmbar: amarelo (atenção) */
+  --fa-prim-ambar-50:  #FFFAEB;
+  --fa-prim-ambar-100: #FEF3CD;
+  --fa-prim-ambar-200: #FDE69B;
+  --fa-prim-ambar-300: #FAD661;
+  --fa-prim-ambar-400: #F9C824;
+  --fa-prim-ambar-500: #DCAA04;
+  --fa-prim-ambar-600: #B88D00;
+  --fa-prim-ambar-700: #8F6D00;
+  --fa-prim-ambar-800: #664E00;
+  --fa-prim-ambar-900: #3D2F00;
+
+  /* Brasa: vermelho (alerta, erro) */
+  --fa-prim-brasa-50:  #FEECEB;
+  --fa-prim-brasa-100: #FDD6D3;
+  --fa-prim-brasa-200: #FAADA8;
+  --fa-prim-brasa-300: #F67D74;
+  --fa-prim-brasa-400: #EE4A3F;
+  --fa-prim-brasa-500: #D82518;
+  --fa-prim-brasa-600: #B4190E;
+  --fa-prim-brasa-700: #931006;
+  --fa-prim-brasa-800: #680903;
+  --fa-prim-brasa-900: #410602;
+
+  /* ---------- Semânticos (modo dia) ---------- */
+  /* Superfície */
+  --fa-color-surface-base:     var(--fa-prim-ardosia-0);
+  --fa-color-surface-subtle:   var(--fa-prim-ardosia-50);
+  --fa-color-surface-raised:   var(--fa-prim-ardosia-100);
+  --fa-color-surface-inverted: var(--fa-prim-ardosia-900);
+  --fa-color-surface-brand:    var(--fa-prim-defesa-800);
+  --fa-color-surface-scrim:    rgba(20, 31, 46, 0.56);
+
+  /* Conteúdo (texto e ícone) */
+  --fa-color-content-primary:   var(--fa-prim-ardosia-900);
+  --fa-color-content-secondary: var(--fa-prim-ardosia-700);
+  --fa-color-content-tertiary:  var(--fa-prim-ardosia-600);
+  --fa-color-content-disabled:  var(--fa-prim-ardosia-400);
+  --fa-color-content-inverted:  var(--fa-prim-ardosia-0);
+  --fa-color-content-link:      var(--fa-prim-defesa-600);
+  --fa-color-content-on-brand:  var(--fa-prim-ardosia-0);
+
+  /* Borda */
+  --fa-color-border-subtle:  var(--fa-prim-ardosia-100);
+  --fa-color-border-default: var(--fa-prim-ardosia-200);
+  --fa-color-border-strong:  var(--fa-prim-ardosia-400);
+  --fa-color-border-focus:   var(--fa-prim-defesa-600);
+
+  /* Ação */
+  --fa-color-action-primary:  var(--fa-prim-defesa-600);
+  --fa-color-action-hover:    var(--fa-prim-defesa-700);
+  --fa-color-action-pressed:  var(--fa-prim-defesa-800);
+  --fa-color-action-on:       var(--fa-prim-ardosia-0);
+  --fa-color-action-subtle:   var(--fa-prim-defesa-100);
+  --fa-color-action-surface:  var(--fa-prim-defesa-50);
+  --fa-color-action-disabled: var(--fa-prim-ardosia-200);
+
+  /* Destaque de marca (laranja Sinal). Uso pontual, nunca para risco */
+  --fa-color-accent:         var(--fa-prim-sinal-400);
+  --fa-color-accent-hover:   var(--fa-prim-sinal-300);
+  --fa-color-accent-pressed: var(--fa-prim-sinal-500);
+  --fa-color-accent-on:      var(--fa-prim-ardosia-900);
+
+  /* Feedback de interface (não é risco hidrológico) */
+  --fa-color-feedback-info-surface:    var(--fa-prim-mare-50);
+  --fa-color-feedback-info-border:     var(--fa-prim-mare-700);
+  --fa-color-feedback-info-content:    var(--fa-prim-mare-800);
+  --fa-color-feedback-success-surface: var(--fa-prim-vale-50);
+  --fa-color-feedback-success-border:  var(--fa-prim-vale-600);
+  --fa-color-feedback-success-content: var(--fa-prim-vale-800);
+  --fa-color-feedback-warning-surface: var(--fa-prim-ambar-50);
+  --fa-color-feedback-warning-border:  var(--fa-prim-ambar-700);
+  --fa-color-feedback-warning-content: var(--fa-prim-ambar-800);
+  --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-50);
+  --fa-color-feedback-danger-border:   var(--fa-prim-brasa-600);
+  --fa-color-feedback-danger-content:  var(--fa-prim-brasa-800);
+
+  /* Estados */
+  --fa-color-state-hover-neutral: var(--fa-prim-ardosia-100);
+  --fa-color-state-hover-action:  var(--fa-prim-defesa-50);
+  --fa-color-state-focus-ring:    var(--fa-prim-defesa-500);
+  --fa-color-state-disabled-surface: var(--fa-prim-ardosia-50);
+  --fa-color-state-disabled-content: var(--fa-prim-ardosia-400);
+
+  /* Marca */
+  --fa-color-brand-marinho: var(--fa-prim-defesa-800);
+  --fa-color-brand-sinal:   var(--fa-prim-sinal-400);
+}
+
+/* ---------- Modo noite ----------
+   Uso real: Defesa Civil e moradores consultam de madrugada, durante a
+   chuva. O modo noite não é opcional. Dispara por atributo, por classe e
+   pela preferência do sistema (a menos que o usuário force o modo dia). */
+:root[data-theme="dark"],
+:root.dark {
+  --fa-color-surface-base:     var(--fa-prim-ardosia-900);
+  --fa-color-surface-subtle:   var(--fa-prim-ardosia-800);
+  --fa-color-surface-raised:   var(--fa-prim-ardosia-700);
+  --fa-color-surface-inverted: var(--fa-prim-ardosia-50);
+  --fa-color-surface-brand:    var(--fa-prim-defesa-900);
+  --fa-color-surface-scrim:    rgba(0, 0, 0, 0.64);
+
+  --fa-color-content-primary:   var(--fa-prim-ardosia-50);
+  --fa-color-content-secondary: var(--fa-prim-ardosia-200);
+  --fa-color-content-tertiary:  var(--fa-prim-ardosia-300);
+  --fa-color-content-disabled:  var(--fa-prim-ardosia-500);
+  --fa-color-content-inverted:  var(--fa-prim-ardosia-900);
+  --fa-color-content-link:      var(--fa-prim-defesa-300);
+
+  --fa-color-border-subtle:  var(--fa-prim-ardosia-800);
+  --fa-color-border-default: var(--fa-prim-ardosia-700);
+  --fa-color-border-strong:  var(--fa-prim-ardosia-500);
+  --fa-color-border-focus:   var(--fa-prim-defesa-300);
+
+  --fa-color-action-primary:  var(--fa-prim-defesa-300);
+  --fa-color-action-hover:    var(--fa-prim-defesa-200);
+  --fa-color-action-pressed:  var(--fa-prim-defesa-100);
+  --fa-color-action-on:       var(--fa-prim-ardosia-900);
+  --fa-color-action-subtle:   var(--fa-prim-defesa-800);
+  --fa-color-action-surface:  var(--fa-prim-defesa-900);
+  --fa-color-action-disabled: var(--fa-prim-ardosia-700);
+
+  --fa-color-feedback-info-surface:    var(--fa-prim-mare-900);
+  --fa-color-feedback-info-border:     var(--fa-prim-mare-400);
+  --fa-color-feedback-info-content:    var(--fa-prim-mare-100);
+  --fa-color-feedback-success-surface: var(--fa-prim-vale-900);
+  --fa-color-feedback-success-border:  var(--fa-prim-vale-400);
+  --fa-color-feedback-success-content: var(--fa-prim-vale-100);
+  --fa-color-feedback-warning-surface: var(--fa-prim-ambar-900);
+  --fa-color-feedback-warning-border:  var(--fa-prim-ambar-400);
+  --fa-color-feedback-warning-content: var(--fa-prim-ambar-100);
+  --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-900);
+  --fa-color-feedback-danger-border:   var(--fa-prim-brasa-400);
+  --fa-color-feedback-danger-content:  var(--fa-prim-brasa-100);
+
+  --fa-color-state-hover-neutral: var(--fa-prim-ardosia-800);
+  --fa-color-state-hover-action:  var(--fa-prim-defesa-900);
+  --fa-color-state-focus-ring:    var(--fa-prim-defesa-300);
+  --fa-color-state-disabled-surface: var(--fa-prim-ardosia-800);
+  --fa-color-state-disabled-content: var(--fa-prim-ardosia-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-color-surface-base:     var(--fa-prim-ardosia-900);
+    --fa-color-surface-subtle:   var(--fa-prim-ardosia-800);
+    --fa-color-surface-raised:   var(--fa-prim-ardosia-700);
+    --fa-color-surface-inverted: var(--fa-prim-ardosia-50);
+    --fa-color-surface-brand:    var(--fa-prim-defesa-900);
+    --fa-color-surface-scrim:    rgba(0, 0, 0, 0.64);
+
+    --fa-color-content-primary:   var(--fa-prim-ardosia-50);
+    --fa-color-content-secondary: var(--fa-prim-ardosia-200);
+    --fa-color-content-tertiary:  var(--fa-prim-ardosia-300);
+    --fa-color-content-disabled:  var(--fa-prim-ardosia-500);
+    --fa-color-content-inverted:  var(--fa-prim-ardosia-900);
+    --fa-color-content-link:      var(--fa-prim-defesa-300);
+
+    --fa-color-border-subtle:  var(--fa-prim-ardosia-800);
+    --fa-color-border-default: var(--fa-prim-ardosia-700);
+    --fa-color-border-strong:  var(--fa-prim-ardosia-500);
+    --fa-color-border-focus:   var(--fa-prim-defesa-300);
+
+    --fa-color-action-primary:  var(--fa-prim-defesa-300);
+    --fa-color-action-hover:    var(--fa-prim-defesa-200);
+    --fa-color-action-pressed:  var(--fa-prim-defesa-100);
+    --fa-color-action-on:       var(--fa-prim-ardosia-900);
+    --fa-color-action-subtle:   var(--fa-prim-defesa-800);
+    --fa-color-action-surface:  var(--fa-prim-defesa-900);
+    --fa-color-action-disabled: var(--fa-prim-ardosia-700);
+
+    --fa-color-feedback-info-surface:    var(--fa-prim-mare-900);
+    --fa-color-feedback-info-border:     var(--fa-prim-mare-400);
+    --fa-color-feedback-info-content:    var(--fa-prim-mare-100);
+    --fa-color-feedback-success-surface: var(--fa-prim-vale-900);
+    --fa-color-feedback-success-border:  var(--fa-prim-vale-400);
+    --fa-color-feedback-success-content: var(--fa-prim-vale-100);
+    --fa-color-feedback-warning-surface: var(--fa-prim-ambar-900);
+    --fa-color-feedback-warning-border:  var(--fa-prim-ambar-400);
+    --fa-color-feedback-warning-content: var(--fa-prim-ambar-100);
+    --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-900);
+    --fa-color-feedback-danger-border:   var(--fa-prim-brasa-400);
+    --fa-color-feedback-danger-content:  var(--fa-prim-brasa-100);
+
+    --fa-color-state-hover-neutral: var(--fa-prim-ardosia-800);
+    --fa-color-state-hover-action:  var(--fa-prim-defesa-900);
+    --fa-color-state-focus-ring:    var(--fa-prim-defesa-300);
+    --fa-color-state-disabled-surface: var(--fa-prim-ardosia-800);
+    --fa-color-state-disabled-content: var(--fa-prim-ardosia-500);
+  }
+}
+
+/* ============================================================
+   Farol DS — Dimensão 02 Risco (a dimensão que o Arrow não tem)
+   Escala de risco do sistema, espelhando a da Defesa Civil
+   (RF32, RN01). Quatro faixas + dois estados de dado.
+
+   Mapeamento de cor ABERTO para validação com a Defesa Civil
+   (pendência PE05): o rascunho da equipe cita verde, amarelo e
+   vermelho; a faixa "observação" recebeu o ciano Maré para não
+   colidir com o laranja da marca. Trocar a cor de uma faixa é
+   mudar UMA linha neste arquivo.
+
+   Regra de ouro: cor nunca é o único canal. Toda faixa vem com
+   ícone e rótulo de texto (daltonismo, sol forte, tela baixa).
+   ============================================================ */
+:root {
+  /* normal, verde */
+  --fa-risk-normal-solid:     var(--fa-prim-vale-600);
+  --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-normal-surface:   var(--fa-prim-vale-100);
+  --fa-risk-normal-border:    var(--fa-prim-vale-600);
+  --fa-risk-normal-content:   var(--fa-prim-vale-800);
+
+  /* observação, ciano */
+  --fa-risk-observacao-solid:     var(--fa-prim-mare-700);
+  --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-observacao-surface:   var(--fa-prim-mare-100);
+  --fa-risk-observacao-border:    var(--fa-prim-mare-700);
+  --fa-risk-observacao-content:   var(--fa-prim-mare-800);
+
+  /* atenção, amarelo */
+  --fa-risk-atencao-solid:     var(--fa-prim-ambar-400);
+  --fa-risk-atencao-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-atencao-surface:   var(--fa-prim-ambar-100);
+  --fa-risk-atencao-border:    var(--fa-prim-ambar-700);
+  --fa-risk-atencao-content:   var(--fa-prim-ambar-800);
+
+  /* alerta, vermelho */
+  --fa-risk-alerta-solid:     var(--fa-prim-brasa-600);
+  --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-0);
+  --fa-risk-alerta-surface:   var(--fa-prim-brasa-100);
+  --fa-risk-alerta-border:    var(--fa-prim-brasa-600);
+  --fa-risk-alerta-content:   var(--fa-prim-brasa-800);
+
+  /* Estados do DADO (RN04, RNF04): não são faixas de risco */
+  --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-600);
+  --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-0);
+  --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-100);
+  --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-500);
+  --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-800);
+
+  --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-700);
+  --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-0);
+  --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-50);
+  --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-500);
+  --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-700);
+
+  /* Séries de dado nos gráficos (RF19: observado x estimado x cenário) */
+  --fa-data-observed:     var(--fa-prim-defesa-600);   /* linha cheia */
+  --fa-data-forecast:     var(--fa-prim-defesa-500);   /* tracejada */
+  --fa-data-uncertainty:  var(--fa-prim-defesa-200);   /* faixa de incerteza */
+  --fa-data-scenario:     var(--fa-prim-sinal-600);    /* tracejada, cenário hipotético */
+  --fa-data-rain:         var(--fa-prim-mare-600);     /* barras de chuva */
+  --fa-data-grid:         var(--fa-color-border-default);
+}
+
+:root[data-theme="dark"],
+:root.dark {
+  --fa-risk-normal-solid:     var(--fa-prim-vale-500);
+  --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-normal-surface:   var(--fa-prim-vale-900);
+  --fa-risk-normal-border:    var(--fa-prim-vale-400);
+  --fa-risk-normal-content:   var(--fa-prim-vale-100);
+
+  --fa-risk-observacao-solid:     var(--fa-prim-mare-400);
+  --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-observacao-surface:   var(--fa-prim-mare-900);
+  --fa-risk-observacao-border:    var(--fa-prim-mare-400);
+  --fa-risk-observacao-content:   var(--fa-prim-mare-100);
+
+  --fa-risk-atencao-surface:   var(--fa-prim-ambar-900);
+  --fa-risk-atencao-border:    var(--fa-prim-ambar-400);
+  --fa-risk-atencao-content:   var(--fa-prim-ambar-100);
+
+  --fa-risk-alerta-solid:     var(--fa-prim-brasa-300);
+  --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-900);
+  --fa-risk-alerta-surface:   var(--fa-prim-brasa-900);
+  --fa-risk-alerta-border:    var(--fa-prim-brasa-400);
+  --fa-risk-alerta-content:   var(--fa-prim-brasa-100);
+
+  --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-300);
+  --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-900);
+  --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-800);
+  --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-400);
+  --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-100);
+
+  --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-400);
+  --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-900);
+  --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-800);
+  --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-300);
+  --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-200);
+
+  --fa-data-observed:     var(--fa-prim-defesa-300);
+  --fa-data-forecast:     var(--fa-prim-defesa-300);
+  --fa-data-uncertainty:  var(--fa-prim-defesa-800);
+  --fa-data-scenario:     var(--fa-prim-sinal-300);
+  --fa-data-rain:         var(--fa-prim-mare-400);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-risk-normal-solid:     var(--fa-prim-vale-500);
+    --fa-risk-normal-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-normal-surface:   var(--fa-prim-vale-900);
+    --fa-risk-normal-border:    var(--fa-prim-vale-400);
+    --fa-risk-normal-content:   var(--fa-prim-vale-100);
+
+    --fa-risk-observacao-solid:     var(--fa-prim-mare-400);
+    --fa-risk-observacao-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-observacao-surface:   var(--fa-prim-mare-900);
+    --fa-risk-observacao-border:    var(--fa-prim-mare-400);
+    --fa-risk-observacao-content:   var(--fa-prim-mare-100);
+
+    --fa-risk-atencao-surface:   var(--fa-prim-ambar-900);
+    --fa-risk-atencao-border:    var(--fa-prim-ambar-400);
+    --fa-risk-atencao-content:   var(--fa-prim-ambar-100);
+
+    --fa-risk-alerta-solid:     var(--fa-prim-brasa-300);
+    --fa-risk-alerta-on-solid:  var(--fa-prim-ardosia-900);
+    --fa-risk-alerta-surface:   var(--fa-prim-brasa-900);
+    --fa-risk-alerta-border:    var(--fa-prim-brasa-400);
+    --fa-risk-alerta-content:   var(--fa-prim-brasa-100);
+
+    --fa-risk-desatualizado-solid:    var(--fa-prim-ardosia-300);
+    --fa-risk-desatualizado-on-solid: var(--fa-prim-ardosia-900);
+    --fa-risk-desatualizado-surface:  var(--fa-prim-ardosia-800);
+    --fa-risk-desatualizado-border:   var(--fa-prim-ardosia-400);
+    --fa-risk-desatualizado-content:  var(--fa-prim-ardosia-100);
+
+    --fa-risk-indisponivel-solid:    var(--fa-prim-ardosia-400);
+    --fa-risk-indisponivel-on-solid: var(--fa-prim-ardosia-900);
+    --fa-risk-indisponivel-surface:  var(--fa-prim-ardosia-800);
+    --fa-risk-indisponivel-border:   var(--fa-prim-ardosia-300);
+    --fa-risk-indisponivel-content:  var(--fa-prim-ardosia-200);
+
+    --fa-data-observed:     var(--fa-prim-defesa-300);
+    --fa-data-forecast:     var(--fa-prim-defesa-300);
+    --fa-data-uncertainty:  var(--fa-prim-defesa-800);
+    --fa-data-scenario:     var(--fa-prim-sinal-300);
+    --fa-data-rain:         var(--fa-prim-mare-400);
+  }
+}
+
+/* ============================================================
+   Farol DS — Dimensão 03 Tipografia
+   Atkinson Hyperlegible Next é a única família. Foi desenhada pelo
+   Braille Institute para maximizar a distinção entre caracteres
+   (1/l/I, 0/O), o que importa quando o número é a informação.
+   3 pesos: 400 (texto), 500 (rótulo), 700 (título e dado).
+   Corpo nunca abaixo de 16px em texto corrido; 14px só em apoio.
+   Instalar via @fontsource (empacotado, funciona offline no PWA):
+     npm i @fontsource-variable/atkinson-hyperlegible-next
+   ============================================================ */
+:root {
+  --fa-font-family-base: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next',
+    'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --fa-font-weight-regular: 400;
+  --fa-font-weight-medium:  500;
+  --fa-font-weight-bold:    700;
+
+  /* Dado: o número do nível do rio. Maior elemento da tela. */
+  --fa-type-dado-xl-size: 56px;
+  --fa-type-dado-xl-weight: 700;
+  --fa-type-dado-xl-line-height: 1;
+  --fa-type-dado-xl-tracking: -0.02em;
+  --fa-type-dado-lg-size: 40px;
+  --fa-type-dado-lg-weight: 700;
+  --fa-type-dado-lg-line-height: 1.05;
+  --fa-type-dado-lg-tracking: -0.015em;
+  --fa-type-dado-md-size: 24px;
+  --fa-type-dado-md-weight: 700;
+  --fa-type-dado-md-line-height: 1.1;
+  --fa-type-dado-md-tracking: -0.01em;
+
+  /* Título */
+  --fa-type-titulo-xl-size: 32px;
+  --fa-type-titulo-xl-weight: 700;
+  --fa-type-titulo-xl-line-height: 1.15;
+  --fa-type-titulo-xl-tracking: -0.01em;
+  --fa-type-titulo-lg-size: 24px;
+  --fa-type-titulo-lg-weight: 700;
+  --fa-type-titulo-lg-line-height: 1.2;
+  --fa-type-titulo-lg-tracking: -0.005em;
+  --fa-type-titulo-md-size: 20px;
+  --fa-type-titulo-md-weight: 700;
+  --fa-type-titulo-md-line-height: 1.25;
+  --fa-type-titulo-md-tracking: 0;
+  --fa-type-titulo-sm-size: 18px;
+  --fa-type-titulo-sm-weight: 700;
+  --fa-type-titulo-sm-line-height: 1.3;
+  --fa-type-titulo-sm-tracking: 0;
+
+  /* Texto */
+  --fa-type-texto-lg-size: 18px;
+  --fa-type-texto-lg-weight: 400;
+  --fa-type-texto-lg-line-height: 1.6;
+  --fa-type-texto-lg-tracking: 0;
+  --fa-type-texto-md-size: 16px;
+  --fa-type-texto-md-weight: 400;
+  --fa-type-texto-md-line-height: 1.6;
+  --fa-type-texto-md-tracking: 0;
+  --fa-type-texto-sm-size: 14px;
+  --fa-type-texto-sm-weight: 400;
+  --fa-type-texto-sm-line-height: 1.5;
+  --fa-type-texto-sm-tracking: 0.005em;
+
+  /* Rótulo (botão, campo, chip, legenda) */
+  --fa-type-rotulo-lg-size: 16px;
+  --fa-type-rotulo-lg-weight: 500;
+  --fa-type-rotulo-lg-line-height: 1.25;
+  --fa-type-rotulo-lg-tracking: 0.005em;
+  --fa-type-rotulo-md-size: 14px;
+  --fa-type-rotulo-md-weight: 500;
+  --fa-type-rotulo-md-line-height: 1.25;
+  --fa-type-rotulo-md-tracking: 0.01em;
+  --fa-type-rotulo-sm-size: 12px;
+  --fa-type-rotulo-sm-weight: 500;
+  --fa-type-rotulo-sm-line-height: 1.25;
+  --fa-type-rotulo-sm-tracking: 0.02em;
+}
+
+/* Todo número que muda ou se compara usa algarismo tabular,
+   para a coluna não "dançar" quando o valor atualiza. */
+.fa-num,
+[class*="fa-type-dado"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ============================================================
+   Farol DS — Dimensão 04 Espaçamento
+   Base 4px; todo valor é múltiplo de 4. Três famílias semânticas
+   com nomes de papel: inset (dentro do componente), stack (entre
+   blocos) e section (entre seções). Alvo de toque mínimo: 44px.
+   ============================================================ */
+:root {
+  --fa-space-4:  4px;
+  --fa-space-8:  8px;
+  --fa-space-12: 12px;
+  --fa-space-16: 16px;
+  --fa-space-20: 20px;
+  --fa-space-24: 24px;
+  --fa-space-32: 32px;
+  --fa-space-40: 40px;
+  --fa-space-48: 48px;
+  --fa-space-64: 64px;
+  --fa-space-96: 96px;
+
+  /* inset: padding interno de componente */
+  --fa-space-inset-xs: var(--fa-space-4);
+  --fa-space-inset-sm: var(--fa-space-8);
+  --fa-space-inset-md: var(--fa-space-12);
+  --fa-space-inset-lg: var(--fa-space-16);
+  --fa-space-inset-xl: var(--fa-space-24);
+
+  /* stack: espaço entre blocos irmãos */
+  --fa-space-stack-xs: var(--fa-space-8);
+  --fa-space-stack-sm: var(--fa-space-16);
+  --fa-space-stack-md: var(--fa-space-24);
+  --fa-space-stack-lg: var(--fa-space-32);
+  --fa-space-stack-xl: var(--fa-space-48);
+
+  /* section: respiro entre seções da página */
+  --fa-space-section-sm: var(--fa-space-32);
+  --fa-space-section-md: var(--fa-space-48);
+  --fa-space-section-lg: var(--fa-space-64);
+  --fa-space-section-xl: var(--fa-space-96);
+
+  /* alvo de toque (WCAG 2.5.5 e uso com a mão molhada ou luva) */
+  --fa-target-min: 44px;
+  --fa-target-comfortable: 48px;
+}
+
+/* ============================================================
+   Farol DS — Dimensão 05 Forma
+   Âncora: 10px (o Arrow ancora em 8). Cantos um pouco mais
+   generosos para dedo grosso e leitura rápida em celular.
+   Pill (999px) é permitido em CHIP e BADGE de status/risco e na
+   trilha do switch. Nunca em botão, card ou campo.
+   ============================================================ */
+:root {
+  --fa-radius-0:    0px;
+  --fa-radius-4:    4px;
+  --fa-radius-6:    6px;
+  --fa-radius-10:   10px;
+  --fa-radius-14:   14px;
+  --fa-radius-20:   20px;
+  --fa-radius-28:   28px;
+  --fa-radius-pill: 999px;
+
+  /* controle: o que o usuário aciona */
+  --fa-shape-control-sm:   var(--fa-radius-6);    /* checkbox, radio */
+  --fa-shape-control-md:   var(--fa-radius-10);   /* botão, campo, select (âncora) */
+  --fa-shape-control-lg:   var(--fa-radius-14);   /* botão principal da tela */
+  --fa-shape-control-pill: var(--fa-radius-pill); /* switch */
+
+  /* superfície: o que contém conteúdo */
+  --fa-shape-surface-sm: var(--fa-radius-10);  /* tooltip, menu */
+  --fa-shape-surface-md: var(--fa-radius-14);  /* card, painel, aviso */
+  --fa-shape-surface-lg: var(--fa-radius-20);  /* modal, cartão de risco em destaque */
+  --fa-shape-surface-sheet: var(--fa-radius-28); /* canto superior do bottom sheet */
+
+  /* status: comunica estado */
+  --fa-shape-status-sm:   var(--fa-radius-4);    /* tag inline em tabela */
+  --fa-shape-status-pill: var(--fa-radius-pill); /* chip e badge de risco */
+
+  /* estrutura */
+  --fa-shape-structure-none: var(--fa-radius-0);
+  --fa-shape-structure-sm:   var(--fa-radius-4);  /* barra de progresso, skeleton */
+}
+
+/* ============================================================
+   Farol DS — Dimensão 06 Elevação
+   Sombra sempre derivada da Ardósia 900 (20, 31, 46), nunca preto
+   puro. Em tela de emergência a hierarquia vem de cor e posição
+   antes de sombra; sombra é reforço, não decoração.
+   Z-index semântico: sem número mágico.
+   ============================================================ */
+:root {
+  --fa-shadow-0: none;
+  --fa-shadow-1: 0 1px 2px rgba(20, 31, 46, 0.08);
+  --fa-shadow-2: 0 2px 6px rgba(20, 31, 46, 0.10), 0 1px 2px rgba(20, 31, 46, 0.06);
+  --fa-shadow-3: 0 6px 14px rgba(20, 31, 46, 0.12), 0 2px 4px rgba(20, 31, 46, 0.08);
+  --fa-shadow-4: 0 12px 28px rgba(20, 31, 46, 0.16), 0 4px 8px rgba(20, 31, 46, 0.10);
+
+  --fa-elevation-flat:      var(--fa-shadow-0);
+  --fa-elevation-card:      var(--fa-shadow-1);
+  --fa-elevation-card-hover: var(--fa-shadow-2);
+  --fa-elevation-control-pressed: var(--fa-shadow-0);
+  --fa-elevation-header:    var(--fa-shadow-2);
+  --fa-elevation-dropdown:  var(--fa-shadow-3);
+  --fa-elevation-sheet:     var(--fa-shadow-4);
+  --fa-elevation-modal:     var(--fa-shadow-4);
+  --fa-elevation-toast:     var(--fa-shadow-3);
+
+  --fa-z-base:      0;
+  --fa-z-raised:    10;
+  --fa-z-sticky:    200;
+  --fa-z-dropdown:  300;
+  --fa-z-sheet:     400;
+  --fa-z-backdrop:  450;
+  --fa-z-modal:     500;
+  --fa-z-toast:     600;
+  --fa-z-emergency: 700;  /* faixa de alerta vigente, acima de tudo */
+}
+
+:root[data-theme="dark"],
+:root.dark {
+  --fa-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --fa-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.28);
+  --fa-shadow-3: 0 6px 14px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0, 0, 0, 0.32);
+  --fa-shadow-4: 0 12px 28px rgba(0, 0, 0, 0.56), 0 4px 8px rgba(0, 0, 0, 0.36);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --fa-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.28);
+    --fa-shadow-3: 0 6px 14px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0, 0, 0, 0.32);
+    --fa-shadow-4: 0 12px 28px rgba(0, 0, 0, 0.56), 0 4px 8px rgba(0, 0, 0, 0.36);
+  }
+}
+
+/* ============================================================
+   Farol DS — Dimensão 07 Movimento
+   Movimento aqui é calmo: a tela comunica risco e não pode
+   competir com a informação. Centro de gravidade 150ms, teto 400ms.
+   Assimetria: entrada (160ms) mais lenta que saída (120ms).
+   Transição genérica de todas as propriedades não existe: declare cada uma.
+
+   Três proibições de segurança:
+   1. Nada pisca. Nenhum elemento alterna mais de 1 vez por segundo.
+   2. Mudança de faixa de risco não anima cor em loop; no máximo um
+      destaque único de 250ms (--fa-motion-highlight).
+   3. prefers-reduced-motion zera deslocamento e escala.
+   ============================================================ */
+:root {
+  --fa-duration-0:   0ms;
+  --fa-duration-100: 100ms;
+  --fa-duration-120: 120ms;
+  --fa-duration-160: 160ms;
+  --fa-duration-250: 250ms;
+  --fa-duration-400: 400ms;
+
+  --fa-motion-fast:      var(--fa-duration-100);  /* hover, press */
+  --fa-motion-base:      var(--fa-duration-160);  /* entrada de elemento */
+  --fa-motion-exit:      var(--fa-duration-120);  /* saída de elemento */
+  --fa-motion-highlight: var(--fa-duration-250);  /* destaque único de dado novo */
+  --fa-motion-sheet:     var(--fa-duration-250);  /* bottom sheet, página */
+  --fa-motion-ceiling:   var(--fa-duration-400);
+
+  --fa-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fa-easing-enter:    cubic-bezier(0, 0, 0.2, 1);
+  --fa-easing-exit:     cubic-bezier(0.4, 0, 1, 1);
+}
+
+.fa-motion-hover {
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.fa-motion-press {
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.fa-motion-enter {
+  transition-property: opacity, transform;
+  transition-duration: var(--fa-motion-base);
+  transition-timing-function: var(--fa-easing-enter);
+}
+.fa-motion-exit {
+  transition-property: opacity, transform;
+  transition-duration: var(--fa-motion-exit);
+  transition-timing-function: var(--fa-easing-exit);
+}
+
+/* Destaque único quando um dado novo chega (sem loop) */
+@keyframes fa-highlight {
+  from { background-color: var(--fa-color-action-subtle); }
+  to   { background-color: transparent; }
+}
+.fa-motion-highlight {
+  animation: fa-highlight var(--fa-motion-highlight) var(--fa-easing-standard) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fa-motion-hover,
+  .fa-motion-press,
+  .fa-motion-enter,
+  .fa-motion-exit {
+    transition-duration: 0ms;
+    transform: none !important;
+  }
+  .fa-motion-highlight {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Farol DS — Dimensão 08 Grade e Layout
+   MOBILE-FIRST (o Arrow é desktop-first). O público é o morador
+   no celular, com rede ruim, durante a chuva. O desktop é o
+   segundo cenário: a Defesa Civil no centro de operações.
+   4 colunas no celular, 8 no tablet, 12 no desktop.
+   Primeira informação de risco: no máximo 2 níveis de navegação
+   a partir da tela inicial (RNF08).
+   ============================================================ */
+:root {
+  --fa-grid-columns-sm: 4;
+  --fa-grid-columns-md: 8;
+  --fa-grid-columns-lg: 12;
+
+  --fa-grid-gutter-sm: 16px;
+  --fa-grid-gutter-md: 24px;
+  --fa-grid-gutter-lg: 24px;
+
+  --fa-grid-margin-sm: 16px;
+  --fa-grid-margin-md: 32px;
+  --fa-grid-margin-lg: 40px;
+
+  /* Breakpoints (usar em media query: min-width). Base = 0, celular. */
+  --fa-bp-sm: 480px;
+  --fa-bp-md: 768px;
+  --fa-bp-lg: 1024px;
+  --fa-bp-xl: 1280px;
+
+  --fa-container-wide:    1280px;
+  --fa-container-content: 1120px;
+  --fa-container-text:    680px;
+  --fa-container-narrow:  440px;
+
+  /* respeita entalhe e barra de gestos do aparelho (PWA standalone) */
+  --fa-safe-top:    env(safe-area-inset-top, 0px);
+  --fa-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.fa-container {
+  width: 100%;
+  max-width: var(--fa-container-content);
+  margin-inline: auto;
+  padding-inline: var(--fa-grid-margin-sm);
+}
+@media (min-width: 768px) {
+  .fa-container { padding-inline: var(--fa-grid-margin-md); }
+}
+@media (min-width: 1024px) {
+  .fa-container { padding-inline: var(--fa-grid-margin-lg); }
+}
+
+/* ============================================================
+   Farol DS — Dimensão 09 Iconografia
+   Biblioteca: Lucide (lucide-react), traço 2px a 24px, MIT.
+   Quatro tamanhos: 16 / 20 / 24 / 40. O 40 existe para o ícone
+   de faixa de risco em destaque. Número direto é proibido.
+   Ícone de risco é parte do significado: jamais decorativo.
+   ============================================================ */
+:root {
+  --fa-icon-size-compact:     16px;
+  --fa-icon-size-default:     20px;
+  --fa-icon-size-comfortable: 24px;
+  --fa-icon-size-prominent:   40px;
+
+  --fa-icon-stroke: 2;
+
+  --fa-icon-color-primary:   var(--fa-color-content-primary);
+  --fa-icon-color-secondary: var(--fa-color-content-secondary);
+  --fa-icon-color-action:    var(--fa-color-action-primary);
+  --fa-icon-color-inverted:  var(--fa-color-content-inverted);
+  --fa-icon-color-danger:    var(--fa-color-feedback-danger-border);
+  --fa-icon-color-success:   var(--fa-color-feedback-success-border);
+}
+
+/* ---------- Base mínima ---------- */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--fa-color-surface-base);
+  color: var(--fa-color-content-primary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size)/var(--fa-type-texto-md-line-height) var(--fa-font-family-base);
+}
+:focus-visible {
+  outline: 3px solid var(--fa-color-state-focus-ring);
+  outline-offset: 2px;
+}

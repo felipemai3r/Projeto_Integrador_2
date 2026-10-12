@@ -1,0 +1,268 @@
+/* ============================================================
+   Farol DS — Dimensão 01 Cor
+   Três camadas: primitivos → semânticos → modo noite.
+   Componentes consomem APENAS os semânticos (--fa-color-*) e os
+   tokens de risco (--fa-risk-*). Nunca primitivo, nunca hex.
+
+   Identidade: azul e laranja da Defesa Civil de Santa Catarina.
+   O azul é a cor de ação. O laranja é assinatura institucional
+   (faixa de marca, destaque pontual) e NUNCA significa risco.
+   Risco tem família própria em risk.css.
+
+   Todo par texto/fundo usado nos semânticos foi validado em
+   WCAG AA (4,5:1 para texto, 3:1 para componente de interface).
+   ============================================================ */
+:root {
+  /* ---------- Primitivos ---------- */
+  /* Ardósia: neutro frio, levemente azulado */
+  --fa-prim-ardosia-0:   #FFFFFF;
+  --fa-prim-ardosia-50:  #F3F5F7;
+  --fa-prim-ardosia-100: #E3E7ED;
+  --fa-prim-ardosia-200: #C9D0D9;
+  --fa-prim-ardosia-300: #A9B3C1;
+  --fa-prim-ardosia-400: #8894A5;
+  --fa-prim-ardosia-500: #677689;
+  --fa-prim-ardosia-600: #515F70;
+  --fa-prim-ardosia-700: #3D4A5C;
+  --fa-prim-ardosia-800: #273445;
+  --fa-prim-ardosia-900: #141F2E;
+
+  /* Defesa: azul institucional (ação e marca) */
+  --fa-prim-defesa-50:  #EDF4FD;
+  --fa-prim-defesa-100: #D6E7FA;
+  --fa-prim-defesa-200: #AFCFF4;
+  --fa-prim-defesa-300: #81B2E9;
+  --fa-prim-defesa-400: #4B91E2;
+  --fa-prim-defesa-500: #0A70E6;
+  --fa-prim-defesa-600: #055BBD;
+  --fa-prim-defesa-700: #064893;
+  --fa-prim-defesa-800: #063265;
+  --fa-prim-defesa-900: #051F3D;
+
+  /* Sinal: laranja de sinalização (assinatura da marca) */
+  --fa-prim-sinal-50:  #FFF3EB;
+  --fa-prim-sinal-100: #FFE2CC;
+  --fa-prim-sinal-200: #FDC59B;
+  --fa-prim-sinal-300: #FAA361;
+  --fa-prim-sinal-400: #F68128;
+  --fa-prim-sinal-500: #D5630B;
+  --fa-prim-sinal-600: #B35005;
+  --fa-prim-sinal-700: #8F3E00;
+  --fa-prim-sinal-800: #662C00;
+  --fa-prim-sinal-900: #3D1B00;
+
+  /* Vale: verde (situação normal) */
+  --fa-prim-vale-50:  #F0FAF4;
+  --fa-prim-vale-100: #DDF3E6;
+  --fa-prim-vale-200: #BDE5CD;
+  --fa-prim-vale-300: #92D3AC;
+  --fa-prim-vale-400: #5DC085;
+  --fa-prim-vale-500: #27A559;
+  --fa-prim-vale-600: #188644;
+  --fa-prim-vale-700: #107036;
+  --fa-prim-vale-800: #095327;
+  --fa-prim-vale-900: #043417;
+
+  /* Maré: ciano (observação, informação) */
+  --fa-prim-mare-50:  #EEF9FC;
+  --fa-prim-mare-100: #D8F0F8;
+  --fa-prim-mare-200: #B3E1EF;
+  --fa-prim-mare-300: #82CDE3;
+  --fa-prim-mare-400: #45BADE;
+  --fa-prim-mare-500: #02A3D4;
+  --fa-prim-mare-600: #0085AD;
+  --fa-prim-mare-700: #036C8C;
+  --fa-prim-mare-800: #045067;
+  --fa-prim-mare-900: #03313F;
+
+  /* Âmbar: amarelo (atenção) */
+  --fa-prim-ambar-50:  #FFFAEB;
+  --fa-prim-ambar-100: #FEF3CD;
+  --fa-prim-ambar-200: #FDE69B;
+  --fa-prim-ambar-300: #FAD661;
+  --fa-prim-ambar-400: #F9C824;
+  --fa-prim-ambar-500: #DCAA04;
+  --fa-prim-ambar-600: #B88D00;
+  --fa-prim-ambar-700: #8F6D00;
+  --fa-prim-ambar-800: #664E00;
+  --fa-prim-ambar-900: #3D2F00;
+
+  /* Brasa: vermelho (alerta, erro) */
+  --fa-prim-brasa-50:  #FEECEB;
+  --fa-prim-brasa-100: #FDD6D3;
+  --fa-prim-brasa-200: #FAADA8;
+  --fa-prim-brasa-300: #F67D74;
+  --fa-prim-brasa-400: #EE4A3F;
+  --fa-prim-brasa-500: #D82518;
+  --fa-prim-brasa-600: #B4190E;
+  --fa-prim-brasa-700: #931006;
+  --fa-prim-brasa-800: #680903;
+  --fa-prim-brasa-900: #410602;
+
+  /* ---------- Semânticos (modo dia) ---------- */
+  /* Superfície */
+  --fa-color-surface-base:     var(--fa-prim-ardosia-0);
+  --fa-color-surface-subtle:   var(--fa-prim-ardosia-50);
+  --fa-color-surface-raised:   var(--fa-prim-ardosia-100);
+  --fa-color-surface-inverted: var(--fa-prim-ardosia-900);
+  --fa-color-surface-brand:    var(--fa-prim-defesa-800);
+  --fa-color-surface-scrim:    rgba(20, 31, 46, 0.56);
+
+  /* Conteúdo (texto e ícone) */
+  --fa-color-content-primary:   var(--fa-prim-ardosia-900);
+  --fa-color-content-secondary: var(--fa-prim-ardosia-700);
+  --fa-color-content-tertiary:  var(--fa-prim-ardosia-600);
+  --fa-color-content-disabled:  var(--fa-prim-ardosia-400);
+  --fa-color-content-inverted:  var(--fa-prim-ardosia-0);
+  --fa-color-content-link:      var(--fa-prim-defesa-600);
+  --fa-color-content-on-brand:  var(--fa-prim-ardosia-0);
+
+  /* Borda */
+  --fa-color-border-subtle:  var(--fa-prim-ardosia-100);
+  --fa-color-border-default: var(--fa-prim-ardosia-200);
+  --fa-color-border-strong:  var(--fa-prim-ardosia-400);
+  --fa-color-border-focus:   var(--fa-prim-defesa-600);
+
+  /* Ação */
+  --fa-color-action-primary:  var(--fa-prim-defesa-600);
+  --fa-color-action-hover:    var(--fa-prim-defesa-700);
+  --fa-color-action-pressed:  var(--fa-prim-defesa-800);
+  --fa-color-action-on:       var(--fa-prim-ardosia-0);
+  --fa-color-action-subtle:   var(--fa-prim-defesa-100);
+  --fa-color-action-surface:  var(--fa-prim-defesa-50);
+  --fa-color-action-disabled: var(--fa-prim-ardosia-200);
+
+  /* Destaque de marca (laranja Sinal). Uso pontual, nunca para risco */
+  --fa-color-accent:         var(--fa-prim-sinal-400);
+  --fa-color-accent-hover:   var(--fa-prim-sinal-300);
+  --fa-color-accent-pressed: var(--fa-prim-sinal-500);
+  --fa-color-accent-on:      var(--fa-prim-ardosia-900);
+
+  /* Feedback de interface (não é risco hidrológico) */
+  --fa-color-feedback-info-surface:    var(--fa-prim-mare-50);
+  --fa-color-feedback-info-border:     var(--fa-prim-mare-700);
+  --fa-color-feedback-info-content:    var(--fa-prim-mare-800);
+  --fa-color-feedback-success-surface: var(--fa-prim-vale-50);
+  --fa-color-feedback-success-border:  var(--fa-prim-vale-600);
+  --fa-color-feedback-success-content: var(--fa-prim-vale-800);
+  --fa-color-feedback-warning-surface: var(--fa-prim-ambar-50);
+  --fa-color-feedback-warning-border:  var(--fa-prim-ambar-700);
+  --fa-color-feedback-warning-content: var(--fa-prim-ambar-800);
+  --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-50);
+  --fa-color-feedback-danger-border:   var(--fa-prim-brasa-600);
+  --fa-color-feedback-danger-content:  var(--fa-prim-brasa-800);
+
+  /* Estados */
+  --fa-color-state-hover-neutral: var(--fa-prim-ardosia-100);
+  --fa-color-state-hover-action:  var(--fa-prim-defesa-50);
+  --fa-color-state-focus-ring:    var(--fa-prim-defesa-500);
+  --fa-color-state-disabled-surface: var(--fa-prim-ardosia-50);
+  --fa-color-state-disabled-content: var(--fa-prim-ardosia-400);
+
+  /* Marca */
+  --fa-color-brand-marinho: var(--fa-prim-defesa-800);
+  --fa-color-brand-sinal:   var(--fa-prim-sinal-400);
+}
+
+/* ---------- Modo noite ----------
+   Uso real: Defesa Civil e moradores consultam de madrugada, durante a
+   chuva. O modo noite não é opcional. Dispara por atributo, por classe e
+   pela preferência do sistema (a menos que o usuário force o modo dia). */
+:root[data-theme="dark"],
+:root.dark {
+  --fa-color-surface-base:     var(--fa-prim-ardosia-900);
+  --fa-color-surface-subtle:   var(--fa-prim-ardosia-800);
+  --fa-color-surface-raised:   var(--fa-prim-ardosia-700);
+  --fa-color-surface-inverted: var(--fa-prim-ardosia-50);
+  --fa-color-surface-brand:    var(--fa-prim-defesa-900);
+  --fa-color-surface-scrim:    rgba(0, 0, 0, 0.64);
+
+  --fa-color-content-primary:   var(--fa-prim-ardosia-50);
+  --fa-color-content-secondary: var(--fa-prim-ardosia-200);
+  --fa-color-content-tertiary:  var(--fa-prim-ardosia-300);
+  --fa-color-content-disabled:  var(--fa-prim-ardosia-500);
+  --fa-color-content-inverted:  var(--fa-prim-ardosia-900);
+  --fa-color-content-link:      var(--fa-prim-defesa-300);
+
+  --fa-color-border-subtle:  var(--fa-prim-ardosia-800);
+  --fa-color-border-default: var(--fa-prim-ardosia-700);
+  --fa-color-border-strong:  var(--fa-prim-ardosia-500);
+  --fa-color-border-focus:   var(--fa-prim-defesa-300);
+
+  --fa-color-action-primary:  var(--fa-prim-defesa-300);
+  --fa-color-action-hover:    var(--fa-prim-defesa-200);
+  --fa-color-action-pressed:  var(--fa-prim-defesa-100);
+  --fa-color-action-on:       var(--fa-prim-ardosia-900);
+  --fa-color-action-subtle:   var(--fa-prim-defesa-800);
+  --fa-color-action-surface:  var(--fa-prim-defesa-900);
+  --fa-color-action-disabled: var(--fa-prim-ardosia-700);
+
+  --fa-color-feedback-info-surface:    var(--fa-prim-mare-900);
+  --fa-color-feedback-info-border:     var(--fa-prim-mare-400);
+  --fa-color-feedback-info-content:    var(--fa-prim-mare-100);
+  --fa-color-feedback-success-surface: var(--fa-prim-vale-900);
+  --fa-color-feedback-success-border:  var(--fa-prim-vale-400);
+  --fa-color-feedback-success-content: var(--fa-prim-vale-100);
+  --fa-color-feedback-warning-surface: var(--fa-prim-ambar-900);
+  --fa-color-feedback-warning-border:  var(--fa-prim-ambar-400);
+  --fa-color-feedback-warning-content: var(--fa-prim-ambar-100);
+  --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-900);
+  --fa-color-feedback-danger-border:   var(--fa-prim-brasa-400);
+  --fa-color-feedback-danger-content:  var(--fa-prim-brasa-100);
+
+  --fa-color-state-hover-neutral: var(--fa-prim-ardosia-800);
+  --fa-color-state-hover-action:  var(--fa-prim-defesa-900);
+  --fa-color-state-focus-ring:    var(--fa-prim-defesa-300);
+  --fa-color-state-disabled-surface: var(--fa-prim-ardosia-800);
+  --fa-color-state-disabled-content: var(--fa-prim-ardosia-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-color-surface-base:     var(--fa-prim-ardosia-900);
+    --fa-color-surface-subtle:   var(--fa-prim-ardosia-800);
+    --fa-color-surface-raised:   var(--fa-prim-ardosia-700);
+    --fa-color-surface-inverted: var(--fa-prim-ardosia-50);
+    --fa-color-surface-brand:    var(--fa-prim-defesa-900);
+    --fa-color-surface-scrim:    rgba(0, 0, 0, 0.64);
+
+    --fa-color-content-primary:   var(--fa-prim-ardosia-50);
+    --fa-color-content-secondary: var(--fa-prim-ardosia-200);
+    --fa-color-content-tertiary:  var(--fa-prim-ardosia-300);
+    --fa-color-content-disabled:  var(--fa-prim-ardosia-500);
+    --fa-color-content-inverted:  var(--fa-prim-ardosia-900);
+    --fa-color-content-link:      var(--fa-prim-defesa-300);
+
+    --fa-color-border-subtle:  var(--fa-prim-ardosia-800);
+    --fa-color-border-default: var(--fa-prim-ardosia-700);
+    --fa-color-border-strong:  var(--fa-prim-ardosia-500);
+    --fa-color-border-focus:   var(--fa-prim-defesa-300);
+
+    --fa-color-action-primary:  var(--fa-prim-defesa-300);
+    --fa-color-action-hover:    var(--fa-prim-defesa-200);
+    --fa-color-action-pressed:  var(--fa-prim-defesa-100);
+    --fa-color-action-on:       var(--fa-prim-ardosia-900);
+    --fa-color-action-subtle:   var(--fa-prim-defesa-800);
+    --fa-color-action-surface:  var(--fa-prim-defesa-900);
+    --fa-color-action-disabled: var(--fa-prim-ardosia-700);
+
+    --fa-color-feedback-info-surface:    var(--fa-prim-mare-900);
+    --fa-color-feedback-info-border:     var(--fa-prim-mare-400);
+    --fa-color-feedback-info-content:    var(--fa-prim-mare-100);
+    --fa-color-feedback-success-surface: var(--fa-prim-vale-900);
+    --fa-color-feedback-success-border:  var(--fa-prim-vale-400);
+    --fa-color-feedback-success-content: var(--fa-prim-vale-100);
+    --fa-color-feedback-warning-surface: var(--fa-prim-ambar-900);
+    --fa-color-feedback-warning-border:  var(--fa-prim-ambar-400);
+    --fa-color-feedback-warning-content: var(--fa-prim-ambar-100);
+    --fa-color-feedback-danger-surface:  var(--fa-prim-brasa-900);
+    --fa-color-feedback-danger-border:   var(--fa-prim-brasa-400);
+    --fa-color-feedback-danger-content:  var(--fa-prim-brasa-100);
+
+    --fa-color-state-hover-neutral: var(--fa-prim-ardosia-800);
+    --fa-color-state-hover-action:  var(--fa-prim-defesa-900);
+    --fa-color-state-focus-ring:    var(--fa-prim-defesa-300);
+    --fa-color-state-disabled-surface: var(--fa-prim-ardosia-800);
+    --fa-color-state-disabled-content: var(--fa-prim-ardosia-500);
+  }
+}

@@ -14,6 +14,9 @@ A pergunta que o sistema responde é operacional e veio do coordenador da Defesa
 | [Fontes de dados](docs/fontes-de-dados.md) | Levantamento e validação técnica das APIs, com endpoints testados, retenção medida e pendências de acesso |
 | [Arquitetura e desenvolvimento](docs/arquitetura-desenvolvimento.md) | Documento interno de construção: serviços, banco, contêineres, execução local e roteiro de implementação |
 | [Estudo da RADIAN](docs/radian.md) | Estrutura da arquitetura de referência e derivação do nível genérico ao específico |
+| [Plano de ação](docs/plano-de-acao.md) | Análise do projeto, inconsistências, decisões abertas e plano da Fase 3 por sprint |
+| [Padrão de desenvolvimento](docs/padrao-de-desenvolvimento.md) | Git, commits, Python, TypeScript, API, testes, CI, segurança e definição de pronto |
+| [Farol DS](.claude/skills/farol-system/SKILL.md) | Sistema de design inspirado na Defesa Civil de SC: fundamentos, tokens, componentes e guia visual |
 
 ## Situação por fase do plano de ensino
 

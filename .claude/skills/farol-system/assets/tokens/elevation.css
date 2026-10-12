@@ -1,0 +1,51 @@
+/* ============================================================
+   Farol DS — Dimensão 06 Elevação
+   Sombra sempre derivada da Ardósia 900 (20, 31, 46), nunca preto
+   puro. Em tela de emergência a hierarquia vem de cor e posição
+   antes de sombra; sombra é reforço, não decoração.
+   Z-index semântico: sem número mágico.
+   ============================================================ */
+:root {
+  --fa-shadow-0: none;
+  --fa-shadow-1: 0 1px 2px rgba(20, 31, 46, 0.08);
+  --fa-shadow-2: 0 2px 6px rgba(20, 31, 46, 0.10), 0 1px 2px rgba(20, 31, 46, 0.06);
+  --fa-shadow-3: 0 6px 14px rgba(20, 31, 46, 0.12), 0 2px 4px rgba(20, 31, 46, 0.08);
+  --fa-shadow-4: 0 12px 28px rgba(20, 31, 46, 0.16), 0 4px 8px rgba(20, 31, 46, 0.10);
+
+  --fa-elevation-flat:      var(--fa-shadow-0);
+  --fa-elevation-card:      var(--fa-shadow-1);
+  --fa-elevation-card-hover: var(--fa-shadow-2);
+  --fa-elevation-control-pressed: var(--fa-shadow-0);
+  --fa-elevation-header:    var(--fa-shadow-2);
+  --fa-elevation-dropdown:  var(--fa-shadow-3);
+  --fa-elevation-sheet:     var(--fa-shadow-4);
+  --fa-elevation-modal:     var(--fa-shadow-4);
+  --fa-elevation-toast:     var(--fa-shadow-3);
+
+  --fa-z-base:      0;
+  --fa-z-raised:    10;
+  --fa-z-sticky:    200;
+  --fa-z-dropdown:  300;
+  --fa-z-sheet:     400;
+  --fa-z-backdrop:  450;
+  --fa-z-modal:     500;
+  --fa-z-toast:     600;
+  --fa-z-emergency: 700;  /* faixa de alerta vigente, acima de tudo */
+}
+
+:root[data-theme="dark"],
+:root.dark {
+  --fa-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --fa-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.28);
+  --fa-shadow-3: 0 6px 14px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0, 0, 0, 0.32);
+  --fa-shadow-4: 0 12px 28px rgba(0, 0, 0, 0.56), 0 4px 8px rgba(0, 0, 0, 0.36);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fa-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --fa-shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.28);
+    --fa-shadow-3: 0 6px 14px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0, 0, 0, 0.32);
+    --fa-shadow-4: 0 12px 28px rgba(0, 0, 0, 0.56), 0 4px 8px rgba(0, 0, 0, 0.36);
+  }
+}

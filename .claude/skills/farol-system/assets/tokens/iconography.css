@@ -1,0 +1,22 @@
+/* ============================================================
+   Farol DS — Dimensão 09 Iconografia
+   Biblioteca: Lucide (lucide-react), traço 2px a 24px, MIT.
+   Quatro tamanhos: 16 / 20 / 24 / 40. O 40 existe para o ícone
+   de faixa de risco em destaque. Número direto é proibido.
+   Ícone de risco é parte do significado: jamais decorativo.
+   ============================================================ */
+:root {
+  --fa-icon-size-compact:     16px;
+  --fa-icon-size-default:     20px;
+  --fa-icon-size-comfortable: 24px;
+  --fa-icon-size-prominent:   40px;
+
+  --fa-icon-stroke: 2;
+
+  --fa-icon-color-primary:   var(--fa-color-content-primary);
+  --fa-icon-color-secondary: var(--fa-color-content-secondary);
+  --fa-icon-color-action:    var(--fa-color-action-primary);
+  --fa-icon-color-inverted:  var(--fa-color-content-inverted);
+  --fa-icon-color-danger:    var(--fa-color-feedback-danger-border);
+  --fa-icon-color-success:   var(--fa-color-feedback-success-border);
+}
