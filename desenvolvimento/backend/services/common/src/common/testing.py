@@ -11,6 +11,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
+from common.config import obter_configuracao
+from common.db import obter_engine
 from common.models import Base
 
 RAIZ = Path(__file__).resolve().parents[4]
@@ -29,6 +31,9 @@ def url_teste() -> str:
     admin.dispose()
     url = make_url(URL_ADMIN).set(database=NOME_BANCO).render_as_string(hide_password=False)
     os.environ["DATABASE_URL"] = url
+    # a configuracao pode ja ter sido lida (import de app) apontando para o banco real
+    obter_configuracao.cache_clear()
+    obter_engine.cache_clear()
     cfg = Config(str(RAIZ / "db" / "alembic.ini"))
     cfg.set_main_option("script_location", str(RAIZ / "db" / "migrations"))
     command.upgrade(cfg, "head")

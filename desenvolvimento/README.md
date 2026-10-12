@@ -7,7 +7,7 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 | `backend/db` | Migrações Alembic (esquema do banco) | Esquema inicial pronto |
 | `backend/services/common` | Pacote compartilhado: configuração, modelos, contratos, seed | Pronto |
 | `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
-| `backend/services/api` | API FastAPI | Próxima etapa |
+| `backend/services/api` | API FastAPI: estações, nível atual com risco e tendência, série, chuva acumulada | Leitura pronta (porta 8000, docs em `/docs`) |
 | `backend/services/modelo` | Correlação defasada e previsão | Sprint 2 |
 | `frontend` | PWA em React, com o design Farol | Próxima etapa |
 
@@ -33,7 +33,7 @@ O ambiente virtual **não pode ficar dentro do iCloud Drive** (ver [ADR 0001](..
 
 ```bash
 python3 -m venv ~/.venvs/pgetulio
-~/.venvs/pgetulio/bin/pip install -e "backend/services/common[dev]" -e "backend/services/ingestor[dev]"
+~/.venvs/pgetulio/bin/pip install -e "backend/services/common[dev]" -e "backend/services/ingestor[dev]" -e "backend/services/api[dev]"
 docker compose up -d db
 ~/.venvs/pgetulio/bin/pytest backend/services
 ~/.venvs/pgetulio/bin/ruff check backend && ~/.venvs/pgetulio/bin/ruff format --check backend

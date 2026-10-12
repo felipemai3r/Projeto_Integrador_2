@@ -10,6 +10,9 @@ class Configuracao(BaseSettings):
 
     database_url: str = "postgresql+psycopg://pgetulio:troque_esta_senha@localhost:5432/pgetulio"
     log_level: str = "INFO"
+    cors_origens: str = "http://localhost:5173"
+    # acima disso, a ultima leitura de uma estacao e marcada como desatualizada (RN04)
+    desatualizado_apos_min: int = 30
 
     dcsc_graphql_url: str = "https://monitoramento.defesacivil.sc.gov.br/graphql"
     dcsc_rest_url: str = "https://api-dcsc.mks-unifique.ddns.net"

@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Instalar
-        run: pip install -e "desenvolvimento/backend/services/common[dev]" -e "desenvolvimento/backend/services/ingestor[dev]"
+        run: pip install -e "desenvolvimento/backend/services/common[dev]" -e "desenvolvimento/backend/services/ingestor[dev]" -e "desenvolvimento/backend/services/api[dev]"
       - name: Lint
         run: ruff check desenvolvimento/backend && ruff format --check desenvolvimento/backend
       - name: Testes
