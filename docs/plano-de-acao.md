@@ -33,7 +33,8 @@ Documento interno da equipe. Resume a análise completa do repositório em 12/10
 | Sprint 1: adaptadores de barragem e Open-Meteo, `api` (estações, série, chuva, risco), painel e PWA | Concluído (inclui `AlertBanner` e o gráfico de histórico), exceto o painel de qualidade |
 | Sprint 2: correlação defasada e endpoint `/api/correlacao` | Concluído ([ADR 0003](adr/0003-correlacao-defasada-primeiros-resultados.md)), com a página "Como funciona" |
 | Sprint 3: login, registro de ocorrência, mapa, moderação, avaliador de alertas por nível observado, notificação push | Concluído. O push foi validado em envio real contra um servidor local (assinatura VAPID e payload cifrado); falta o teste em aparelho real e HTTPS |
-| Sprints 4 e 5 | Não iniciados: previsão e simulação, relatório, painel de qualidade, publicação com HTTPS, testes ponta a ponta |
+| Sprint 4: previsão e simulação (ridge, validação, RN07, tela Previsão) e painel de qualidade | Concluído. Nenhum horizonte publicado ainda: faltam 7 dias de dado para o mínimo de 60 ([ADR 0004](adr/0004-modelo-de-previsao-primeiros-resultados.md)) |
+| Sprint 5: publicação (Nginx, backup, guia em [publicacao.md](publicacao.md)), relatório PDF, testes ponta a ponta, revisão de acessibilidade | Parcial: arquivos de publicação e backup prontos; falta validar o stack de produção, relatório, e2e e acessibilidade |
 
 Dados da coleta real: série de 5 minutos a partir de 22/07/2026 (21 dias já se haviam perdido), cerca de 23 mil leituras por estação, 416 mil horas de chuva ERA5 desde nov/2020. A estação do Revólver continua sem dado público.
 

@@ -5,6 +5,7 @@ description = "API publica: estacoes, leituras, risco, chuva"
 requires-python = ">=3.12"
 dependencies = [
   "common",
+  "modelo",
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "apscheduler>=3.10,<4",

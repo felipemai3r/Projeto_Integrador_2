@@ -20,6 +20,7 @@ class Configuracao(BaseSettings):
     vapid_subject: str = "mailto:equipe@exemplo.br"
     url_publica: str = "http://localhost:5173"
     pasta_fotos: str = "/tmp/fotos-ocorrencias"
+    pasta_artefatos: str = "/tmp/artefatos-modelo"
     limite_registros_hora: int = 5
     avaliador_ativo: bool = False  # ligado no compose; desligado em testes
 

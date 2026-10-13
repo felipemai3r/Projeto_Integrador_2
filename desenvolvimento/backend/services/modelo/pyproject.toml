@@ -7,6 +7,9 @@ dependencies = [
   "common",
   "pandas>=2.2",
   "numpy>=1.26",
+  "scikit-learn>=1.5",
+  "joblib>=1.4",
+  "apscheduler>=3.10,<4",
 ]
 
 [project.optional-dependencies]

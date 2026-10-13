@@ -46,6 +46,7 @@ services:
       AVALIADOR_ATIVO: "true"
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (veja .env.example)}
       PASTA_FOTOS: /dados/fotos
+      PASTA_ARTEFATOS: /artefatos
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:equipe@exemplo.br}
@@ -54,7 +55,24 @@ services:
       migrate: { condition: service_completed_successfully }
     volumes:
       - fotos:/dados/fotos
+      - artefatos:/artefatos:ro
     ports: ["8000:8000"]
+    restart: unless-stopped
+
+  # Retreino diario dos modelos de previsao (publica sozinho quando a RN07 for atendida)
+  treinador:
+    build:
+      context: ./backend
+      dockerfile: services/modelo/Dockerfile
+    command: ["python", "-m", "modelo.agendador"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PASTA_ARTEFATOS: /artefatos
+    volumes:
+      - artefatos:/artefatos
+    depends_on:
+      migrate: { condition: service_completed_successfully }
     restart: unless-stopped
 
   # Jobs de analise, sob demanda: docker compose run --rm modelo python -m modelo.correlacao
@@ -66,9 +84,13 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PASTA_ARTEFATOS: /artefatos
+    volumes:
+      - artefatos:/artefatos
     depends_on:
       migrate: { condition: service_completed_successfully }
 
 volumes:
   pgdata:
   fotos:
+  artefatos:

@@ -1,0 +1,6 @@
+# Relativo ao contexto de build (desenvolvimento/). node_modules e um link para node_modules.nosync.
+**/node_modules
+**/node_modules.nosync
+**/dist
+backend
+.env

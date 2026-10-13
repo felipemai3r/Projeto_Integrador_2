@@ -1,0 +1,4 @@
+# Servico de backup diario: postgres-client + o script, sem bind mount (o repositorio fica no iCloud).
+FROM postgres:16-alpine
+COPY scripts/backup-loop.sh /backup-loop.sh
+ENTRYPOINT ["sh", "/backup-loop.sh"]

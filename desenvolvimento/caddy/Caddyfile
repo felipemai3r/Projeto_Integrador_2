@@ -1,0 +1,7 @@
+# HTTPS automatico (Let's Encrypt) na frente do portal. Defina DOMINIO no .env.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile https up -d
+{$DOMINIO} {
+    encode gzip
+    reverse_proxy web:80
+    header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+}

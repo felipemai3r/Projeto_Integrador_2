@@ -202,3 +202,42 @@ class Qualidade(BaseModel):
     gerado_em: datetime
     fontes: list[FonteQualidade]
     estacoes: list[EstacaoQualidade]
+
+
+class ResumoModelo(BaseModel):
+    id: int
+    treinado_em: datetime
+    amostras: int
+    rmse_cm: float
+    rmse_persistencia_cm: float
+
+
+class PrevisaoHorizonte(BaseModel):
+    horizonte_h: int
+    disponivel: bool
+    motivo: str | None = None
+    valido_para: datetime | None = None
+    nivel_m: float | None = None
+    incerteza_m: float | None = None
+    intervalo_m: tuple[float, float] | None = None
+    faixa: str | None = None
+    modelo: ResumoModelo | None = None
+    extrapolacao: list[str] = []
+
+
+class PrevisaoOut(BaseModel):
+    estacao: str
+    origem: str  # operacional | cenario
+    base_em: datetime | None
+    nivel_base_m: float | None
+    horizontes: list[PrevisaoHorizonte]
+    aviso: str = (
+        "Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de "
+        "Presidente Getúlio."
+    )
+
+
+class SimulacaoIn(BaseModel):
+    chuva_mm: dict[str, float]  # codigo da estacao -> mm no periodo
+    janela_h: int = 6
+    estacao: str = "DCSC-00043"

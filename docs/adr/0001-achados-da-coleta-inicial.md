@@ -16,6 +16,9 @@ Data: 12/10/2026. Contexto: primeira execução do ingestor e da carga inicial c
 - Sem PostGIS: latitude e longitude simples; a checagem de município é feita na aplicação (resolve a inconsistência I4 do plano de ação).
 - O ambiente virtual de desenvolvimento **não pode ficar dentro do iCloud Drive**: o iCloud marca os arquivos `.pth` como ocultos e o Python 3.13 ou superior os ignora, quebrando instalações editáveis. Usar `~/.venvs/pgetulio`.
 
+- **Sem bind mount no Compose.** Montar um arquivo do repositório (que está no iCloud Drive) dentro de um contêiner travou o Docker Desktop (o contêiner ficou em `Created` e `docker inspect`/`docker rm` deixaram de responder), exigindo reiniciar o Docker. Regra: arquivos entram na imagem com `COPY`; dados em volumes nomeados.
+- **`pkill -f` no mesmo comando que o padrão.** Em automações de terminal, `pkill -f "<texto>"` casa com a própria linha de comando do shell e a derruba. Usar o PID salvo ou `pgrep -x`.
+
 ## Pendências geradas
 
 - ~~Semântica de `chuva_acumulada_mm`~~: resolvida (incremento de 5 minutos). Não precisa mais perguntar à Defesa Civil de SC.

@@ -8,7 +8,7 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 | `backend/services/common` | Pacote compartilhado: configuração, modelos, contratos, seed | Pronto |
 | `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
 | `backend/services/api` | API FastAPI: leitura, alertas, correlação, ocorrências com moderação, login | Pronta (porta 8000, docs em `/docs`) |
-| `backend/services/modelo` | Correlação defasada (RF13); depois treino e previsão | Correlação pronta ([ADR 0003](../docs/adr/0003-correlacao-defasada-primeiros-resultados.md)) |
+| `backend/services/modelo` | Correlação defasada (RF13), treino, validação e previsão (CDU02, CDU03, CDU09) | Pronto ([ADR 0003](../docs/adr/0003-correlacao-defasada-primeiros-resultados.md), [ADR 0004](../docs/adr/0004-modelo-de-previsao-primeiros-resultados.md)). Publica sozinho quando a RN07 for atendida |
 | `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel, histórico, mapa, registro de alagamento, moderação e Como funciona |
 
 ## Rodando
@@ -26,9 +26,24 @@ docker compose exec ingestor python -m ingestor.carga_inicial --dias 82
 # análise de correlação defasada (grava o resultado e imprime a tabela)
 docker compose run --rm modelo python -m modelo.correlacao --estacao DCSC-00043
 
+# treino e validação do modelo de previsão (o `treinador` já faz isso todo dia)
+docker compose exec treinador python -m modelo.treinar --estacao DCSC-00043
+
 # histórico longo de chuva (ERA5), desde o evento de dezembro de 2020
 docker compose exec ingestor python -m ingestor.carga_era5 --inicio 2020-11-01
 ```
+
+## Publicação, backup e restauração
+
+Passo a passo completo em [docs/publicacao.md](../docs/publicacao.md). Em resumo:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build   # produção
+scripts/backup.sh                          # backup manual (cron: veja o guia)
+scripts/restaurar.sh backups/ARQUIVO.sql.gz   # restaura em um banco NOVO e confere as contagens
+```
+
+**Atenção, iCloud Drive:** não use *bind mounts* (`./arquivo:/destino`) no Compose enquanto o repositório estiver dentro do iCloud Drive. Eles travam o Docker Desktop. Os arquivos são embutidos nas imagens (`COPY`) e os dados ficam em volumes nomeados.
 
 ## Moderação: criar usuário
 

@@ -44,3 +44,10 @@ export const useCorrelacao = () =>
 
 export const useQualidade = () =>
   useQuery({ queryKey: ['qualidade'], queryFn: api.qualidade, refetchInterval: UM_MINUTO * 2 })
+
+export const usePrevisao = (codigo: string) =>
+  useQuery({
+    queryKey: ['previsao', codigo],
+    queryFn: () => api.previsao(codigo),
+    refetchInterval: UM_MINUTO * 5,
+  })

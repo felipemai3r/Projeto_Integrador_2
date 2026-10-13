@@ -1,0 +1,83 @@
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-stack-md);
+  max-width: var(--fa-container-text);
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size) /
+    var(--fa-type-titulo-xl-line-height) var(--fa-font-family-base);
+}
+.subtitulo {
+  margin: 0;
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) /
+    var(--fa-type-titulo-md-line-height) var(--fa-font-family-base);
+}
+.apoio {
+  margin: 0;
+  color: var(--fa-color-content-secondary);
+}
+.aviso {
+  margin: 0;
+  padding: var(--fa-space-inset-lg);
+  border: 1px solid var(--fa-color-feedback-info-border);
+  border-radius: var(--fa-shape-surface-md);
+  background: var(--fa-color-feedback-info-surface);
+  color: var(--fa-color-feedback-info-content);
+}
+.bloco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-12);
+}
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-12);
+}
+.campo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-4);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.campo input,
+.campo select {
+  min-height: var(--fa-target-min);
+  padding: 0 var(--fa-space-12);
+  border: 1px solid var(--fa-color-border-strong);
+  border-radius: var(--fa-shape-control-md);
+  background: var(--fa-color-surface-base);
+  color: var(--fa-color-content-primary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) / 1 var(--fa-font-family-base);
+}
+.erro {
+  margin: 0;
+  padding: var(--fa-space-inset-md);
+  border: 1px solid var(--fa-color-feedback-danger-border);
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-feedback-danger-surface);
+  color: var(--fa-color-feedback-danger-content);
+}
+.resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-12);
+}
+.selo {
+  margin: 0;
+  padding: var(--fa-space-8) var(--fa-space-12);
+  border-radius: var(--fa-shape-status-sm);
+  background: var(--fa-color-accent);
+  color: var(--fa-color-accent-on);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+  justify-self: start;
+}
+.meta {
+  margin: 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}

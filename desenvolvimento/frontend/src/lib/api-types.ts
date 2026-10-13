@@ -173,6 +173,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/previsao/{codigo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Previsao
+         * @description Estimativa do nivel para 1, 3, 6, 12 e 24 h, com incerteza (CDU02). So onde ha modelo
+         *     publicado (RN07); nos demais horizontes diz que esta indisponivel e por que.
+         */
+        get: operations["previsao_api_previsao__codigo__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/simulacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulacao
+         * @description Cenario hipotetico (CDU03): "e se tivesse chovido X mm nesses pontos?". Nao altera dado.
+         */
+        post: operations["simulacao_api_simulacao_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ocorrencias": {
         parameters: {
             query?: never;
@@ -659,6 +700,52 @@ export interface components {
             /** Valor */
             valor: number;
         };
+        /** PrevisaoHorizonte */
+        PrevisaoHorizonte: {
+            /** Horizonte H */
+            horizonte_h: number;
+            /** Disponivel */
+            disponivel: boolean;
+            /** Motivo */
+            motivo?: string | null;
+            /** Valido Para */
+            valido_para?: string | null;
+            /** Nivel M */
+            nivel_m?: number | null;
+            /** Incerteza M */
+            incerteza_m?: number | null;
+            /** Intervalo M */
+            intervalo_m?: [
+                number,
+                number
+            ] | null;
+            /** Faixa */
+            faixa?: string | null;
+            modelo?: components["schemas"]["ResumoModelo"] | null;
+            /**
+             * Extrapolacao
+             * @default []
+             */
+            extrapolacao: string[];
+        };
+        /** PrevisaoOut */
+        PrevisaoOut: {
+            /** Estacao */
+            estacao: string;
+            /** Origem */
+            origem: string;
+            /** Base Em */
+            base_em: string | null;
+            /** Nivel Base M */
+            nivel_base_m: number | null;
+            /** Horizontes */
+            horizontes: components["schemas"]["PrevisaoHorizonte"][];
+            /**
+             * Aviso
+             * @default Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de Presidente Getúlio.
+             */
+            aviso: string;
+        };
         /** Qualidade */
         Qualidade: {
             /**
@@ -670,6 +757,22 @@ export interface components {
             fontes: components["schemas"]["FonteQualidade"][];
             /** Estacoes */
             estacoes: components["schemas"]["EstacaoQualidade"][];
+        };
+        /** ResumoModelo */
+        ResumoModelo: {
+            /** Id */
+            id: number;
+            /**
+             * Treinado Em
+             * Format: date-time
+             */
+            treinado_em: string;
+            /** Amostras */
+            amostras: number;
+            /** Rmse Cm */
+            rmse_cm: number;
+            /** Rmse Persistencia Cm */
+            rmse_persistencia_cm: number;
         };
         /** Serie */
         Serie: {
@@ -683,6 +786,23 @@ export interface components {
             passo_min: number;
             /** Pontos */
             pontos: components["schemas"]["PontoSerie"][];
+        };
+        /** SimulacaoIn */
+        SimulacaoIn: {
+            /** Chuva Mm */
+            chuva_mm: {
+                [key: string]: number;
+            };
+            /**
+             * Janela H
+             * @default 6
+             */
+            janela_h: number;
+            /**
+             * Estacao
+             * @default DCSC-00043
+             */
+            estacao: string;
         };
         /** TokenOut */
         TokenOut: {
@@ -1004,6 +1124,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Qualidade"];
+                };
+            };
+        };
+    };
+    previsao_api_previsao__codigo__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrevisaoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    simulacao_api_simulacao_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulacaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrevisaoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

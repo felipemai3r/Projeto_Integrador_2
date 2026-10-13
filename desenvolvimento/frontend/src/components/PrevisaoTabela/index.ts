@@ -1,0 +1,1 @@
+export { PrevisaoTabela } from './PrevisaoTabela'
