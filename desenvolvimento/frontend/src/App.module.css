@@ -3,3 +3,11 @@
   gap: var(--fa-space-section-sm);
   padding-block: var(--fa-space-section-sm) calc(var(--fa-space-section-lg) + var(--fa-safe-bottom));
 }
+.rodape {
+  margin: 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.rodape a {
+  color: var(--fa-color-content-link);
+}

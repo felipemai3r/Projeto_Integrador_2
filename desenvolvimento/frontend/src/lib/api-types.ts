@@ -153,6 +153,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/qualidade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Qualidade
+         * @description Cobertura por estacao, lacunas, sensor travado e fontes instaveis (RF36, RNF16).
+         */
+        get: operations["qualidade_api_qualidade_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ocorrencias": {
         parameters: {
             query?: never;
@@ -450,6 +470,48 @@ export interface components {
             longitude: number;
             limiares: components["schemas"]["Limiares"];
         };
+        /** EstacaoQualidade */
+        EstacaoQualidade: {
+            /** Estacao */
+            estacao: string;
+            /** Nome */
+            nome: string;
+            /** Variavel */
+            variavel: string;
+            /** Ultima Leitura */
+            ultima_leitura: string | null;
+            /** Cobertura 24H Pct */
+            cobertura_24h_pct: number;
+            /** Lacunas 7D */
+            lacunas_7d: number;
+            /** Maior Lacuna Min */
+            maior_lacuna_min: number;
+            /** Possivelmente Travado */
+            possivelmente_travado: boolean;
+            /** Descartadas 7D */
+            descartadas_7d: number;
+            /** Suspeitas 7D */
+            suspeitas_7d: number;
+        };
+        /** FonteQualidade */
+        FonteQualidade: {
+            /** Codigo */
+            codigo: string;
+            /** Nome */
+            nome: string;
+            /** Ultima Coleta */
+            ultima_coleta: string | null;
+            /** Ultimo Sucesso */
+            ultimo_sucesso: string | null;
+            /** Status Ultima */
+            status_ultima: string | null;
+            /** Falhas Seguidas */
+            falhas_seguidas: number;
+            /** Instavel */
+            instavel: boolean;
+            /** Ultima Mensagem */
+            ultima_mensagem: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -596,6 +658,18 @@ export interface components {
             medido_em: string;
             /** Valor */
             valor: number;
+        };
+        /** Qualidade */
+        Qualidade: {
+            /**
+             * Gerado Em
+             * Format: date-time
+             */
+            gerado_em: string;
+            /** Fontes */
+            fontes: components["schemas"]["FonteQualidade"][];
+            /** Estacoes */
+            estacoes: components["schemas"]["EstacaoQualidade"][];
         };
         /** Serie */
         Serie: {
@@ -910,6 +984,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    qualidade_api_qualidade_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Qualidade"];
                 };
             };
         };

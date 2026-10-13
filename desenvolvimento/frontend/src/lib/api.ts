@@ -11,6 +11,7 @@ const BASE = import.meta.env.VITE_API_BASE ?? ''
 
 export type OcorrenciaOut = components['schemas']['OcorrenciaOut']
 export type TokenOut = components['schemas']['TokenOut']
+export type QualidadeOut = components['schemas']['Qualidade']
 export type ModeracaoOut = components['schemas']['ModeracaoOut']
 
 export class ErroApi extends Error {
@@ -79,6 +80,7 @@ export const api = {
     ),
   historico: (token: string, id: number) =>
     get<ModeracaoOut[]>(`/ocorrencias/${id}/historico`, token),
+  qualidade: () => get<QualidadeOut>('/qualidade'),
   pushChave: () => get<{ configurado: boolean; chave_publica: string }>('/push/chave'),
   inscrever: (corpo: {
     endpoint: string

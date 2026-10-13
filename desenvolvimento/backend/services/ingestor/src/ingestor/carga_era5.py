@@ -13,10 +13,11 @@ from datetime import UTC, date, datetime, timedelta
 
 from common.config import obter_configuracao
 from common.db import sessao
+from common.enums import StatusColeta
 from common.logs import configurar
 
 from ingestor.adapters.openmeteo import OpenMeteo
-from ingestor.gravar import gravar
+from ingestor.gravar import gravar, registrar_log
 from ingestor.main import pontos_ativos
 
 log = logging.getLogger("ingestor.carga_era5")
@@ -33,7 +34,15 @@ def carregar(inicio: date, fim: date, pausa_s: float = 1.0) -> int:
             leituras = om.historico([ponto], cursor, ate)
             with sessao() as s:
                 novas, _ = gravar(s, "openmeteo_archive", leituras, datetime.now(UTC))
-            total += novas
+                total += novas
+                registrar_log(
+                    s,
+                    "openmeteo_archive",
+                    0,
+                    novas,
+                    StatusColeta.SUCESSO if novas else StatusColeta.VAZIO,
+                    f"{ponto[0]} {cursor} a {ate}",
+                )
             log.info("%s %s a %s: %d novas", ponto[0], cursor, ate, novas)
             cursor = ate + timedelta(days=1)
             time.sleep(pausa_s)

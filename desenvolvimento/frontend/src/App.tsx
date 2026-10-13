@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import { AlertBanner } from './components/AlertBanner'
 import { Header } from './components/Header'
 import { Navegacao } from './components/Navegacao'
@@ -11,6 +11,7 @@ import { Painel } from './pages/Painel'
 import styles from './App.module.css'
 
 // Mapa e formularios carregam sob demanda: o Leaflet nao pesa na tela inicial
+const Qualidade = lazy(() => import('./pages/Qualidade').then((m) => ({ default: m.Qualidade })))
 const Avisos = lazy(() => import('./pages/Avisos').then((m) => ({ default: m.Avisos })))
 const Mapa = lazy(() => import('./pages/Mapa').then((m) => ({ default: m.Mapa })))
 const Moderacao = lazy(() => import('./pages/Moderacao').then((m) => ({ default: m.Moderacao })))
@@ -27,6 +28,7 @@ export function App() {
         <Suspense fallback={<Skeleton altura={240} />}>
           <Routes>
             <Route path="/" element={<Painel />} />
+            <Route path="/qualidade" element={<Qualidade />} />
             <Route path="/avisos" element={<Avisos />} />
             <Route path="/mapa" element={<Mapa />} />
             <Route path="/registrar" element={<Registrar />} />
@@ -36,6 +38,10 @@ export function App() {
           </Routes>
         </Suspense>
         <OfficialNotice />
+        <p className={styles.rodape}>
+          <Link to="/qualidade">Qualidade dos dados</Link> ·{' '}
+          <Link to="/como-funciona">Como funciona</Link>
+        </p>
       </main>
     </>
   )

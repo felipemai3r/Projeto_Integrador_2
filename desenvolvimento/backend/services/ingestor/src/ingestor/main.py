@@ -25,6 +25,20 @@ def estacoes_ativas() -> list[str]:
         return list(s.scalars(select(Estacao.codigo).where(Estacao.ativa)))
 
 
+def verificar_silencio(limite_min: int = 15) -> None:
+    """O primeiro sintoma de problema grave e o silencio: sem leitura nova, grita no log."""
+    from common.models import Leitura
+    from sqlalchemy import func
+
+    with sessao() as s:
+        ultima = s.scalar(select(func.max(Leitura.coletado_em)))
+    if ultima is None or datetime.now(UTC) - ultima > timedelta(minutes=limite_min):
+        log.error(
+            "COLETA EM SILENCIO: nenhuma leitura nova",
+            extra={"extra_campos": {"ultima_coleta": str(ultima), "limite_min": limite_min}},
+        )
+
+
 def pontos_ativos() -> list[Ponto]:
     with sessao() as s:
         return [
@@ -98,6 +112,7 @@ def main() -> None:
         **kw,
     )
     sch.add_job(canario_de_contrato, "cron", hour=9, minute=0, **kw)
+    sch.add_job(verificar_silencio, "interval", minutes=5, **kw)
     log.info("ingestor iniciado")
     sch.start()
 

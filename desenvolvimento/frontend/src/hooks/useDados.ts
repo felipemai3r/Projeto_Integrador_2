@@ -41,3 +41,6 @@ export const useSerie = (codigo: string, horas: number) =>
 
 export const useCorrelacao = () =>
   useQuery({ queryKey: ['correlacao'], queryFn: api.correlacao, staleTime: 10 * UM_MINUTO })
+
+export const useQualidade = () =>
+  useQuery({ queryKey: ['qualidade'], queryFn: api.qualidade, refetchInterval: UM_MINUTO * 2 })

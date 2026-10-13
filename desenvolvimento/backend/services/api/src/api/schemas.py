@@ -172,3 +172,33 @@ class CancelamentoIn(BaseModel):
 class ChavePublica(BaseModel):
     configurado: bool
     chave_publica: str
+
+
+class FonteQualidade(BaseModel):
+    codigo: str
+    nome: str
+    ultima_coleta: datetime | None
+    ultimo_sucesso: datetime | None
+    status_ultima: str | None
+    falhas_seguidas: int
+    instavel: bool
+    ultima_mensagem: str | None
+
+
+class EstacaoQualidade(BaseModel):
+    estacao: str
+    nome: str
+    variavel: str
+    ultima_leitura: datetime | None
+    cobertura_24h_pct: float
+    lacunas_7d: int
+    maior_lacuna_min: int
+    possivelmente_travado: bool
+    descartadas_7d: int
+    suspeitas_7d: int
+
+
+class Qualidade(BaseModel):
+    gerado_em: datetime
+    fontes: list[FonteQualidade]
+    estacoes: list[EstacaoQualidade]

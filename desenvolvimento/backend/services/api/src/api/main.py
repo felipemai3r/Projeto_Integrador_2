@@ -22,6 +22,7 @@ from api.routers import (
     inscricoes,
     municipio,
     ocorrencias,
+    qualidade,
 )
 
 cfg = obter_configuracao()
@@ -55,6 +56,7 @@ api.include_router(alertas.router)
 api.include_router(auth.router)
 api.include_router(inscricoes.router)
 api.include_router(municipio.router)
+api.include_router(qualidade.router)
 api.include_router(ocorrencias.router)
 api.include_router(chuva.router)
 api.include_router(correlacao.router)

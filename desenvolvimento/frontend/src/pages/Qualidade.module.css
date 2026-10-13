@@ -1,0 +1,69 @@
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-section-sm);
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size) /
+    var(--fa-type-titulo-xl-line-height) var(--fa-font-family-base);
+}
+.pagina h3 {
+  margin: 0 0 var(--fa-space-12);
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) /
+    var(--fa-type-titulo-md-line-height) var(--fa-font-family-base);
+}
+.apoio {
+  margin: 0;
+  max-width: var(--fa-container-text);
+  color: var(--fa-color-content-secondary);
+}
+.rolagem {
+  overflow-x: auto;
+}
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) / 1.5 var(--fa-font-family-base);
+}
+.tabela caption {
+  text-align: left;
+  padding-bottom: var(--fa-space-8);
+  color: var(--fa-color-content-tertiary);
+}
+.tabela th,
+.tabela td {
+  padding: var(--fa-space-8) var(--fa-space-12);
+  border-bottom: 1px solid var(--fa-color-border-default);
+  text-align: left;
+  white-space: nowrap;
+}
+.tabela tbody th {
+  font-weight: var(--fa-font-weight-medium);
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.ok,
+.ruim,
+.neutro {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fa-space-4);
+}
+.ok {
+  color: var(--fa-color-feedback-success-content);
+}
+.ruim {
+  color: var(--fa-color-feedback-danger-content);
+  font-weight: var(--fa-font-weight-medium);
+}
+.neutro {
+  color: var(--fa-color-content-tertiary);
+}
+.nota {
+  margin: var(--fa-space-8) 0 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}
