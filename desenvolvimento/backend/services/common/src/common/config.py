@@ -13,6 +13,10 @@ class Configuracao(BaseSettings):
     cors_origens: str = "http://localhost:5173"
     # acima disso, a ultima leitura de uma estacao e marcada como desatualizada (RN04)
     desatualizado_apos_min: int = 30
+    jwt_secret: str = "segredo-somente-para-testes-automatizados-0123456789"
+    jwt_horas: int = 8
+    pasta_fotos: str = "/tmp/fotos-ocorrencias"
+    limite_registros_hora: int = 5
     avaliador_ativo: bool = False  # ligado no compose; desligado em testes
 
     dcsc_graphql_url: str = "https://monitoramento.defesacivil.sc.gov.br/graphql"

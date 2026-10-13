@@ -30,9 +30,10 @@ Documento interno da equipe. Resume a análise completa do repositório em 12/10
 | Etapa do plano | Situação |
 |---|---|
 | Sprint 0: esqueleto, banco, `ingestor`, carga inicial, CI | Concluído. Falta a decisão D1 (máquina 24h) e o backup diário |
-| Sprint 1: adaptadores de barragem e Open-Meteo, `api` (estações, série, chuva, risco), painel e PWA | Concluído, exceto `AlertBanner` e o painel de qualidade |
-| Sprint 2: correlação defasada e endpoint `/api/correlacao` | Concluído ([ADR 0003](adr/0003-correlacao-defasada-primeiros-resultados.md)). Falta a página "Como funciona" no front e o gráfico de histórico |
-| Sprints 3 a 5 | Não iniciados |
+| Sprint 1: adaptadores de barragem e Open-Meteo, `api` (estações, série, chuva, risco), painel e PWA | Concluído (inclui `AlertBanner` e o gráfico de histórico), exceto o painel de qualidade |
+| Sprint 2: correlação defasada e endpoint `/api/correlacao` | Concluído ([ADR 0003](adr/0003-correlacao-defasada-primeiros-resultados.md)), com a página "Como funciona" |
+| Sprint 3: login, registro de ocorrência, mapa, moderação, avaliador de alertas por nível observado | Concluído. Falta o push (notificação no aparelho) |
+| Sprints 4 e 5 | Não iniciados: previsão e simulação, relatório, painel de qualidade, publicação com HTTPS, testes ponta a ponta |
 
 Dados da coleta real: série de 5 minutos a partir de 22/07/2026 (21 dias já se haviam perdido), cerca de 23 mil leituras por estação, 416 mil horas de chuva ERA5 desde nov/2020. A estação do Revólver continua sem dado público.
 

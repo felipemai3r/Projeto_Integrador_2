@@ -44,8 +44,12 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ORIGENS: ${CORS_ORIGENS:-http://localhost:5173}
       AVALIADOR_ATIVO: "true"
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (veja .env.example)}
+      PASTA_FOTOS: /dados/fotos
     depends_on:
       migrate: { condition: service_completed_successfully }
+    volumes:
+      - fotos:/dados/fotos
     ports: ["8000:8000"]
     restart: unless-stopped
 
@@ -63,3 +67,4 @@ services:
 
 volumes:
   pgdata:
+  fotos:

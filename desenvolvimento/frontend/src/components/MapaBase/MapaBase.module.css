@@ -1,0 +1,15 @@
+.mapa {
+  border: 1px solid var(--fa-color-border-default);
+  border-radius: var(--fa-shape-surface-md);
+  overflow: hidden;
+}
+.leaflet {
+  height: 360px;
+  width: 100%;
+  background: var(--fa-color-surface-raised);
+}
+@media (min-width: 768px) {
+  .leaflet {
+    height: 480px;
+  }
+}

@@ -33,6 +33,8 @@ export default defineConfig({
   resolve: { preserveSymlinks: true },
   server: {
     port: 5173,
+    // sem isto o Vite observa node_modules.nosync e entra em loop de recarga
+    watch: { ignored: ['**/node_modules.nosync/**', '**/node_modules/**'] },
     proxy: { '/api': process.env.VITE_API_PROXY ?? 'http://localhost:8000' },
   },
   test: {

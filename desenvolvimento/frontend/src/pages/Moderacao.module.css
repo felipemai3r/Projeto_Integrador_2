@@ -1,0 +1,94 @@
+.pagina {
+  display: grid;
+  gap: var(--fa-space-stack-sm);
+}
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--fa-space-12);
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size) /
+    var(--fa-type-titulo-xl-line-height) var(--fa-font-family-base);
+}
+.login {
+  display: grid;
+  gap: var(--fa-space-12);
+  max-width: var(--fa-container-narrow);
+}
+.login p {
+  margin: 0;
+  color: var(--fa-color-content-secondary);
+}
+.campo {
+  display: grid;
+  gap: var(--fa-space-4);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.campo input,
+.campo select {
+  min-height: var(--fa-target-min);
+  padding: 0 var(--fa-space-12);
+  border: 1px solid var(--fa-color-border-strong);
+  border-radius: var(--fa-shape-control-md);
+  background: var(--fa-color-surface-base);
+  color: var(--fa-color-content-primary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) / 1 var(--fa-font-family-base);
+}
+.erro {
+  margin: 0;
+  padding: var(--fa-space-inset-md);
+  border: 1px solid var(--fa-color-feedback-danger-border);
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-feedback-danger-surface);
+  color: var(--fa-color-feedback-danger-content);
+}
+.lista {
+  display: grid;
+  gap: var(--fa-space-16);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cartao {
+  display: grid;
+  gap: var(--fa-space-16);
+  padding: var(--fa-space-inset-lg);
+  border: 1px solid var(--fa-color-border-default);
+  border-radius: var(--fa-shape-surface-md);
+  background: var(--fa-color-surface-base);
+}
+@media (min-width: 768px) {
+  .cartao {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}
+.meta {
+  margin: var(--fa-space-4) 0 0;
+  color: var(--fa-color-content-secondary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.acoes {
+  display: grid;
+  gap: var(--fa-space-8);
+  align-content: start;
+}
+.foto {
+  display: block;
+  max-width: 100%;
+  margin-top: var(--fa-space-8);
+  border-radius: var(--fa-shape-surface-sm);
+}
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fa-color-content-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

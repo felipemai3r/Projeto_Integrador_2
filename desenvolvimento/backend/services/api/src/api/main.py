@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from api import avaliador
 from api.deps import obter_sessao
-from api.routers import alertas, chuva, correlacao, estacoes
+from api.routers import alertas, auth, chuva, correlacao, estacoes, municipio, ocorrencias
 
 cfg = obter_configuracao()
 configurar(cfg.log_level)
@@ -36,13 +36,16 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in cfg.cors_origens.split(",") if o.strip()],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
 api = APIRouter(prefix="/api")
 api.include_router(estacoes.router)
 api.include_router(alertas.router)
+api.include_router(auth.router)
+api.include_router(municipio.router)
+api.include_router(ocorrencias.router)
 api.include_router(chuva.router)
 api.include_router(correlacao.router)
 

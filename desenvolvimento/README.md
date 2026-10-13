@@ -7,9 +7,9 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 | `backend/db` | Migrações Alembic (esquema do banco) | Esquema inicial pronto |
 | `backend/services/common` | Pacote compartilhado: configuração, modelos, contratos, seed | Pronto |
 | `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
-| `backend/services/api` | API FastAPI: estações, nível atual com risco e tendência, série, chuva acumulada | Leitura pronta (porta 8000, docs em `/docs`) |
+| `backend/services/api` | API FastAPI: leitura, alertas, correlação, ocorrências com moderação, login | Pronta (porta 8000, docs em `/docs`) |
 | `backend/services/modelo` | Correlação defasada (RF13); depois treino e previsão | Correlação pronta ([ADR 0003](../docs/adr/0003-correlacao-defasada-primeiros-resultados.md)) |
-| `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel pronto |
+| `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel, histórico, mapa, registro de alagamento, moderação e Como funciona |
 
 ## Rodando
 
@@ -29,6 +29,17 @@ docker compose run --rm modelo python -m modelo.correlacao --estacao DCSC-00043
 # histórico longo de chuva (ERA5), desde o evento de dezembro de 2020
 docker compose exec ingestor python -m ingestor.carga_era5 --inicio 2020-11-01
 ```
+
+## Moderação: criar usuário
+
+O cidadão não tem conta. Quem modera (Defesa Civil, equipe) entra em `/moderacao` com e-mail e senha. Crie o usuário:
+
+```bash
+docker compose exec api python -m api.criar_usuario --email fulano@exemplo.br --nome "Fulano" --papel moderador
+# a senha é pedida no terminal (mínimo 10 caracteres). Papéis: admin, moderador
+```
+
+O `JWT_SECRET` do `.env` é obrigatório (veja `.env.example`). Fotos de ocorrência ficam no volume `fotos`, sem metadados (EXIF removido).
 
 ## Testes e lint (fora do Docker)
 

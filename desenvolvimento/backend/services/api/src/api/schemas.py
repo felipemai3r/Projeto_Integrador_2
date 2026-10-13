@@ -96,3 +96,58 @@ class AlertaOut(BaseModel):
     vigente: bool
     nivel_m: float | None = None
     aviso: str = "Estimativa de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio."
+
+
+TIPOS_IMPACTO = ("via_intransitavel", "agua_calcada", "agua_imovel", "outro")
+
+
+class LoginIn(BaseModel):
+    email: str
+    senha: str
+
+
+class TokenOut(BaseModel):
+    token: str
+    nome: str
+    papel: str
+    expira_em: datetime
+
+
+class OcorrenciaOut(BaseModel):
+    """Ocorrencia registrada pela populacao. Nunca expoe quem registrou (RN06)."""
+
+    id: int
+    latitude: float
+    longitude: float
+    ocorreu_em: datetime
+    tipo_impacto: str
+    descricao: str | None
+    tem_foto: bool
+    status: str
+    contexto: dict | None
+    criada_em: datetime
+    moderado_por: str | None = None
+    moderado_em: datetime | None = None
+
+
+class OcorrenciaCriada(BaseModel):
+    id: int
+    status: str
+    mensagem: str
+
+
+class ModeracaoIn(BaseModel):
+    acao: str  # validar | rejeitar | reclassificar
+    tipo_impacto: str | None = None
+    nota: str | None = None
+
+
+class ModeracaoOut(BaseModel):
+    acao: str
+    usuario: str
+    status_anterior: str
+    status_novo: str
+    tipo_anterior: str
+    tipo_novo: str
+    nota: str | None
+    em: datetime

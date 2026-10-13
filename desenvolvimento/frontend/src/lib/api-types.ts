@@ -75,6 +75,121 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_api_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/municipio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contorno
+         * @description Contorno de Presidente Getulio (GeoJSON, malha do IBGE) para desenhar no mapa.
+         */
+        get: operations["contorno_api_municipio_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocorrencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar
+         * @description Publico: so validadas. Pendentes e rejeitadas exigem login de quem modera.
+         */
+        get: operations["listar_api_ocorrencias_get"];
+        put?: never;
+        /**
+         * Registrar
+         * @description Registro anonimo de alagamento (CDU04). Entra como pendente e passa por moderacao (RN05).
+         */
+        post: operations["registrar_api_ocorrencias_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocorrencias/{id_}/foto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Foto */
+        get: operations["foto_api_ocorrencias__id___foto_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocorrencias/{id_}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Moderar
+         * @description Valida, rejeita ou reclassifica. Todo passo fica no historico (RF26).
+         */
+        patch: operations["moderar_api_ocorrencias__id___patch"];
+        trace?: never;
+    };
+    "/api/ocorrencias/{id_}/historico": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Historico */
+        get: operations["historico_api_ocorrencias__id___historico_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chuva/acumulada": {
         parameters: {
             query?: never;
@@ -174,6 +289,24 @@ export interface components {
              */
             aviso: string;
         };
+        /** Body_registrar_api_ocorrencias_post */
+        Body_registrar_api_ocorrencias_post: {
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /**
+             * Ocorreu Em
+             * Format: date-time
+             */
+            ocorreu_em: string;
+            /** Tipo Impacto */
+            tipo_impacto: string;
+            /** Descricao */
+            descricao?: string | null;
+            /** Foto */
+            foto?: string | null;
+        };
         /** ChuvaEstacao */
         ChuvaEstacao: {
             /** Estacao */
@@ -271,6 +404,44 @@ export interface components {
             /** Alerta */
             alerta?: number | null;
         };
+        /** LoginIn */
+        LoginIn: {
+            /** Email */
+            email: string;
+            /** Senha */
+            senha: string;
+        };
+        /** ModeracaoIn */
+        ModeracaoIn: {
+            /** Acao */
+            acao: string;
+            /** Tipo Impacto */
+            tipo_impacto?: string | null;
+            /** Nota */
+            nota?: string | null;
+        };
+        /** ModeracaoOut */
+        ModeracaoOut: {
+            /** Acao */
+            acao: string;
+            /** Usuario */
+            usuario: string;
+            /** Status Anterior */
+            status_anterior: string;
+            /** Status Novo */
+            status_novo: string;
+            /** Tipo Anterior */
+            tipo_anterior: string;
+            /** Tipo Novo */
+            tipo_novo: string;
+            /** Nota */
+            nota: string | null;
+            /**
+             * Em
+             * Format: date-time
+             */
+            em: string;
+        };
         /** NivelAtual */
         NivelAtual: {
             estacao: components["schemas"]["EstacaoOut"];
@@ -296,6 +467,53 @@ export interface components {
             /** Fonte */
             fonte?: string | null;
         };
+        /** OcorrenciaCriada */
+        OcorrenciaCriada: {
+            /** Id */
+            id: number;
+            /** Status */
+            status: string;
+            /** Mensagem */
+            mensagem: string;
+        };
+        /**
+         * OcorrenciaOut
+         * @description Ocorrencia registrada pela populacao. Nunca expoe quem registrou (RN06).
+         */
+        OcorrenciaOut: {
+            /** Id */
+            id: number;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /**
+             * Ocorreu Em
+             * Format: date-time
+             */
+            ocorreu_em: string;
+            /** Tipo Impacto */
+            tipo_impacto: string;
+            /** Descricao */
+            descricao: string | null;
+            /** Tem Foto */
+            tem_foto: boolean;
+            /** Status */
+            status: string;
+            /** Contexto */
+            contexto: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Criada Em
+             * Format: date-time
+             */
+            criada_em: string;
+            /** Moderado Por */
+            moderado_por?: string | null;
+            /** Moderado Em */
+            moderado_em?: string | null;
+        };
         /** PontoSerie */
         PontoSerie: {
             /**
@@ -318,6 +536,20 @@ export interface components {
             passo_min: number;
             /** Pontos */
             pontos: components["schemas"]["PontoSerie"][];
+        };
+        /** TokenOut */
+        TokenOut: {
+            /** Token */
+            token: string;
+            /** Nome */
+            nome: string;
+            /** Papel */
+            papel: string;
+            /**
+             * Expira Em
+             * Format: date-time
+             */
+            expira_em: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -451,6 +683,223 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AlertaOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_api_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    contorno_api_municipio_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    listar_api_ocorrencias_get: {
+        parameters: {
+            query?: {
+                status?: string;
+                dias?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcorrenciaOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    registrar_api_ocorrencias_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_registrar_api_ocorrencias_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcorrenciaCriada"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    foto_api_ocorrencias__id___foto_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    moderar_api_ocorrencias__id___patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModeracaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcorrenciaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    historico_api_ocorrencias__id___historico_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModeracaoOut"][];
                 };
             };
             /** @description Validation Error */

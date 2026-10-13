@@ -14,5 +14,10 @@ from api.main import app
 def client(s: Session) -> Iterator[TestClient]:  # noqa: F811
     app.dependency_overrides[obter_sessao] = lambda: s
     app.dependency_overrides[obter_agora] = lambda: AGORA
+    from api.routers.auth import limite_login
+    from api.routers.ocorrencias import limite_registro
+
+    limite_login.limpar()
+    limite_registro.limpar()
     yield TestClient(app)
     app.dependency_overrides.clear()

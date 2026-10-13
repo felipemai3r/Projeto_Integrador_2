@@ -210,3 +210,34 @@ class Correlacao(Base):
     metodo: Mapped[str] = mapped_column(Text)
     periodo_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     periodo_fim: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class Usuario(Base):
+    """Quem pode moderar ou administrar. O cidadao nao tem conta (RN06, RF22)."""
+
+    __tablename__ = "usuario"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nome: Mapped[str] = mapped_column(Text)
+    email: Mapped[str] = mapped_column(Text, unique=True)
+    papel: Mapped[str] = mapped_column(Text)  # admin | moderador
+    senha_hash: Mapped[str] = mapped_column(Text)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Moderacao(Base):
+    """Historico de moderacao de uma ocorrencia (RF26): nada e sobrescrito sem registro."""
+
+    __tablename__ = "moderacao"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    ocorrencia_id: Mapped[int] = mapped_column(ForeignKey("ocorrencia.id"))
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+    acao: Mapped[str] = mapped_column(Text)  # validar | rejeitar | reclassificar
+    status_anterior: Mapped[str] = mapped_column(Text)
+    status_novo: Mapped[str] = mapped_column(Text)
+    tipo_anterior: Mapped[str] = mapped_column(Text)
+    tipo_novo: Mapped[str] = mapped_column(Text)
+    nota: Mapped[str | None] = mapped_column(Text)
+    em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
