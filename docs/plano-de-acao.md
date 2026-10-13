@@ -25,6 +25,17 @@ Documento interno da equipe. Resume a análise completa do repositório em 12/10
 | Coleta de dados | **Não está rodando.** Cada dia sem coleta é dado perdido |
 | Design e padrão de código | Definidos neste ciclo: [Farol DS](../.claude/skills/farol-system/SKILL.md) e [padrão de desenvolvimento](padrao-de-desenvolvimento.md) |
 
+### 1.1 Andamento em 13/10/2026
+
+| Etapa do plano | Situação |
+|---|---|
+| Sprint 0: esqueleto, banco, `ingestor`, carga inicial, CI | Concluído. Falta a decisão D1 (máquina 24h) e o backup diário |
+| Sprint 1: adaptadores de barragem e Open-Meteo, `api` (estações, série, chuva, risco), painel e PWA | Concluído, exceto `AlertBanner` e o painel de qualidade |
+| Sprint 2: correlação defasada e endpoint `/api/correlacao` | Concluído ([ADR 0003](adr/0003-correlacao-defasada-primeiros-resultados.md)). Falta a página "Como funciona" no front e o gráfico de histórico |
+| Sprints 3 a 5 | Não iniciados |
+
+Dados da coleta real: série de 5 minutos a partir de 22/07/2026 (21 dias já se haviam perdido), cerca de 23 mil leituras por estação, 416 mil horas de chuva ERA5 desde nov/2020. A estação do Revólver continua sem dado público.
+
 ## 2. Pontos principais
 
 ### 2.1 O que está forte
@@ -37,7 +48,7 @@ Documento interno da equipe. Resume a análise completa do repositório em 12/10
 
 ### 2.2 O que é urgente
 
-**1. A janela de 80 dias da API REST está andando.** A validação foi em 19/09. Pelos cálculos da própria especificação, o histórico acessível naquele dia começava por volta de 1º/07. Hoje (12/10) o começo da janela está perto de 24/07, ou seja, **cerca de 23 dias de série de 5 minutos já se perderam** e mais um dia some a cada dia. A coleta (etapas 2 e 3 do roteiro) é a tarefa mais importante e não depende de nenhuma decisão pendente.
+**1. A janela de 80 dias da API REST está andando.** A validação foi em 19/09. Pelos cálculos da própria especificação, o histórico acessível naquele dia começava por volta de 1º/07. Hoje (12/10) o começo da janela está perto de 24/07, ou seja, **cerca de 21 dias de série de 5 minutos já se perderam** (medido: a série disponível começa em 22/07/2026) e mais um dia some a cada dia. A coleta (etapas 2 e 3 do roteiro) é a tarefa mais importante e não depende de nenhuma decisão pendente.
 
 **2. A coleta precisa rodar 24 horas por dia.** Um notebook que dorme cria lacunas e invalida a análise de correlação. É preciso uma máquina sempre ligada: servidor da UDESC (ainda sem confirmação), VPS barato ou equipamento da equipe que não desligue. Essa escolha bloqueia o início real da coleta (decisão D1).
 
@@ -60,10 +71,10 @@ Corrigir antes da validação com o professor.
 
 | # | Onde | Problema | Correção sugerida |
 |---|---|---|---|
-| I1 | Especificação 4.4 (rastreabilidade) | Intervalos de RF desatualizados: cita RF15 a RF19 como painel, RF20 a RF23 como registro, RF24 a RF27 como alerta e RF28 a RF32 como administração. Os RF reais são: análise RF09 a RF15, painel RF16 a RF21, registro RF22 a RF27, alerta RF28 a RF33, administração RF34 a RF39 | Reescrever a tabela com os intervalos da seção 6 |
+| I1 (corrigido em 13/10) | Especificação 4.4 (rastreabilidade) | Intervalos de RF desatualizados: cita RF15 a RF19 como painel, RF20 a RF23 como registro, RF24 a RF27 como alerta e RF28 a RF32 como administração. Os RF reais são: análise RF09 a RF15, painel RF16 a RF21, registro RF22 a RF27, alerta RF28 a RF33, administração RF34 a RF39 | Reescrever a tabela com os intervalos da seção 6 |
 | I2 | `Rascunhos` (não versionado) | Tem requisitos que **não estão na especificação**: classificação por chuva (50 mm em 24h observação, 60 mm alerta) e escala de 3 cores (verde, amarelo, vermelho) | Decidir se vira regra de negócio (D3) e versionar ou apagar o arquivo |
 | I3 | Especificação 8 e RN01 | Escala de 4 faixas (normal, observação, atenção, alerta), mas o rascunho cita 3 cores | Mapeamento de cor proposto no Farol DS (observação em ciano), a validar com a Defesa Civil (PE05) |
-| I4 | Arquitetura seção 1 e `docker-compose.yml` de referência | Texto cita PostGIS, mas a imagem é `postgres:16-alpine`, que não tem PostGIS | Usar `postgis/postgis:16-3.4` ou assumir latitude e longitude simples e checar o município por polígono na aplicação |
+| I4 (resolvido: sem PostGIS, ADR 0001) | Arquitetura seção 1 e `docker-compose.yml` de referência | Texto cita PostGIS, mas a imagem é `postgres:16-alpine`, que não tem PostGIS | Usar `postgis/postgis:16-3.4` ou assumir latitude e longitude simples e checar o município por polígono na aplicação |
 | I5 | Arquitetura seção 2, CDU11 passo 8 | O `ingestor` "não calcula risco" e a `api` só reage a requisição, mas o CDU11 manda reavaliar o risco a cada leitura nova. **Ninguém dispara a reavaliação** | Criar o job `avaliador` (seção 4, item 1) |
 | I6 | Arquitetura seção 10 | O serviço `web` sobe na porta 5173 (servidor de desenvolvimento do Vite) e a seção 13 usa o mesmo compose em produção | Build estático servido pelo Nginx em produção; Vite só em `docker-compose.override.yml` |
 | I7 | Especificação 10 | São 15 casos de uso, só 8 estão expandidos (CDU01, 02, 03, 04, 07, 09, 11, 13) | Aceitável para a entrega; expandir CDU05, 06, 08, 10, 12 durante a implementação |

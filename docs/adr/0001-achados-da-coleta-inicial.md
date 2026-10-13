@@ -11,12 +11,11 @@ Data: 12/10/2026. Contexto: primeira execução do ingestor e da carga inicial c
 
 ## Decisões
 
-- Variáveis separadas por origem: `nivel_m`, `chuva_acumulada_mm` (REST, bruta), `chuva_h001_mm` a `chuva_h168_mm` (GraphQL), `reservatorio_m`, `reservatorio_pct`. O cálculo de janelas a partir da série de 5 minutos fica para o serviço `modelo`, depois de confirmada a semântica.
+- Variáveis separadas por origem: `nivel_m`, `chuva_acumulada_mm` (REST, bruta), `chuva_h001_mm` a `chuva_h168_mm` (GraphQL), `reservatorio_m`, `reservatorio_pct`. O serviço `modelo` soma os incrementos de 5 minutos em chuva horária, exigindo 9 de 12 leituras por hora; hora com cobertura menor vira desconhecida (NaN), nunca zero.
 - Cota de barragem nunca é gravada como `nivel_m` (`ESTACOES_RESERVATORIO` no adaptador REST).
 - Sem PostGIS: latitude e longitude simples; a checagem de município é feita na aplicação (resolve a inconsistência I4 do plano de ação).
 - O ambiente virtual de desenvolvimento **não pode ficar dentro do iCloud Drive**: o iCloud marca os arquivos `.pth` como ocultos e o Python 3.13 ou superior os ignora, quebrando instalações editáveis. Usar `~/.venvs/pgetulio`.
 
 ## Pendências geradas
 
-- Perguntar à Defesa Civil de SC o significado de `chuva_acumulada_mm` na REST (PE10, pergunta adicional).
-- Validar com a série `h001` do GraphQL ao longo de alguns dias para inferir a semântica por comparação.
+- ~~Semântica de `chuva_acumulada_mm`~~: resolvida (incremento de 5 minutos). Não precisa mais perguntar à Defesa Civil de SC.

@@ -58,3 +58,23 @@ class ChuvaEstacao(BaseModel):
     medido_em: datetime | None
     fonte: str | None
     acumulado_mm: dict[str, float | None]
+
+
+class CorrelacaoOut(BaseModel):
+    """Um resultado da correlacao defasada (RF13). Exploratorio: leia `leitura`."""
+
+    ponto: str
+    nome: str
+    explicativa: str
+    melhor_defasagem_h: int
+    r: float
+    ic_inf: float | None
+    ic_sup: float | None
+    p_valor: float | None
+    horas_validas: int
+    sinal_claro: bool
+    leitura: str
+    janela_chuva_h: int
+    periodo_inicio: datetime
+    periodo_fim: datetime
+    calculado_em: datetime

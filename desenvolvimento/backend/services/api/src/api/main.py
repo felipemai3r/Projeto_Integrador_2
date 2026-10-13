@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from api.deps import obter_sessao
-from api.routers import chuva, estacoes
+from api.routers import chuva, correlacao, estacoes
 
 cfg = obter_configuracao()
 configurar(cfg.log_level)
@@ -30,6 +30,7 @@ app.add_middleware(
 api = APIRouter(prefix="/api")
 api.include_router(estacoes.router)
 api.include_router(chuva.router)
+api.include_router(correlacao.router)
 
 
 @api.get("/saude", tags=["operacao"])

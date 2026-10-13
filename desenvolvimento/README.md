@@ -8,7 +8,7 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 | `backend/services/common` | Pacote compartilhado: configuração, modelos, contratos, seed | Pronto |
 | `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
 | `backend/services/api` | API FastAPI: estações, nível atual com risco e tendência, série, chuva acumulada | Leitura pronta (porta 8000, docs em `/docs`) |
-| `backend/services/modelo` | Correlação defasada e previsão | Sprint 2 |
+| `backend/services/modelo` | Correlação defasada (RF13); depois treino e previsão | Correlação pronta ([ADR 0003](../docs/adr/0003-correlacao-defasada-primeiros-resultados.md)) |
 | `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel pronto |
 
 ## Rodando
@@ -23,6 +23,9 @@ docker compose up --build        # sobe db, aplica migrações e seed, inicia a 
 # carga inicial do histórico disponível na API REST (uma vez; pode repetir sem duplicar)
 docker compose exec ingestor python -m ingestor.carga_inicial --dias 82
 
+# análise de correlação defasada (grava o resultado e imprime a tabela)
+docker compose run --rm modelo python -m modelo.correlacao --estacao DCSC-00043
+
 # histórico longo de chuva (ERA5), desde o evento de dezembro de 2020
 docker compose exec ingestor python -m ingestor.carga_era5 --inicio 2020-11-01
 ```
@@ -33,7 +36,7 @@ O ambiente virtual **não pode ficar dentro do iCloud Drive** (ver [ADR 0001](..
 
 ```bash
 python3 -m venv ~/.venvs/pgetulio
-~/.venvs/pgetulio/bin/pip install -e "backend/services/common[dev]" -e "backend/services/ingestor[dev]" -e "backend/services/api[dev]"
+~/.venvs/pgetulio/bin/pip install -e "backend/services/common[dev]" -e "backend/services/ingestor[dev]" -e "backend/services/api[dev]" -e "backend/services/modelo[dev]"
 docker compose up -d db
 ~/.venvs/pgetulio/bin/pytest backend/services
 ~/.venvs/pgetulio/bin/ruff check backend && ~/.venvs/pgetulio/bin/ruff format --check backend

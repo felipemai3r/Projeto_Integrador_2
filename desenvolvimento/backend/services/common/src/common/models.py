@@ -185,3 +185,28 @@ class LogColeta(Base):
     registros: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(Text)
     mensagem: Mapped[str | None] = mapped_column(Text)
+
+
+class Correlacao(Base):
+    """Resultado da analise de correlacao defasada (RF13), um por ponto e rodada."""
+
+    __tablename__ = "correlacao"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    calculado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    estacao_alvo_id: Mapped[int] = mapped_column(ForeignKey("estacao.id"))
+    ponto_id: Mapped[int] = mapped_column(ForeignKey("estacao.id"))
+    explicativa: Mapped[str] = mapped_column(Text)
+    janela_chuva_h: Mapped[int] = mapped_column(Integer)
+    melhor_defasagem_h: Mapped[int] = mapped_column(Integer)
+    r: Mapped[float] = mapped_column(Double)
+    ic_inf: Mapped[float | None] = mapped_column(Double)
+    ic_sup: Mapped[float | None] = mapped_column(Double)
+    p_valor: Mapped[float | None] = mapped_column(Double)
+    horas_validas: Mapped[int] = mapped_column(Integer)
+    curva: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    metodo: Mapped[str] = mapped_column(Text)
+    periodo_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    periodo_fim: Mapped[datetime] = mapped_column(DateTime(timezone=True))

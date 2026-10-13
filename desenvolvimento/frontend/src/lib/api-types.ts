@@ -75,6 +75,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/correlacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ultima Analise
+         * @description Resultados da rodada mais recente da correlacao defasada para a estacao alvo.
+         */
+        get: operations["ultima_analise_api_correlacao_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/saude": {
         parameters: {
             query?: never;
@@ -117,6 +137,51 @@ export interface components {
             acumulado_mm: {
                 [key: string]: number | null;
             };
+        };
+        /**
+         * CorrelacaoOut
+         * @description Um resultado da correlacao defasada (RF13). Exploratorio: leia `leitura`.
+         */
+        CorrelacaoOut: {
+            /** Ponto */
+            ponto: string;
+            /** Nome */
+            nome: string;
+            /** Explicativa */
+            explicativa: string;
+            /** Melhor Defasagem H */
+            melhor_defasagem_h: number;
+            /** R */
+            r: number;
+            /** Ic Inf */
+            ic_inf: number | null;
+            /** Ic Sup */
+            ic_sup: number | null;
+            /** P Valor */
+            p_valor: number | null;
+            /** Horas Validas */
+            horas_validas: number;
+            /** Sinal Claro */
+            sinal_claro: boolean;
+            /** Leitura */
+            leitura: string;
+            /** Janela Chuva H */
+            janela_chuva_h: number;
+            /**
+             * Periodo Inicio
+             * Format: date-time
+             */
+            periodo_inicio: string;
+            /**
+             * Periodo Fim
+             * Format: date-time
+             */
+            periodo_fim: string;
+            /**
+             * Calculado Em
+             * Format: date-time
+             */
+            calculado_em: string;
         };
         /** EstacaoOut */
         EstacaoOut: {
@@ -325,6 +390,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChuvaEstacao"][];
+                };
+            };
+        };
+    };
+    ultima_analise_api_correlacao_get: {
+        parameters: {
+            query?: {
+                estacao?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrelacaoOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

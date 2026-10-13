@@ -190,6 +190,14 @@ Módulos da RADIAN mantidos no recorte:
 | Grupo de RF | Módulo geral | Macro funcionalidade da tese |
 |---|---|---|
 | RF01 a RF08, coleta e integração | Comunicação com Sistemas Externos | Coleta, Ingestão e Processamento Estatístico de Dados |
+| RF09 a RF15, análise e previsão | Análise e Tomada de Decisões | Diagnóstico, Predição de Cenários, Geração e Simulação de Cenários de Decisão |
+| RF16 a RF21, painel e visualização | Análise e Tomada de Decisões, Interação com Usuários | Visualização de Dados e Painéis de Decisão, Gestão de Interação com os Usuários |
+| RF22 a RF27, registro participativo | Gestão de Dados, Análise e Tomada de Decisões | Acesso e Gerenciamento de Dados, Avaliação e Mapeamento de Vulnerabilidades |
+| RF28 a RF33, alerta e notificação | Supervisão de Execução das Decisões | Geração e Envio de Alertas, Comunicação entre Atores |
+| RF34 a RF39, administração e auditoria | Suporte Geral | Governança, Geração de Relatórios de Gestão, Operação e Auditoria, LGPD e Privacidade de Dados |
+
+---|---|---|
+| RF01 a RF08, coleta e integração | Comunicação com Sistemas Externos | Coleta, Ingestão e Processamento Estatístico de Dados |
 | RF09 a RF14, análise e previsão | Análise e Tomada de Decisões | Diagnóstico, Predição de Cenários, Geração e Simulação de Cenários de Decisão |
 | RF15 a RF19, painel e visualização | Análise e Tomada de Decisões, Interação com Usuários | Visualização de Dados e Painéis de Decisão, Gestão de Interação com os Usuários |
 | RF20 a RF23, registro participativo | Gestão de Dados, Análise e Tomada de Decisões | Acesso e Gerenciamento de Dados, Avaliação e Mapeamento de Vulnerabilidades |
