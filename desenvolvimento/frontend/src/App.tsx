@@ -11,6 +11,7 @@ import { Painel } from './pages/Painel'
 import styles from './App.module.css'
 
 // Mapa e formularios carregam sob demanda: o Leaflet nao pesa na tela inicial
+const Avisos = lazy(() => import('./pages/Avisos').then((m) => ({ default: m.Avisos })))
 const Mapa = lazy(() => import('./pages/Mapa').then((m) => ({ default: m.Mapa })))
 const Moderacao = lazy(() => import('./pages/Moderacao').then((m) => ({ default: m.Moderacao })))
 const Registrar = lazy(() => import('./pages/Registrar').then((m) => ({ default: m.Registrar })))
@@ -26,6 +27,7 @@ export function App() {
         <Suspense fallback={<Skeleton altura={240} />}>
           <Routes>
             <Route path="/" element={<Painel />} />
+            <Route path="/avisos" element={<Avisos />} />
             <Route path="/mapa" element={<Mapa />} />
             <Route path="/registrar" element={<Registrar />} />
             <Route path="/moderacao" element={<Moderacao />} />

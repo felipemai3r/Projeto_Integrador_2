@@ -46,6 +46,10 @@ services:
       AVALIADOR_ATIVO: "true"
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env (veja .env.example)}
       PASTA_FOTOS: /dados/fotos
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:equipe@exemplo.br}
+      URL_PUBLICA: ${URL_PUBLICA:-http://localhost:5173}
     depends_on:
       migrate: { condition: service_completed_successfully }
     volumes:

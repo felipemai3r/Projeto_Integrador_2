@@ -92,6 +92,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/push/chave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chave Publica */
+        get: operations["chave_publica_api_push_chave_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inscricoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inscrever
+         * @description Inscricao de push, sem login (CDU06). Chamar de novo atualiza as preferencias.
+         */
+        post: operations["inscrever_api_inscricoes_post"];
+        /**
+         * Cancelar
+         * @description Remove a inscricao e o historico de envios dela (RF39, LGPD). Idempotente.
+         */
+        delete: operations["cancelar_api_inscricoes_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/municipio": {
         parameters: {
             query?: never;
@@ -307,6 +348,25 @@ export interface components {
             /** Foto */
             foto?: string | null;
         };
+        /** CancelamentoIn */
+        CancelamentoIn: {
+            /** Endpoint */
+            endpoint: string;
+        };
+        /** ChavePublica */
+        ChavePublica: {
+            /** Configurado */
+            configurado: boolean;
+            /** Chave Publica */
+            chave_publica: string;
+        };
+        /** ChavesPush */
+        ChavesPush: {
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
+        };
         /** ChuvaEstacao */
         ChuvaEstacao: {
             /** Estacao */
@@ -394,6 +454,19 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** InscricaoIn */
+        InscricaoIn: {
+            /** Endpoint */
+            endpoint: string;
+            keys: components["schemas"]["ChavesPush"];
+            /** Estacao */
+            estacao?: string | null;
+            /**
+             * Faixa Minima
+             * @default atencao
+             */
+            faixa_minima: string;
         };
         /** Limiares */
         Limiares: {
@@ -716,6 +789,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chave_publica_api_push_chave_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChavePublica"];
+                };
+            };
+        };
+    };
+    inscrever_api_inscricoes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InscricaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelar_api_inscricoes_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelamentoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */

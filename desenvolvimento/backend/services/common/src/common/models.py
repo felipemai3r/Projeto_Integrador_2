@@ -241,3 +241,17 @@ class Moderacao(Base):
     tipo_novo: Mapped[str] = mapped_column(Text)
     nota: Mapped[str | None] = mapped_column(Text)
     em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Notificacao(Base):
+    """Resultado de cada envio de push (CDU07 passo 7): auditoria e aviso de encerramento."""
+
+    __tablename__ = "notificacao"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    alerta_id: Mapped[int] = mapped_column(ForeignKey("alerta.id"))
+    inscricao_id: Mapped[int] = mapped_column(ForeignKey("inscricao.id"))
+    tipo: Mapped[str] = mapped_column(Text)  # abertura | encerramento
+    status: Mapped[str] = mapped_column(Text)  # enviada | falha | expirada
+    erro: Mapped[str | None] = mapped_column(Text)
+    enviada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

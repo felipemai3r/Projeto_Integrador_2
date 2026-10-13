@@ -151,3 +151,24 @@ class ModeracaoOut(BaseModel):
     tipo_novo: str
     nota: str | None
     em: datetime
+
+
+class ChavesPush(BaseModel):
+    p256dh: str
+    auth: str
+
+
+class InscricaoIn(BaseModel):
+    endpoint: str
+    keys: ChavesPush
+    estacao: str | None = None  # codigo da estacao; None = todas as estacoes alvo
+    faixa_minima: str = "atencao"
+
+
+class CancelamentoIn(BaseModel):
+    endpoint: str
+
+
+class ChavePublica(BaseModel):
+    configurado: bool
+    chave_publica: str

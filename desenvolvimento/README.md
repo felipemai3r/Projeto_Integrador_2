@@ -39,6 +39,16 @@ docker compose exec api python -m api.criar_usuario --email fulano@exemplo.br --
 # a senha é pedida no terminal (mínimo 10 caracteres). Papéis: admin, moderador
 ```
 
+## Avisos por push
+
+Gere o par de chaves VAPID uma vez e guarde no `.env` (nunca no Git):
+
+```bash
+docker compose run --rm api python -m api.gerar_vapid
+```
+
+O push só funciona no app **publicado/instalado** (service worker). Para testar localmente: `cd frontend && npm run build && npm run preview` e abra `http://localhost:4173/avisos`. No iPhone, só depois de adicionar o app à tela inicial. O servidor só aceita inscrições de serviços de push de navegadores conhecidos (proteção contra SSRF).
+
 O `JWT_SECRET` do `.env` é obrigatório (veja `.env.example`). Fotos de ocorrência ficam no volume `fotos`, sem metadados (EXIF removido).
 
 ## Testes e lint (fora do Docker)

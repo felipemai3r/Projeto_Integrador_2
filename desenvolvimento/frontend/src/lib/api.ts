@@ -79,6 +79,24 @@ export const api = {
     ),
   historico: (token: string, id: number) =>
     get<ModeracaoOut[]>(`/ocorrencias/${id}/historico`, token),
+  pushChave: () => get<{ configurado: boolean; chave_publica: string }>('/push/chave'),
+  inscrever: (corpo: {
+    endpoint: string
+    keys: { p256dh: string; auth: string }
+    estacao: string | null
+    faixa_minima: string
+  }) =>
+    pedir<{ status: string }>('/inscricoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    }),
+  cancelarInscricao: (endpoint: string) =>
+    pedir<{ status: string }>('/inscricoes', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    }),
   fotoProtegida: async (token: string, id: number): Promise<string> => {
     const r = await fetch(`${BASE}/api/ocorrencias/${id}/foto`, {
       headers: { Authorization: `Bearer ${token}` },

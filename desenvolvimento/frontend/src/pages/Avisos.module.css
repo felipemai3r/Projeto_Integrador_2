@@ -1,0 +1,78 @@
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-stack-sm);
+  max-width: var(--fa-container-text);
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size) /
+    var(--fa-type-titulo-xl-line-height) var(--fa-font-family-base);
+}
+.apoio {
+  margin: 0;
+  color: var(--fa-color-content-secondary);
+}
+.form {
+  display: grid;
+  gap: var(--fa-space-16);
+}
+.campo {
+  display: grid;
+  gap: var(--fa-space-4);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.campo select {
+  min-height: var(--fa-target-min);
+  padding: 0 var(--fa-space-12);
+  border: 1px solid var(--fa-color-border-strong);
+  border-radius: var(--fa-shape-control-md);
+  background: var(--fa-color-surface-base);
+  color: var(--fa-color-content-primary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) / 1 var(--fa-font-family-base);
+}
+.nota {
+  margin: 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.aviso {
+  margin: 0;
+  padding: var(--fa-space-inset-lg);
+  border: 1px solid var(--fa-color-feedback-warning-border);
+  border-radius: var(--fa-shape-surface-md);
+  background: var(--fa-color-feedback-warning-surface);
+  color: var(--fa-color-feedback-warning-content);
+}
+.aviso p {
+  margin: 0 0 var(--fa-space-8);
+}
+.aviso ol {
+  margin: 0;
+  padding-left: var(--fa-space-20);
+}
+.ok {
+  display: grid;
+  gap: var(--fa-space-12);
+  justify-items: start;
+  padding: var(--fa-space-inset-lg);
+  border: 1px solid var(--fa-color-feedback-success-border);
+  border-radius: var(--fa-shape-surface-md);
+  background: var(--fa-color-feedback-success-surface);
+  color: var(--fa-color-feedback-success-content);
+}
+.ok p {
+  display: flex;
+  align-items: center;
+  gap: var(--fa-space-8);
+  margin: 0;
+}
+.erro {
+  margin: 0;
+  padding: var(--fa-space-inset-md);
+  border: 1px solid var(--fa-color-feedback-danger-border);
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-feedback-danger-surface);
+  color: var(--fa-color-feedback-danger-content);
+}

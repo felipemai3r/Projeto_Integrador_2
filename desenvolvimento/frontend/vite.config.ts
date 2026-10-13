@@ -37,6 +37,7 @@ export default defineConfig({
     watch: { ignored: ['**/node_modules.nosync/**', '**/node_modules/**'] },
     proxy: { '/api': process.env.VITE_API_PROXY ?? 'http://localhost:8000' },
   },
+  preview: { port: 4173, proxy: { '/api': process.env.VITE_API_PROXY ?? 'http://localhost:8000' } },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',

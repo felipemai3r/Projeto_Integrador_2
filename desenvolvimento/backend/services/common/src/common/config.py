@@ -15,6 +15,10 @@ class Configuracao(BaseSettings):
     desatualizado_apos_min: int = 30
     jwt_secret: str = "segredo-somente-para-testes-automatizados-0123456789"
     jwt_horas: int = 8
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:equipe@exemplo.br"
+    url_publica: str = "http://localhost:5173"
     pasta_fotos: str = "/tmp/fotos-ocorrencias"
     limite_registros_hora: int = 5
     avaliador_ativo: bool = False  # ligado no compose; desligado em testes

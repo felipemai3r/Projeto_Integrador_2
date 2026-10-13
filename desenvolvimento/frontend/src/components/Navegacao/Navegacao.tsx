@@ -1,10 +1,11 @@
-import { BookOpen, Gauge, MapPin } from 'lucide-react'
+import { Bell, BookOpen, Gauge, MapPin } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import styles from './Navegacao.module.css'
 
 const ITENS = [
   { para: '/', rotulo: 'Painel', Icone: Gauge },
   { para: '/mapa', rotulo: 'Mapa', Icone: MapPin },
+  { para: '/avisos', rotulo: 'Avisos', Icone: Bell },
   { para: '/como-funciona', rotulo: 'Como funciona', Icone: BookOpen },
 ] as const
 
