@@ -1,5 +1,5 @@
 .principal {
   display: grid;
   gap: var(--fa-space-section-sm);
-  padding-block: var(--fa-space-section-sm) calc(var(--fa-space-section-md) + var(--fa-safe-bottom));
+  padding-block: var(--fa-space-section-sm) calc(var(--fa-space-section-lg) + var(--fa-safe-bottom));
 }

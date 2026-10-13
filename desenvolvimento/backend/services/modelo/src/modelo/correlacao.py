@@ -14,6 +14,9 @@ Metodo:
   mas quebra a relacao com o nivel) e o maior r entre as 36 defasagens e recalculado. O p-valor e
   a fracao de vezes em que o acaso iguala ou supera o r observado. Isso corrige o vies de
   "escolher o melhor de 36 e esquecer que escolhi": um IC do maximo seria sempre positivo.
+- Comparacoes multiplas: cada analise testa varios pontos de uma vez, entao um p de 0,03 em um
+  deles e esperado por acaso. O p-valor e corrigido por Bonferroni (multiplicado pelo numero de
+  pontos testados naquela analise, limitado a 1).
 - Incerteza do r: bootstrap em blocos de 24 h (dias inteiros) na defasagem escolhida. E um IC
   otimista por ter a defasagem escolhida nos mesmos dados; use o p-valor para decidir se ha sinal.
 
@@ -24,7 +27,7 @@ O resultado e exploratorio e diz quando nao ha sinal.
 import argparse
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime, timedelta
 
 import numpy as np
@@ -35,7 +38,8 @@ log = logging.getLogger("modelo.correlacao")
 METODO = (
     "Spearman entre a chuva acumulada na janela (terminando d horas antes) e a variacao "
     "horaria do nivel; p-valor por permutacao ciclica da estatistica do maximo entre as "
-    "defasagens; IC por bootstrap em blocos de 24 h na defasagem escolhida"
+    "defasagens, com correcao de Bonferroni pelo numero de pontos testados na mesma analise; "
+    "IC por bootstrap em blocos de 24 h na defasagem escolhida"
 )
 DEFASAGENS_PADRAO = range(1, 37)
 JANELA_PADRAO_H = 3
@@ -223,10 +227,23 @@ def analisar_ponto(
     )
 
 
+def ajustar_multiplicidade(resultados: list[ResultadoPonto]) -> list[ResultadoPonto]:
+    """Bonferroni dentro de cada analise (`explicativa`): p * n_testes, no maximo 1."""
+    por_grupo: dict[str, int] = {}
+    for r in resultados:
+        por_grupo[r.explicativa] = por_grupo.get(r.explicativa, 0) + 1
+    return [
+        replace(
+            r, p_valor=None if r.p_valor is None else min(1.0, r.p_valor * por_grupo[r.explicativa])
+        )
+        for r in resultados
+    ]
+
+
 def formatar(resultados: list[ResultadoPonto]) -> str:
     linhas = [
         f"{'ponto':<12}{'defasagem':>10}{'r':>8}{'IC 95% (otimista)':>22}"
-        f"{'p':>8}{'horas':>8}  leitura",
+        f"{'p ajust.':>9}{'horas':>8}  leitura",
         "-" * 92,
     ]
     for r in sorted(resultados, key=lambda x: -x.r):
@@ -284,29 +301,11 @@ def principal() -> None:
             if p.codigo != args.estacao
         }
 
+        coletados: list[tuple[ResultadoPonto, int]] = []
+
         def guardar(res: ResultadoPonto | None, ponto_id: int) -> None:
-            if res is None:
-                return
-            resultados.append(res)
-            if not args.sem_salvar:
-                s.add(
-                    Correlacao(
-                        estacao_alvo_id=alvo.id,
-                        ponto_id=ponto_id,
-                        explicativa=res.explicativa,
-                        janela_chuva_h=res.janela_chuva_h,
-                        melhor_defasagem_h=res.melhor_defasagem_h,
-                        r=res.r,
-                        ic_inf=res.ic_inf,
-                        ic_sup=res.ic_sup,
-                        p_valor=res.p_valor,
-                        horas_validas=res.horas_validas,
-                        curva=[asdict(c) for c in res.curva],
-                        metodo=METODO,
-                        periodo_inicio=inicio,
-                        periodo_fim=fim,
-                    )
-                )
+            if res is not None:
+                coletados.append((res, ponto_id))
 
         for p in pontos:
             if not chuvas[p.codigo].empty:
@@ -345,6 +344,28 @@ def principal() -> None:
                         repeticoes=args.repeticoes,
                     ),
                     p.id,
+                )
+        ajustados = ajustar_multiplicidade([r for r, _ in coletados])
+        for res, (_, ponto_id) in zip(ajustados, coletados, strict=True):
+            resultados.append(res)
+            if not args.sem_salvar:
+                s.add(
+                    Correlacao(
+                        estacao_alvo_id=alvo.id,
+                        ponto_id=ponto_id,
+                        explicativa=res.explicativa,
+                        janela_chuva_h=res.janela_chuva_h,
+                        melhor_defasagem_h=res.melhor_defasagem_h,
+                        r=res.r,
+                        ic_inf=res.ic_inf,
+                        ic_sup=res.ic_sup,
+                        p_valor=res.p_valor,
+                        horas_validas=res.horas_validas,
+                        curva=[asdict(c) for c in res.curva],
+                        metodo=METODO,
+                        periodo_inicio=inicio,
+                        periodo_fim=fim,
+                    )
                 )
     if args.json:
         print(json.dumps([asdict(r) for r in resultados], indent=1))

@@ -49,3 +49,7 @@
 .botao:hover {
   background: var(--fa-color-action-hover);
 }
+.graficos {
+  display: grid;
+  gap: var(--fa-space-16);
+}

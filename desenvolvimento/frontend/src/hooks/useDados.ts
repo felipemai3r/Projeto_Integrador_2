@@ -30,3 +30,14 @@ export const useAlertasVigentes = () =>
     refetchInterval: UM_MINUTO,
     refetchOnWindowFocus: true,
   })
+
+export const useSerie = (codigo: string, horas: number) =>
+  useQuery({
+    queryKey: ['serie', codigo, horas],
+    queryFn: () => api.serie(codigo, horas),
+    refetchInterval: UM_MINUTO * 2,
+    placeholderData: (anterior) => anterior,
+  })
+
+export const useCorrelacao = () =>
+  useQuery({ queryKey: ['correlacao'], queryFn: api.correlacao, staleTime: 10 * UM_MINUTO })

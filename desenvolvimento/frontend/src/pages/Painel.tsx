@@ -1,8 +1,28 @@
+import { lazy, Suspense } from 'react'
 import { RainAccumulatedTable } from '../components/RainAccumulatedTable'
 import { Skeleton } from '../components/Skeleton'
 import { StationCard } from '../components/StationCard'
 import { useChuvaAcumulada, useEstacoes, useNivelAtual } from '../hooks/useDados'
 import styles from './Painel.module.css'
+
+const SeriesChart = lazy(() =>
+  import('../components/SeriesChart').then((m) => ({ default: m.SeriesChart })),
+)
+
+function GraficoDaEstacao({ codigo }: { codigo: string }) {
+  const { data } = useNivelAtual(codigo)
+  if (!data || data.estado === 'indisponivel') return null
+  const { estacao } = data
+  return (
+    <Suspense fallback={<Skeleton altura={320} />}>
+      <SeriesChart
+        codigo={codigo}
+        titulo={`Histórico do nível, ${estacao.curso_dagua ?? estacao.nome}`}
+        limiares={estacao.limiares}
+      />
+    </Suspense>
+  )
+}
 
 function CartaoDaEstacao({ codigo }: { codigo: string }) {
   const { data, isPending, isError, refetch } = useNivelAtual(codigo)
@@ -50,6 +70,19 @@ export function Painel() {
           ))}
         </div>
       </section>
+
+      {alvos.length > 0 && (
+        <section aria-labelledby="titulo-historico">
+          <h2 id="titulo-historico" className={styles.titulo}>
+            Como o nível variou
+          </h2>
+          <div className={styles.graficos}>
+            {alvos.map((e) => (
+              <GraficoDaEstacao key={e.codigo} codigo={e.codigo} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="titulo-chuva">
         <h2 id="titulo-chuva" className={styles.titulo}>

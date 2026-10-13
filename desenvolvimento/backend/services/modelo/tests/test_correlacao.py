@@ -3,6 +3,8 @@ import pandas as pd
 import pytest
 
 from modelo.correlacao import (
+    ResultadoPonto,
+    ajustar_multiplicidade,
     analisar_ponto,
     chuva_em_janela,
     curva_de_correlacao,
@@ -141,3 +143,37 @@ def test_residuo_sem_dados_suficientes_devolve_nan() -> None:
     idx = indice(10)
     r = residuo_sem_chuva_local(pd.Series(np.arange(10.0), idx), pd.Series(np.zeros(10), idx))
     assert r.isna().all()
+
+
+def _res(ponto: str, expl: str, p: float | None) -> ResultadoPonto:
+    return ResultadoPonto(
+        ponto=ponto,
+        explicativa=expl,
+        janela_chuva_h=3,
+        melhor_defasagem_h=1,
+        r=0.2,
+        ic_inf=0.1,
+        ic_sup=0.3,
+        p_valor=p,
+        horas_validas=1000,
+        curva=[],
+    )
+
+
+def test_bonferroni_corrige_pelo_numero_de_testes_de_cada_analise() -> None:
+    rs = (
+        [_res("A", "chuva_sem_local", 0.026)]
+        + [_res(c, "chuva_sem_local", 0.2) for c in "BCD"]
+        + [_res("E", "chuva_sem_local", 0.002), _res("F", "nivel", 0.02)]
+    )
+    aj = ajustar_multiplicidade(rs)
+    assert aj[0].p_valor == pytest.approx(0.026 * 5)  # 5 testes na analise
+    assert not aj[0].sinal_claro  # o p de 0,026 deixa de ser sinal: era esperado por acaso
+    assert aj[4].p_valor == pytest.approx(0.01) and aj[4].sinal_claro
+    assert aj[5].p_valor == pytest.approx(0.02)  # uma analise com 1 teste nao muda
+    assert all(a.p_valor is None or a.p_valor <= 1 for a in aj)
+
+
+def test_bonferroni_limita_a_um_e_preserva_none() -> None:
+    aj = ajustar_multiplicidade([_res("A", "x", 0.9), _res("B", "x", 0.8), _res("C", "x", None)])
+    assert aj[0].p_valor == 1.0 and aj[1].p_valor == 1.0 and aj[2].p_valor is None

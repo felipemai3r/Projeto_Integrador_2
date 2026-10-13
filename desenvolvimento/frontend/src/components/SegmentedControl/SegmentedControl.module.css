@@ -1,0 +1,54 @@
+.grupo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.legenda {
+  padding: 0;
+  margin-bottom: var(--fa-space-8);
+  color: var(--fa-color-content-secondary);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.opcoes {
+  display: inline-flex;
+  border: 1px solid var(--fa-color-border-strong);
+  border-radius: var(--fa-shape-control-md);
+  overflow: hidden;
+}
+.opcao {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: var(--fa-target-min);
+  min-height: var(--fa-target-min);
+  padding: 0 var(--fa-space-16);
+  cursor: pointer;
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1 var(--fa-font-family-base);
+  color: var(--fa-color-content-primary);
+  transition-property: background-color;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.opcao + .opcao {
+  border-left: 1px solid var(--fa-color-border-strong);
+}
+.opcao:hover {
+  background: var(--fa-color-state-hover-action);
+}
+.opcao input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+.opcao:has(input:checked) {
+  background: var(--fa-color-action-primary);
+  color: var(--fa-color-action-on);
+}
+.opcao:has(input:focus-visible) {
+  outline: 3px solid var(--fa-color-state-focus-ring);
+  outline-offset: -3px;
+}
