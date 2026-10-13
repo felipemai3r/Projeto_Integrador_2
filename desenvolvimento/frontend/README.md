@@ -9,11 +9,15 @@ PWA em React 19, TypeScript e Vite, com o design [Farol DS](../../.claude/skills
 | Tokens do Farol (`src/styles/farol.css`) | Em uso, modo dia e noite |
 | Fonte Atkinson Hyperlegible Next | Empacotada (funciona offline) |
 | Componentes | `RiskBadge`, `StationCard`, `LevelGauge`, `TrendIndicator`, `SourceStamp`, `StaleNotice`, `OfficialNotice`, `RainAccumulatedTable`, `Header`, `Skeleton` |
-| Página | Painel (CDU01): situação dos rios alvo e chuva nos pontos a montante |
+| Páginas | Painel, Previsão e simulador, Mapa, Registrar alagamento, Avisos (push), Como funciona, Qualidade dos dados, Relatório (imprime/PDF) e Moderação (login) |
 | PWA | Manifest, ícones e service worker que guarda só o casco (nunca `/api`) |
 | Tipos da API | Gerados do OpenAPI (`src/lib/api-types.ts`) |
 
-Tamanho: JavaScript de 86 kB comprimido na primeira tela (orçamento: 250 kB).
+Tamanho: cerca de 97 kB comprimidos na primeira tela (orçamento: 250 kB). Mapa, gráfico e formulários carregam sob demanda.
+
+## Testes ponta a ponta
+
+Rodam contra o sistema de verdade (banco, API, Nginx). O fluxo completo registra um alagamento, entra como moderador, valida, confere no mapa e **rejeita o registro de teste no fim** (fica só como rejeitado). Crie antes o usuário de teste (`docker compose exec api python -m api.criar_usuario ...`) e informe `E2E_EMAIL` e `E2E_SENHA`, ou use os valores de desenvolvimento do README do `desenvolvimento/`.
 
 ## Rodando
 
@@ -32,6 +36,8 @@ A API precisa estar no ar (`docker compose up` em `desenvolvimento/`).
 | `npm run build` | Checa tipos e gera `dist/` com o service worker |
 | `npm test` | Testes (Vitest e Testing Library) |
 | `npm run lint` | ESLint com regras de acessibilidade (`jsx-a11y`) |
+| `npm run e2e` | Testes ponta a ponta no Chrome do sistema (precisa do stack no ar; `E2E_URL` muda o endereço, padrão `http://localhost:8080`) |
+| `npm run e2e:acessibilidade` | Varredura axe (WCAG A e AA) das 9 telas, em modo dia e noite |
 | `npm run tokens` | Copia `farol.css` da skill do design para `src/styles/` |
 | `npm run api:types` | Regenera os tipos a partir de `http://localhost:8000/openapi.json` |
 

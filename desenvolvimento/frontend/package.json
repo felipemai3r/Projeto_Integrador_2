@@ -11,7 +11,9 @@
     "lint": "eslint src",
     "tokens": "cp ../../.claude/skills/farol-system/assets/farol.css src/styles/farol.css",
     "api:types": "openapi-typescript http://localhost:8000/openapi.json -o src/lib/api-types.ts",
-    "nosync": "rm -rf node_modules.nosync && mv node_modules node_modules.nosync && ln -s node_modules.nosync node_modules"
+    "nosync": "rm -rf node_modules.nosync && mv node_modules node_modules.nosync && ln -s node_modules.nosync node_modules",
+    "e2e": "playwright test",
+    "e2e:acessibilidade": "playwright test e2e/acessibilidade.spec.ts"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
@@ -27,7 +29,9 @@
     "workbox-routing": "^7.4.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

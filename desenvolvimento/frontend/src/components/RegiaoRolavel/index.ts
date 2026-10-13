@@ -1,0 +1,1 @@
+export { RegiaoRolavel } from './RegiaoRolavel'

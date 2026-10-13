@@ -28,7 +28,7 @@ Data: 13/10/2026. Atende CDU02, CDU03, CDU09, CDU12 e RN07. Código em `desenvol
 
 ## Decisão e limitações
 
-- **Nenhum horizonte está publicado hoje**, porque há 53 dias de dado completo e o mínimo é 60 (as variáveis de 168 h consomem a primeira semana). O que se espera, **se a validação se mantiver**: 1, 3 e 6 h publicam por volta de 21/10; 12 h fica na fronteira; 24 h não publica.
-- **A validação é preliminar.** São poucas semanas e poucos eventos fortes (a maior variação em 24 h foi de cerca de 2,7 m, mas foram raros). Um modelo que vence a persistência em dias calmos pode falhar justamente na enxurrada. Antes de divulgar previsão ao público, recomendo conferir o desempenho **nos eventos de subida** (probabilidade de detecção e alarme falso na troca de faixa, seção 9.4 da especificação), o que exige eventos rotulados da Defesa Civil (PE07).
+- **Nenhum horizonte está publicado hoje**, porque há 53 dias de dado completo e o mínimo é 60 (as variáveis de 168 h consomem a primeira semana). O que se espera, **se a validação se mantiver**: 1, 3 e 6 h publicam por volta de 20/10; 12 h fica na fronteira; 24 h não publica.
+- **A validação é preliminar.** São poucas semanas e poucos eventos fortes (a maior variação do nível em 12 h foi de cerca de 2,7 m, mas esses casos foram raros). Um modelo que vence a persistência em dias calmos pode falhar justamente na enxurrada. Antes de divulgar previsão ao público, recomendo conferir o desempenho **nos eventos de subida** (probabilidade de detecção e alarme falso na troca de faixa, seção 9.4 da especificação), o que exige eventos rotulados da Defesa Civil (PE07).
 - A chuva **prevista** (Open-Meteo) não entra no treino, porque o histórico de previsões ainda está sendo acumulado. Hoje o modelo só usa o observado. Quando houver meses de previsões gravadas, entra como variável (ganho esperado nos horizontes longos).
 - Hora do dia como variável com apenas 3 meses de dado pode capturar acaso; revisar com um ano.

@@ -1,4 +1,5 @@
 import { CircleCheck, TriangleAlert } from 'lucide-react'
+import { RegiaoRolavel } from '../components/RegiaoRolavel'
 import { Skeleton } from '../components/Skeleton'
 import { useQualidade } from '../hooks/useDados'
 import { formatarDataHora, tempoRelativo } from '../lib/formato'
@@ -32,7 +33,7 @@ export function Qualidade() {
         <>
           <section aria-labelledby="fontes">
             <h3 id="fontes">Fontes de dados</h3>
-            <div className={styles.rolagem}>
+            <RegiaoRolavel rotulo="Tabela das fontes de dados">
               <table className={styles.tabela}>
                 <thead>
                   <tr>
@@ -61,12 +62,12 @@ export function Qualidade() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </RegiaoRolavel>
           </section>
 
           <section aria-labelledby="estacoes">
             <h3 id="estacoes">Estações</h3>
-            <div className={styles.rolagem}>
+            <RegiaoRolavel rotulo="Tabela das estações">
               <table className={styles.tabela}>
                 <caption>Cobertura nas últimas 24 horas e lacunas nos últimos 7 dias</caption>
                 <thead>
@@ -112,7 +113,7 @@ export function Qualidade() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </RegiaoRolavel>
             <p className={styles.nota}>
               Uma lacuna é um intervalo de mais de 15 minutos sem leitura. As leituras são esperadas
               a cada 5 minutos.

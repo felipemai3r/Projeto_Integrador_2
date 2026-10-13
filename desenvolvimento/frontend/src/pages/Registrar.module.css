@@ -40,12 +40,16 @@
 }
 .campo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: var(--fa-space-4);
   font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
     var(--fa-font-family-base);
 }
 .campo input,
 .campo textarea {
+  width: 100%;
+  max-width: 100%;
   min-height: var(--fa-target-min);
   padding: var(--fa-space-8) var(--fa-space-12);
   border: 1px solid var(--fa-color-border-strong);

@@ -1,0 +1,26 @@
+/* Impressao e "Salvar como PDF": so o conteudo do relatorio, em preto sobre branco. */
+@media print {
+  header,
+  nav,
+  .nao-imprimir,
+  [role='alert'],
+  [data-testid='mapa'] {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  main {
+    padding: 0 !important;
+  }
+  table,
+  li,
+  section {
+    break-inside: avoid;
+  }
+}

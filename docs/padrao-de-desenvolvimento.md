@@ -161,7 +161,7 @@ Tags `v0.N.0` por marco de sprint. Migração de banco nunca é editada depois d
 | Modelo | Sem vazamento temporal; baseline calculado; critério RN07 | pytest |
 | Componentes | 4 faixas, desatualizado, indisponível, modo noite | vitest, Testing Library |
 | Ponta a ponta | Registrar ocorrência; inscrever e receber push | Playwright |
-| Acessibilidade | `axe` automatizado nas telas principais, mais roteiro manual | `@axe-core/playwright` |
+| Acessibilidade | `axe` automatizado nas telas (`npm run e2e:acessibilidade`), mais roteiro manual | `@axe-core/playwright` |
 
 Regras:
 - Teste novo para todo defeito corrigido, que **falha sem a correção**.

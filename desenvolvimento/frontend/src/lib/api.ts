@@ -49,6 +49,7 @@ export const api = {
   estacoes: () => get<EstacaoOut[]>('/estacoes'),
   nivelAtual: (codigo: string) => get<NivelAtual>(`/estacoes/${codigo}/atual`),
   chuvaAcumulada: () => get<ChuvaEstacao[]>('/chuva/acumulada'),
+  alertasHistorico: () => get<Alerta[]>('/alertas?limite=200'),
   alertasVigentes: () => get<Alerta[]>('/alertas?vigentes=true'),
   correlacao: () => get<Correlacao[]>('/correlacao'),
   serie: (codigo: string, horas: number) => get<Serie>(`/estacoes/${codigo}/serie?horas=${horas}`),

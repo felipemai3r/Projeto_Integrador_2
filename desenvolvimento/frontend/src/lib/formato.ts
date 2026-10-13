@@ -53,3 +53,6 @@ export function descreverTendencia(
 
 export const nomeDaFonte = (codigo: string): string =>
   codigo.startsWith('dcsc') ? 'Defesa Civil de SC' : codigo
+
+/** Remove o prefixo tecnico do nome da fonte para texto corrido. */
+export const rotuloFonte = (nome: string): string => nome.replace(/^Defesa Civil SC, /, '')

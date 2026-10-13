@@ -2,6 +2,7 @@ import { useCorrelacao } from '../hooks/useDados'
 import { formatarDataHora } from '../lib/formato'
 import { SELOS, type SeloRisco } from '../lib/risco'
 import { RiskBadge } from '../components/RiskBadge'
+import { RegiaoRolavel } from '../components/RegiaoRolavel'
 import { Skeleton } from '../components/Skeleton'
 import styles from './ComoFunciona.module.css'
 
@@ -103,7 +104,7 @@ export function ComoFunciona() {
             </ul>
             <details className={styles.detalhes}>
               <summary>Ver os números da análise</summary>
-              <div className={styles.rolagem}>
+              <RegiaoRolavel rotulo="Tabela dos números da análise">
                 <table className={styles.tabela}>
                   <caption>
                     Calculado em {formatarDataHora(data[0]!.calculado_em)}, últimos 90 dias
@@ -133,10 +134,28 @@ export function ComoFunciona() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </RegiaoRolavel>
             </details>
           </>
         )}
+      </section>
+
+      <section aria-labelledby="privacidade">
+        <h3 id="privacidade">Privacidade</h3>
+        <p>Você não precisa de cadastro para usar o sistema. Guardamos só o necessário:</p>
+        <ul className={styles.achados}>
+          <li>
+            <strong>Registro de alagamento:</strong> o local, o horário, o tipo e o texto que você
+            escrever. Seu nome não é pedido nem aparece. Tiramos da foto os dados do aparelho e da
+            localização.
+          </li>
+          <li>
+            <strong>Avisos no celular:</strong> um endereço técnico gerado pelo seu navegador e as
+            chaves para enviar a notificação. Em &ldquo;Avisos&rdquo; você cancela quando quiser e
+            tudo isso é apagado.
+          </li>
+          <li>Não usamos cookies de propaganda nem ferramentas de rastreamento.</li>
+        </ul>
       </section>
 
       <section>

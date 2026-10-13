@@ -1,0 +1,88 @@
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--fa-space-stack-md);
+  max-width: var(--fa-container-text);
+}
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fa-space-12);
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-xl-weight) var(--fa-type-titulo-xl-size) /
+    var(--fa-type-titulo-xl-line-height) var(--fa-font-family-base);
+}
+.tituloImpressao {
+  display: none;
+  margin: 0;
+  font-size: 22px;
+}
+@media print {
+  .tituloImpressao {
+    display: block;
+  }
+}
+.pagina h3 {
+  margin: 0 0 var(--fa-space-8);
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) /
+    var(--fa-type-titulo-md-line-height) var(--fa-font-family-base);
+}
+.meta {
+  margin: 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.destaque {
+  margin: 0 0 var(--fa-space-8);
+  padding: var(--fa-space-inset-md);
+  border: 1px solid var(--fa-color-feedback-warning-border);
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-feedback-warning-surface);
+  color: var(--fa-color-feedback-warning-content);
+}
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) / 1.5 var(--fa-font-family-base);
+}
+.tabela th,
+.tabela td {
+  padding: var(--fa-space-8) var(--fa-space-12);
+  border-bottom: 1px solid var(--fa-color-border-default);
+  text-align: left;
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fa-space-24);
+  margin: 0;
+}
+.resumo dt {
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.resumo dd {
+  margin: 0;
+  font: var(--fa-type-dado-md-weight) var(--fa-type-dado-md-size) / 1.1 var(--fa-font-family-base);
+  font-variant-numeric: tabular-nums;
+}
+.lista {
+  display: grid;
+  gap: var(--fa-space-8);
+  margin: 0;
+  padding-left: var(--fa-space-20);
+  color: var(--fa-color-content-secondary);
+}
+.rodape {
+  margin: 0;
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+}

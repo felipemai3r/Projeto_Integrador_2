@@ -1,5 +1,5 @@
 import io
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -38,7 +38,8 @@ def cabecalho(
     u = Usuario(nome="Leo", email=email, papel=papel, senha_hash=hash_senha("senha-forte-123"))
     s.add(u)
     s.commit()
-    token, _ = criar_token(u, AGORA)
+    # o JWT confere o relogio REAL: o token nao pode ser emitido com a data fixa dos testes
+    token, _ = criar_token(u, datetime.now(UTC))
     return {"Authorization": f"Bearer {token}"}
 
 
