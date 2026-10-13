@@ -22,3 +22,11 @@ export const useChuvaAcumulada = () =>
     refetchInterval: UM_MINUTO,
     refetchOnWindowFocus: true,
   })
+
+export const useAlertasVigentes = () =>
+  useQuery({
+    queryKey: ['alertas-vigentes'],
+    queryFn: api.alertasVigentes,
+    refetchInterval: UM_MINUTO,
+    refetchOnWindowFocus: true,
+  })

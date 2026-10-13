@@ -330,6 +330,7 @@ Prioridade pela escala MoSCoW: O (obrigatório), I (importante), D (desejável).
 | RN07 | Estimativa de nível só é publicada se houver dado suficiente no período de treino, conforme critério definido na seção 9.4. Sem isso, o sistema exibe apenas o observado e informa que a previsão está indisponível. |
 | RN08 | Limiar alterado precisa ser crescente entre as faixas, e a alteração exige justificativa registrada. |
 | RN09 | O sistema não emite alerta oficial. Toda comunicação traz aviso de que a fonte oficial é a Defesa Civil. |
+| RN10 | Histerese: para voltar a uma faixa menos grave, as três últimas leituras válidas precisam estar todas abaixo da faixa vigente, e a faixa de destino é a mais alta entre elas. Evita entra-e-sai de alerta quando o nível oscila em torno de um limiar. |
 
 ---
 

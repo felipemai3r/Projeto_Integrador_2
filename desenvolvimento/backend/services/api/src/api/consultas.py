@@ -80,3 +80,21 @@ def estado_do_dado(medido_em: datetime | None, agora: datetime, limite_min: int)
     if medido_em is None:
         return "indisponivel"
     return "desatualizado" if agora - medido_em > timedelta(minutes=limite_min) else "ok"
+
+
+def ultimas_leituras(
+    s: Session, estacao_id: int, variavel: Variavel, n: int
+) -> list[tuple[datetime, float]]:
+    """As `n` leituras validas mais recentes, da mais nova para a mais antiga."""
+    linhas = s.execute(
+        select(Leitura.medido_em, Leitura.valor)
+        .where(
+            Leitura.estacao_id == estacao_id,
+            Leitura.variavel == variavel.value,
+            Leitura.qualidade == Qualidade.OK.value,
+            Leitura.valor.is_not(None),
+        )
+        .order_by(Leitura.medido_em.desc())
+        .limit(n)
+    ).all()
+    return [(t, v) for t, v in linhas]

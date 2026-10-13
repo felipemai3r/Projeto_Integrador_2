@@ -1,5 +1,7 @@
 """API publica do sistema. Documentacao automatica em /docs."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from common.config import obter_configuracao
@@ -9,13 +11,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from api import avaliador
 from api.deps import obter_sessao
-from api.routers import chuva, correlacao, estacoes
+from api.routers import alertas, chuva, correlacao, estacoes
 
 cfg = obter_configuracao()
 configurar(cfg.log_level)
 
+
+@asynccontextmanager
+async def ciclo_de_vida(_: FastAPI) -> AsyncIterator[None]:
+    sch = avaliador.iniciar() if cfg.avaliador_ativo else None
+    yield
+    if sch is not None:
+        sch.shutdown(wait=False)
+
+
 app = FastAPI(
+    lifespan=ciclo_de_vida,
     title="Sistema de apoio a decisão para enchentes, Presidente Getúlio",
     description="Estimativas de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio.",
     version="0.1.0",
@@ -29,6 +42,7 @@ app.add_middleware(
 
 api = APIRouter(prefix="/api")
 api.include_router(estacoes.router)
+api.include_router(alertas.router)
 api.include_router(chuva.router)
 api.include_router(correlacao.router)
 

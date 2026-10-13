@@ -13,6 +13,7 @@ class Configuracao(BaseSettings):
     cors_origens: str = "http://localhost:5173"
     # acima disso, a ultima leitura de uma estacao e marcada como desatualizada (RN04)
     desatualizado_apos_min: int = 30
+    avaliador_ativo: bool = False  # ligado no compose; desligado em testes
 
     dcsc_graphql_url: str = "https://monitoramento.defesacivil.sc.gov.br/graphql"
     dcsc_rest_url: str = "https://api-dcsc.mks-unifique.ddns.net"

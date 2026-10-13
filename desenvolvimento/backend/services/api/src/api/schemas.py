@@ -78,3 +78,21 @@ class CorrelacaoOut(BaseModel):
     periodo_inicio: datetime
     periodo_fim: datetime
     calculado_em: datetime
+
+
+class AlertaOut(BaseModel):
+    """Transicao de faixa de risco. `origem` distingue observado de previsto (RN03)."""
+
+    id: int
+    estacao: str
+    nome: str
+    curso_dagua: str | None
+    faixa_anterior: str
+    faixa_nova: str
+    sobe: bool
+    origem: str
+    criado_em: datetime
+    encerrado_em: datetime | None
+    vigente: bool
+    nivel_m: float | None = None
+    aviso: str = "Estimativa de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio."

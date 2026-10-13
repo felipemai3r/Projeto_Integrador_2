@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { NivelAtual } from '../lib/api'
+import { AlertBanner } from './AlertBanner'
 import { LevelGauge } from './LevelGauge'
 import { RainAccumulatedTable } from './RainAccumulatedTable'
 import { RiskBadge } from './RiskBadge'
@@ -114,5 +116,50 @@ describe('RainAccumulatedTable', () => {
     )
     expect(screen.getByText('1,3')).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+  })
+})
+
+const alerta = {
+  id: 1,
+  estacao: 'DCSC-00043',
+  nome: 'PCD Presidente Getúlio',
+  curso_dagua: 'Rio dos Índios',
+  faixa_anterior: 'normal',
+  faixa_nova: 'atencao',
+  sobe: true,
+  origem: 'observado',
+  criado_em: '2026-10-12T17:00:00Z',
+  encerrado_em: null,
+  vigente: true,
+  nivel_m: 4.62,
+  aviso: 'Estimativa de apoio.',
+}
+
+describe('AlertBanner', () => {
+  it('mostra o alerta mais grave com nivel, origem e fonte oficial', () => {
+    render(<AlertBanner alertas={[alerta, { ...alerta, id: 2, faixa_nova: 'alerta' }]} />)
+    expect(screen.getByText('Rio dos Índios em alerta')).toBeInTheDocument()
+    expect(screen.getByText(/Nível 4,62 m\. Observado\./)).toBeInTheDocument()
+    expect(screen.getByText(/Mais 1 alerta vigente/)).toBeInTheDocument()
+    expect(screen.getByText(/Fonte oficial: Defesa Civil/)).toBeInTheDocument()
+  })
+
+  it('rotula previsao como previsao, nao como observado', () => {
+    render(<AlertBanner alertas={[{ ...alerta, origem: 'previsto' }]} />)
+    expect(screen.getByText(/Previsão\./)).toBeInTheDocument()
+  })
+
+  it('nao mostra nada sem alerta vigente', () => {
+    const { container } = render(<AlertBanner alertas={[{ ...alerta, vigente: false }]} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('so a observacao pode ser dispensada; atencao permanece', async () => {
+    const { rerender } = render(<AlertBanner alertas={[{ ...alerta, faixa_nova: 'observacao' }]} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Dispensar' }))
+    expect(screen.queryByText(/em observação/)).not.toBeInTheDocument()
+    rerender(<AlertBanner alertas={[{ ...alerta, id: 3 }]} />)
+    expect(screen.queryByRole('button', { name: 'Dispensar' })).not.toBeInTheDocument()
+    expect(screen.getByText('Rio dos Índios em atenção')).toBeInTheDocument()
   })
 })

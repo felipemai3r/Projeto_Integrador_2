@@ -43,6 +43,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       CORS_ORIGENS: ${CORS_ORIGENS:-http://localhost:5173}
+      AVALIADOR_ATIVO: "true"
     depends_on:
       migrate: { condition: service_completed_successfully }
     ports: ["8000:8000"]

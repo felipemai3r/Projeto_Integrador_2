@@ -1,0 +1,56 @@
+.faixa {
+  display: flex;
+  align-items: center;
+  gap: var(--fa-space-16);
+  padding: var(--fa-space-inset-lg);
+  border-radius: var(--fa-shape-surface-md);
+  box-shadow: var(--fa-elevation-card);
+}
+.faixa[data-faixa='observacao'] {
+  background: var(--fa-risk-observacao-solid);
+  color: var(--fa-risk-observacao-on-solid);
+}
+.faixa[data-faixa='atencao'] {
+  background: var(--fa-risk-atencao-solid);
+  color: var(--fa-risk-atencao-on-solid);
+}
+.faixa[data-faixa='alerta'] {
+  background: var(--fa-risk-alerta-solid);
+  color: var(--fa-risk-alerta-on-solid);
+}
+.icone {
+  flex: none;
+}
+.texto {
+  flex: 1;
+  min-width: 0;
+}
+.titulo {
+  margin: 0;
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) /
+    var(--fa-type-titulo-md-line-height) var(--fa-font-family-base);
+}
+.detalhe {
+  margin: var(--fa-space-4) 0 0;
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) /
+    var(--fa-type-texto-sm-line-height) var(--fa-font-family-base);
+}
+.dispensar {
+  flex: none;
+  min-height: var(--fa-target-min);
+  padding: 0 var(--fa-space-16);
+  border: 1px solid currentcolor;
+  border-radius: var(--fa-shape-control-md);
+  background: transparent;
+  color: inherit;
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1 var(--fa-font-family-base);
+  cursor: pointer;
+}
+@media (max-width: 479px) {
+  .faixa {
+    flex-wrap: wrap;
+  }
+  .texto {
+    flex-basis: calc(100% - 48px);
+  }
+}
