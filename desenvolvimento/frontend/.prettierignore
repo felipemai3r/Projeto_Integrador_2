@@ -1,0 +1,4 @@
+src/styles/farol.css
+src/lib/api-types.ts
+dist
+node_modules*

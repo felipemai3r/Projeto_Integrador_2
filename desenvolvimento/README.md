@@ -9,7 +9,7 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 | `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
 | `backend/services/api` | API FastAPI: estações, nível atual com risco e tendência, série, chuva acumulada | Leitura pronta (porta 8000, docs em `/docs`) |
 | `backend/services/modelo` | Correlação defasada e previsão | Sprint 2 |
-| `frontend` | PWA em React, com o design Farol | Próxima etapa |
+| `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel pronto |
 
 ## Rodando
 

@@ -1,0 +1,12 @@
+.tendencia {
+  display: flex;
+  align-items: center;
+  gap: var(--fa-space-8);
+  margin: 0;
+  color: var(--fa-color-content-secondary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) /
+    var(--fa-type-texto-md-line-height) var(--fa-font-family-base);
+}
+.tendencia svg {
+  flex: none;
+}

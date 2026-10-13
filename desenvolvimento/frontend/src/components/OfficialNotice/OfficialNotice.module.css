@@ -1,0 +1,18 @@
+.aviso {
+  display: flex;
+  gap: var(--fa-space-12);
+  padding: var(--fa-space-inset-md) var(--fa-space-inset-lg);
+  border-radius: var(--fa-shape-surface-md);
+  border: 1px solid var(--fa-color-feedback-info-border);
+  background: var(--fa-color-feedback-info-surface);
+  color: var(--fa-color-feedback-info-content);
+}
+.aviso svg {
+  flex: none;
+  margin-top: 2px;
+}
+.aviso p {
+  margin: 0;
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) /
+    var(--fa-type-texto-md-line-height) var(--fa-font-family-base);
+}

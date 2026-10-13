@@ -1,0 +1,5 @@
+.bloco {
+  display: block;
+  background: var(--fa-color-surface-raised);
+  border-radius: var(--fa-shape-structure-sm);
+}

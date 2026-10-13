@@ -1,0 +1,1 @@
+export { RainAccumulatedTable } from './RainAccumulatedTable'

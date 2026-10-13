@@ -1,0 +1,68 @@
+.cartao {
+  display: grid;
+  gap: var(--fa-space-12);
+  padding: var(--fa-space-inset-lg);
+  background: var(--fa-color-surface-base);
+  border: 1px solid var(--fa-color-border-default);
+  border-left-width: 4px;
+  border-radius: var(--fa-shape-surface-md);
+  box-shadow: var(--fa-elevation-card);
+}
+.cartao[data-faixa='normal'] {
+  border-left-color: var(--fa-risk-normal-border);
+}
+.cartao[data-faixa='observacao'] {
+  border-left-color: var(--fa-risk-observacao-border);
+}
+.cartao[data-faixa='atencao'] {
+  border-left-color: var(--fa-risk-atencao-border);
+}
+.cartao[data-faixa='alerta'] {
+  border-left-color: var(--fa-risk-alerta-border);
+}
+.cartao[data-faixa='desatualizado'] {
+  border-left-color: var(--fa-risk-desatualizado-border);
+}
+.cartao[data-faixa='indisponivel'] {
+  border-left-color: var(--fa-risk-indisponivel-border);
+}
+
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--fa-space-8);
+}
+.nome {
+  margin: 0;
+  font: var(--fa-type-titulo-sm-weight) var(--fa-type-titulo-sm-size) /
+    var(--fa-type-titulo-sm-line-height) var(--fa-font-family-base);
+}
+.nivel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--fa-space-4);
+  margin: 0;
+}
+.valor {
+  font: var(--fa-type-dado-xl-weight) var(--fa-type-dado-xl-size) /
+    var(--fa-type-dado-xl-line-height) var(--fa-font-family-base);
+  letter-spacing: var(--fa-type-dado-xl-tracking);
+}
+.unidade {
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) / 1 var(--fa-font-family-base);
+  color: var(--fa-color-content-secondary);
+}
+.legenda {
+  margin: calc(-1 * var(--fa-space-4)) 0 0;
+  color: var(--fa-color-content-tertiary);
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) /
+    var(--fa-type-texto-sm-line-height) var(--fa-font-family-base);
+}
+.indisponivel {
+  margin: 0;
+  color: var(--fa-color-content-secondary);
+  font: var(--fa-type-texto-md-weight) var(--fa-type-texto-md-size) /
+    var(--fa-type-texto-md-line-height) var(--fa-font-family-base);
+}

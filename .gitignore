@@ -8,3 +8,6 @@ __pycache__/
 node_modules/
 .venv/
 *.egg-info/
+node_modules.nosync/
+node_modules
+dist

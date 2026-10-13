@@ -11,6 +11,7 @@ cd "$(dirname "$0")/../assets"
   echo
   cat <<'BASE'
 /* ---------- Base mínima ---------- */
+*, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;

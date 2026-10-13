@@ -1,0 +1,94 @@
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) /
+    var(--fa-type-texto-sm-line-height) var(--fa-font-family-base);
+}
+.legenda {
+  text-align: left;
+  padding-bottom: var(--fa-space-8);
+  color: var(--fa-color-content-secondary);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.tabela th,
+.tabela td {
+  padding: var(--fa-space-8) var(--fa-space-12);
+  border-bottom: 1px solid var(--fa-color-border-default);
+  text-align: left;
+}
+.tabela thead th {
+  color: var(--fa-color-content-secondary);
+  font-weight: var(--fa-font-weight-medium);
+}
+.tabela tbody th {
+  font-weight: var(--fa-font-weight-medium);
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.hora {
+  color: var(--fa-color-content-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.aviso {
+  color: var(--fa-risk-desatualizado-content);
+  font-weight: var(--fa-font-weight-regular);
+}
+tr[data-estado='indisponivel'] {
+  color: var(--fa-color-content-tertiary);
+}
+
+/* Celular: cada ponto vira um cartao com grade de 4 colunas (rotulo da janela sobre o valor) */
+@media (max-width: 767px) {
+  .tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .tabela,
+  .tabela tbody,
+  .tabela caption {
+    display: block;
+    width: 100%;
+  }
+  .tabela tr {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: var(--fa-space-12);
+    border: 1px solid var(--fa-color-border-default);
+    border-radius: var(--fa-shape-surface-sm);
+    background: var(--fa-color-surface-base);
+    overflow: hidden;
+  }
+  .tabela tbody th {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--fa-color-border-default);
+    background: var(--fa-color-surface-subtle);
+  }
+  .tabela td {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fa-space-4);
+    border-bottom: 1px solid var(--fa-color-border-subtle);
+    text-align: left;
+  }
+  .tabela td::before {
+    content: attr(data-rotulo);
+    color: var(--fa-color-content-tertiary);
+    font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size) / 1
+      var(--fa-font-family-base);
+  }
+  .tabela td.hora {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    border-bottom: 0;
+  }
+  .num {
+    text-align: left !important;
+  }
+}

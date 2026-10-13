@@ -32,6 +32,22 @@ jobs:
         run: pytest desenvolvimento/backend/services -q
       - name: Contraste do design
         run: python3 .claude/skills/farol-system/scripts/verificar-contraste.py
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desenvolvimento/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desenvolvimento/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
   docker:
     runs-on: ubuntu-latest
     steps:

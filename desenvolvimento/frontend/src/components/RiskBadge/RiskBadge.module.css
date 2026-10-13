@@ -1,0 +1,42 @@
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fa-space-8);
+  padding: var(--fa-space-8) var(--fa-space-12);
+  border-radius: var(--fa-shape-status-pill);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) /
+    var(--fa-type-rotulo-md-line-height) var(--fa-font-family-base);
+  letter-spacing: var(--fa-type-rotulo-md-tracking);
+  white-space: nowrap;
+}
+.selo svg {
+  flex: none;
+}
+.lg {
+  padding: var(--fa-space-12) var(--fa-space-16);
+  font-size: var(--fa-type-rotulo-lg-size);
+}
+.selo[data-faixa='normal'] {
+  background: var(--fa-risk-normal-solid);
+  color: var(--fa-risk-normal-on-solid);
+}
+.selo[data-faixa='observacao'] {
+  background: var(--fa-risk-observacao-solid);
+  color: var(--fa-risk-observacao-on-solid);
+}
+.selo[data-faixa='atencao'] {
+  background: var(--fa-risk-atencao-solid);
+  color: var(--fa-risk-atencao-on-solid);
+}
+.selo[data-faixa='alerta'] {
+  background: var(--fa-risk-alerta-solid);
+  color: var(--fa-risk-alerta-on-solid);
+}
+.selo[data-faixa='desatualizado'] {
+  background: var(--fa-risk-desatualizado-solid);
+  color: var(--fa-risk-desatualizado-on-solid);
+}
+.selo[data-faixa='indisponivel'] {
+  background: var(--fa-risk-indisponivel-solid);
+  color: var(--fa-risk-indisponivel-on-solid);
+}

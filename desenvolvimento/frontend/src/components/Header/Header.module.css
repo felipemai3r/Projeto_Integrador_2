@@ -1,0 +1,66 @@
+.cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: var(--fa-z-sticky);
+  padding-top: var(--fa-safe-top);
+  background: var(--fa-color-surface-brand);
+  color: var(--fa-color-content-on-brand);
+  border-bottom: 4px solid var(--fa-color-brand-sinal);
+  box-shadow: var(--fa-elevation-header);
+}
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fa-space-16);
+  padding-block: var(--fa-space-12);
+}
+.marca {
+  margin: 0;
+  font: var(--fa-type-titulo-md-weight) var(--fa-type-titulo-md-size) /
+    var(--fa-type-titulo-md-line-height) var(--fa-font-family-base);
+}
+.sub {
+  margin: var(--fa-space-4) 0 0;
+  font: var(--fa-type-texto-sm-weight) var(--fa-type-texto-sm-size) / 1.3 var(--fa-font-family-base);
+  opacity: 0.9;
+}
+.tema {
+  display: grid;
+  place-items: center;
+  width: var(--fa-target-min);
+  height: var(--fa-target-min);
+  border: 1px solid currentcolor;
+  border-radius: var(--fa-shape-control-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition-property: background-color;
+  transition-duration: var(--fa-motion-fast);
+  transition-timing-function: var(--fa-easing-standard);
+}
+.tema:hover {
+  background: color-mix(in srgb, currentcolor 14%, transparent);
+}
+.sol,
+.lua {
+  grid-area: 1 / 1;
+}
+/* mostra o icone da acao disponivel: no escuro, sol; no claro, lua */
+.sol {
+  display: none;
+}
+:global(:root[data-theme='dark']) .sol {
+  display: block;
+}
+:global(:root[data-theme='dark']) .lua {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .sol {
+    display: block;
+  }
+  :global(:root:not([data-theme='light'])) .lua {
+    display: none;
+  }
+}

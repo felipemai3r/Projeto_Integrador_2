@@ -1,0 +1,54 @@
+.regua {
+  margin-block: var(--fa-space-8);
+}
+.barra {
+  position: relative;
+  display: flex;
+  height: 16px;
+  border: 1px solid var(--fa-color-border-default);
+  border-radius: var(--fa-shape-structure-sm);
+  overflow: hidden;
+}
+.barra > span[data-faixa] {
+  height: 100%;
+}
+.barra > span[data-faixa='normal'] {
+  background: var(--fa-risk-normal-surface);
+}
+.barra > span[data-faixa='observacao'] {
+  background: var(--fa-risk-observacao-surface);
+}
+.barra > span[data-faixa='atencao'] {
+  background: var(--fa-risk-atencao-surface);
+}
+.barra > span[data-faixa='alerta'] {
+  background: var(--fa-risk-alerta-surface);
+}
+.marcador {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--fa-color-content-primary);
+  border-radius: 2px;
+}
+.limiar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--fa-color-border-strong);
+}
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fa-space-4) var(--fa-space-16);
+  margin: var(--fa-space-8) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--fa-color-content-tertiary);
+  font: var(--fa-type-rotulo-sm-weight) var(--fa-type-rotulo-sm-size) / 1.3
+    var(--fa-font-family-base);
+  font-variant-numeric: tabular-nums;
+}
