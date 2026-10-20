@@ -19,7 +19,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-DIAS_MINIMOS = 60
+DIAS_MINIMOS = 45  # TEMPORARIO para a demonstracao; o valor da RN07 e 60
 MARGEM_SOBRE_PERSISTENCIA = 0.05  # o modelo precisa errar pelo menos 5% menos que a persistencia
 N_DOBRAS = 5
 # Grade ampla: com poucas semanas de dado e eventos raros, regularizacao fraca explode o erro
