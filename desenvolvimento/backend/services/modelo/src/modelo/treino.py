@@ -19,6 +19,12 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+
+def cm_br(valor: float | None) -> str:
+    """Numero no formato brasileiro, com duas casas: 45,20."""
+    return f"{valor or 0:.2f}".replace(".", ",")
+
+
 DIAS_MINIMOS = 45  # TEMPORARIO para a demonstracao; o valor da RN07 e 60
 MARGEM_SOBRE_PERSISTENCIA = 0.05  # o modelo precisa errar pelo menos 5% menos que a persistencia
 N_DOBRAS = 5
@@ -100,8 +106,8 @@ def avaliar_horizonte(X: pd.DataFrame, y: pd.Series, horizonte_h: int) -> Result
         )
     elif not ganha_persistencia:
         r.motivo = (
-            f"O modelo não superou a persistência (erro de {r.rmse_cm:.1f} cm contra "
-            f"{r.rmse_persistencia_cm:.1f} cm de quem apenas repete o nível atual)."
+            f"O modelo não superou a persistência (erro de {cm_br(r.rmse_cm)} cm contra "
+            f"{cm_br(r.rmse_persistencia_cm)} cm de quem apenas repete o nível atual)."
         )
     else:
         r.publicar = True

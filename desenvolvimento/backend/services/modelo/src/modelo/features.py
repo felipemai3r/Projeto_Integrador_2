@@ -22,12 +22,17 @@ PONTOS_CHUVA = {
     "DCSC-00036": "vitor",
 }
 NIVEL_VIZINHOS = {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}
-MIN_COBERTURA_LONGA = 0.9  # janelas de 48 h ou mais toleram 10% de falha (reescaladas)
+MIN_COBERTURA_LONGA = 0.9  # janelas de 12 h ou mais toleram 10% de falha (reescaladas)
+JANELA_MIN_TOLERANTE_H = 12  # abaixo disso a janela exige todas as horas
 
 
 def chuva_acumulada(chuva_h: pd.Series, janela: int) -> pd.Series:
-    """Soma da chuva nas ultimas `janela` horas ate t. Janelas longas toleram pouca falha."""
-    if janela < 48:
+    """Soma da chuva nas ultimas `janela` horas ate t. Janelas longas toleram pouca falha.
+
+    Uma unica hora sem cobertura (estacao com poucas leituras) nao pode zerar a previsao por
+    12 ou 24 h, por isso essas janelas tambem toleram falha pequena.
+    """
+    if janela < JANELA_MIN_TOLERANTE_H:
         return chuva_h.rolling(janela, min_periods=janela).sum()
     minimo = int(np.ceil(janela * MIN_COBERTURA_LONGA))
     soma = chuva_h.rolling(janela, min_periods=minimo).sum()

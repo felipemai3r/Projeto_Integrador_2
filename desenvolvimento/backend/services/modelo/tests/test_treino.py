@@ -56,6 +56,15 @@ def test_janela_de_chuva_com_falha_curta_e_nan_e_com_falha_longa_e_reescalada() 
     assert abs(longa - 72.0) < 1e-6
 
 
+def test_uma_hora_faltando_nao_zera_a_janela_de_24h() -> None:
+    chuva = pd.Series(1.0, idx(200))
+    chuva.iloc[100] = np.nan
+    assert abs(chuva_acumulada(chuva, 24).iloc[110] - 24.0) < 1e-6  # tolera e reescala
+    assert abs(chuva_acumulada(chuva, 12).iloc[105] - 12.0) < 1e-6
+    chuva.iloc[101:110] = np.nan  # varias horas sem dado: continua desconhecida
+    assert np.isnan(chuva_acumulada(chuva, 24).iloc[110])
+
+
 def test_hora_sem_cobertura_nao_vira_zero() -> None:
     chuva = pd.Series(0.0, idx(50))
     chuva.iloc[20:30] = np.nan
