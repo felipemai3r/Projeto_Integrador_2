@@ -4,7 +4,7 @@ import { Botao } from '../components/Botao'
 import { Skeleton } from '../components/Skeleton'
 import { useSessao } from '../hooks/useSessao'
 import { api, ErroApi, type OcorrenciaOut } from '../lib/api'
-import { formatarDataHora, formatarNivel } from '../lib/formato'
+import { formatarDataHora, formatarMm, formatarNivel } from '../lib/formato'
 import { IMPACTOS, rotuloDoImpacto, type TipoImpacto } from '../lib/impacto'
 import styles from './Moderacao.module.css'
 
@@ -83,6 +83,21 @@ function Foto({ token, id }: { token: string; id: number }) {
   ) : null
 }
 
+const ROTULO_MOTIVO: Record<string, string> = {
+  falso: 'não alagou',
+  local_errado: 'local errado',
+  improprio: 'conteúdo impróprio',
+  outro: 'outro motivo',
+}
+
+function resumirMotivos(motivos: string[]): string {
+  const contagem = new Map<string, number>()
+  for (const m of motivos) contagem.set(m, (contagem.get(m) ?? 0) + 1)
+  return [...contagem]
+    .map(([m, n]) => `${ROTULO_MOTIVO[m] ?? m}${n > 1 ? ` (${n})` : ''}`)
+    .join(', ')
+}
+
 function Cartao({
   o,
   token,
@@ -125,9 +140,16 @@ function Cartao({
           </a>
         </p>
         {o.descricao && <p>{o.descricao}</p>}
+        {(o.curtidas > 0 || (o.denuncias ?? 0) > 0) && (
+          <p className={(o.denuncias ?? 0) > 0 ? styles.denuncias : styles.meta}>
+            {o.curtidas} {o.curtidas === 1 ? 'curtida' : 'curtidas'}
+            {(o.denuncias ?? 0) > 0 &&
+              ` · ${o.denuncias} ${o.denuncias === 1 ? 'denúncia' : 'denúncias'}: ${resumirMotivos(o.motivos_denuncia ?? [])}`}
+          </p>
+        )}
         <p className={styles.meta}>
           {ctx?.disponivel
-            ? `Condições na hora: ${nivel ? `rio dos Índios em ${formatarNivel(nivel.nivel_m)} m` : 'nível sem leitura'}${ctx.chuva_24h_mm?.['DCSC-00043'] != null ? `, ${ctx.chuva_24h_mm['DCSC-00043']} mm de chuva em 24 h na cidade` : ''}.`
+            ? `Condições na hora: ${nivel ? `rio dos Índios em ${formatarNivel(nivel.nivel_m)} m` : 'nível sem leitura'}${ctx.chuva_24h_mm?.['DCSC-00043'] != null ? `, ${formatarMm(ctx.chuva_24h_mm['DCSC-00043'])} mm de chuva em 24 h na cidade` : ''}.`
             : 'Sem dados de nível e chuva para esse horário.'}
         </p>
         {o.tem_foto && <Foto token={token} id={o.id} />}

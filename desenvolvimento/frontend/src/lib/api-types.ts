@@ -92,6 +92,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/inscricoes/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inscrever
+         * @description Envia o link de confirmacao. A resposta e a mesma exista ou nao o e-mail (nao revela).
+         */
+        post: operations["inscrever_api_inscricoes_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inscricoes/email/confirmar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirmar */
+        post: operations["confirmar_api_inscricoes_email_confirmar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inscricoes/email/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancelar
+         * @description Apaga o e-mail e o historico de envios (LGPD). Link de cancelar de qualquer aviso.
+         */
+        post: operations["cancelar_api_inscricoes_email_cancelar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/push/chave": {
         parameters: {
             query?: never;
@@ -128,6 +185,26 @@ export interface paths {
          * @description Remove a inscricao e o historico de envios dela (RF39, LGPD). Idempotente.
          */
         delete: operations["cancelar_api_inscricoes_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/inscricoes/teste": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Testar
+         * @description Aviso de teste so para o proprio aparelho, que precisa ja estar inscrito.
+         */
+        post: operations["testar_api_inscricoes_teste_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -224,6 +301,10 @@ export interface paths {
         /**
          * Listar
          * @description Publico: so validadas. Pendentes e rejeitadas exigem login de quem modera.
+         *
+         *     `com_pendentes` (so com status=validada) inclui no mapa os avisos ainda nao conferidos,
+         *     para sinalizar na hora; para o publico eles vao sem descricao e sem foto. Um pendente com
+         *     muitas denuncias sai do mapa publico ate a moderacao olhar. `horas` substitui `dias`.
          */
         get: operations["listar_api_ocorrencias_get"];
         put?: never;
@@ -287,6 +368,30 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocorrencias/{id_}/reacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reagir
+         * @description Curtir ("vi tambem") ou denunciar, sem login. Uma de cada por aparelho; repetir nao soma.
+         */
+        post: operations["reagir_api_ocorrencias__id___reacoes_post"];
+        /**
+         * Desfazer
+         * @description Desfaz a curtida ou a denuncia deste aparelho.
+         */
+        delete: operations["desfazer_api_ocorrencias__id___reacoes_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -558,6 +663,18 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** InscricaoEmailIn */
+        InscricaoEmailIn: {
+            /** Email */
+            email: string;
+            /** Estacao */
+            estacao?: string | null;
+            /**
+             * Faixa Minima
+             * @default atencao
+             */
+            faixa_minima: string;
+        };
         /** InscricaoIn */
         InscricaoIn: {
             /** Endpoint */
@@ -586,6 +703,13 @@ export interface components {
             email: string;
             /** Senha */
             senha: string;
+        };
+        /** MensagemOut */
+        MensagemOut: {
+            /** Status */
+            status: string;
+            /** Mensagem */
+            mensagem: string;
         };
         /** ModeracaoIn */
         ModeracaoIn: {
@@ -689,6 +813,15 @@ export interface components {
             moderado_por?: string | null;
             /** Moderado Em */
             moderado_em?: string | null;
+            /**
+             * Curtidas
+             * @default 0
+             */
+            curtidas: number;
+            /** Denuncias */
+            denuncias?: number | null;
+            /** Motivos Denuncia */
+            motivos_denuncia?: string[] | null;
         };
         /** PontoSerie */
         PontoSerie: {
@@ -758,6 +891,20 @@ export interface components {
             /** Estacoes */
             estacoes: components["schemas"]["EstacaoQualidade"][];
         };
+        /** ReacaoIn */
+        ReacaoIn: {
+            /** Tipo */
+            tipo: string;
+            /** Dispositivo */
+            dispositivo: string;
+            /** Motivo */
+            motivo?: string | null;
+        };
+        /** ReacaoOut */
+        ReacaoOut: {
+            /** Curtidas */
+            curtidas: number;
+        };
         /** ResumoModelo */
         ResumoModelo: {
             /** Id */
@@ -803,6 +950,11 @@ export interface components {
              * @default DCSC-00043
              */
             estacao: string;
+        };
+        /** TokenIn */
+        TokenIn: {
+            /** Token */
+            token: string;
         };
         /** TokenOut */
         TokenOut: {
@@ -996,6 +1148,105 @@ export interface operations {
             };
         };
     };
+    inscrever_api_inscricoes_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InscricaoEmailIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensagemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirmar_api_inscricoes_email_confirmar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensagemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancelar_api_inscricoes_email_cancelar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MensagemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     chave_publica_api_push_chave_get: {
         parameters: {
             query?: never;
@@ -1052,6 +1303,41 @@ export interface operations {
         };
     };
     cancelar_api_inscricoes_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelamentoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    testar_api_inscricoes_teste_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1197,6 +1483,8 @@ export interface operations {
             query?: {
                 status?: string;
                 dias?: number;
+                horas?: number | null;
+                com_pendentes?: boolean;
             };
             header?: never;
             path?: never;
@@ -1341,6 +1629,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModeracaoOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reagir_api_ocorrencias__id___reacoes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReacaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReacaoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    desfazer_api_ocorrencias__id___reacoes_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReacaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReacaoOut"];
                 };
             };
             /** @description Validation Error */

@@ -51,12 +51,26 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:equipe@exemplo.br}
       URL_PUBLICA: ${URL_PUBLICA:-http://localhost:5173}
+      # avisos por e-mail: em desenvolvimento vao para o Mailpit (http://localhost:8025)
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORTA: ${SMTP_PORTA:-1025}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_SENHA: ${SMTP_SENHA:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-Rios de Presidente Getúlio <avisos@exemplo.br>}
     depends_on:
       migrate: { condition: service_completed_successfully }
     volumes:
       - fotos:/dados/fotos
       - artefatos:/artefatos:ro
     ports: ["8000:8000"]
+    restart: unless-stopped
+
+  # Caixa de e-mail local para desenvolvimento: tudo que a API envia aparece em localhost:8025.
+  # Em producao, SMTP_HOST aponta para um servidor real e este servico nao e usado.
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:8025:8025"]
     restart: unless-stopped
 
   # Retreino diario dos modelos de previsao (publica sozinho quando a RN07 for atendida)

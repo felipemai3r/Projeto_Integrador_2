@@ -7,7 +7,7 @@ import { SegmentedControl } from '../components/SegmentedControl'
 import { Skeleton } from '../components/Skeleton'
 import { useAlertasVigentes, useEstacoes, useNivelAtual, useQualidade } from '../hooks/useDados'
 import { api } from '../lib/api'
-import { formatarDataHora, formatarMm, formatarNivel, rotuloFonte } from '../lib/formato'
+import { formatarDataHora, formatarNivel, formatarPercentual, rotuloFonte } from '../lib/formato'
 import { rotuloDoImpacto } from '../lib/impacto'
 import { seloDe } from '../lib/risco'
 import styles from './Relatorio.module.css'
@@ -178,8 +178,8 @@ export function Relatorio() {
               .filter((e) => e.variavel === 'nivel_m')
               .map((e) => (
                 <li key={e.estacao}>
-                  {e.nome}: cobertura de {formatarMm(e.cobertura_24h_pct).replace(',0', '')}% nas
-                  últimas 24 h, {e.lacunas_7d} lacuna(s) em 7 dias
+                  {e.nome}: cobertura de {formatarPercentual(e.cobertura_24h_pct)}% nas últimas 24
+                  h, {e.lacunas_7d} lacuna(s) em 7 dias
                 </li>
               ))}
           </ul>

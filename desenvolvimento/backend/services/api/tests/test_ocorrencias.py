@@ -57,7 +57,7 @@ def test_registro_anonimo_entra_como_pendente(client: TestClient, base: Session)
     r = client.post("/api/ocorrencias", data=dados(descricao="  Água na rua  "))
     assert r.status_code == 201
     assert r.json()["status"] == "pendente"
-    assert "Defesa Civil conferir" in r.json()["mensagem"]
+    assert "aguardando conferência" in r.json()["mensagem"]
     o = base.scalars(select(Ocorrencia)).one()
     assert o.descricao == "Água na rua" and o.status == "pendente"
 
@@ -65,6 +65,23 @@ def test_registro_anonimo_entra_como_pendente(client: TestClient, base: Session)
 def test_pendente_nao_aparece_no_mapa_publico(client: TestClient, base: Session) -> None:
     client.post("/api/ocorrencias", data=dados())
     assert client.get("/api/ocorrencias").json() == []
+
+
+def test_pendente_aparece_no_mapa_so_com_o_parametro_e_sem_conteudo(
+    client: TestClient, base: Session, tmp_path: Path
+) -> None:
+    client.post("/api/ocorrencias", data=dados(descricao="Texto ainda nao conferido"))
+    lista = client.get("/api/ocorrencias?com_pendentes=true").json()
+    assert len(lista) == 1
+    assert lista[0]["status"] == "pendente"
+    assert lista[0]["descricao"] is None and lista[0]["tem_foto"] is False
+    assert client.get("/api/ocorrencias").json() == []  # padrao continua so validadas
+
+
+def test_moderador_ve_o_conteudo_do_pendente(client: TestClient, base: Session) -> None:
+    client.post("/api/ocorrencias", data=dados(descricao="Texto ainda nao conferido"))
+    lista = client.get("/api/ocorrencias?com_pendentes=true", headers=cabecalho(base)).json()
+    assert lista[0]["descricao"] == "Texto ainda nao conferido"
 
 
 def test_ponto_fora_do_municipio_e_recusado(client: TestClient, base: Session) -> None:
@@ -260,3 +277,55 @@ def test_ocorrencia_inexistente_da_404(client: TestClient, base: Session) -> Non
     assert (
         client.patch("/api/ocorrencias/999", json={"acao": "validar"}, headers=h).status_code == 404
     )
+
+
+APARELHO = "aparelho-de-teste-0001"
+
+
+def test_curtir_conta_uma_vez_por_aparelho_e_pode_desfazer(
+    client: TestClient, base: Session
+) -> None:
+    id_ = client.post("/api/ocorrencias", data=dados()).json()["id"]
+    corpo = {"tipo": "curtida", "dispositivo": APARELHO}
+    assert client.post(f"/api/ocorrencias/{id_}/reacoes", json=corpo).json() == {"curtidas": 1}
+    assert client.post(f"/api/ocorrencias/{id_}/reacoes", json=corpo).json() == {"curtidas": 1}
+    outro = {"tipo": "curtida", "dispositivo": "outro-aparelho-0002"}
+    assert client.post(f"/api/ocorrencias/{id_}/reacoes", json=outro).json() == {"curtidas": 2}
+    lista = client.get("/api/ocorrencias?com_pendentes=true").json()
+    assert lista[0]["curtidas"] == 2 and lista[0]["denuncias"] is None  # publico nao ve denuncias
+    r = client.request("DELETE", f"/api/ocorrencias/{id_}/reacoes", json=corpo)
+    assert r.json() == {"curtidas": 1}
+
+
+def test_denuncia_exige_motivo_e_aparece_para_quem_modera(
+    client: TestClient, base: Session
+) -> None:
+    id_ = client.post("/api/ocorrencias", data=dados()).json()["id"]
+    sem_motivo = {"tipo": "denuncia", "dispositivo": APARELHO}
+    assert client.post(f"/api/ocorrencias/{id_}/reacoes", json=sem_motivo).status_code == 422
+    corpo = {**sem_motivo, "motivo": "falso"}
+    assert client.post(f"/api/ocorrencias/{id_}/reacoes", json=corpo).status_code == 200
+    lista = client.get("/api/ocorrencias?status=pendente", headers=cabecalho(base)).json()
+    assert lista[0]["denuncias"] == 1 and lista[0]["motivos_denuncia"] == ["falso"]
+
+
+def test_pendente_muito_denunciado_sai_do_mapa_publico(client: TestClient, base: Session) -> None:
+    id_ = client.post("/api/ocorrencias", data=dados()).json()["id"]
+    for n in range(3):
+        corpo = {
+            "tipo": "denuncia",
+            "dispositivo": f"aparelho-diferente-{n:04d}",
+            "motivo": "falso",
+        }
+        client.post(f"/api/ocorrencias/{id_}/reacoes", json=corpo)
+    assert client.get("/api/ocorrencias?com_pendentes=true").json() == []
+    moderacao = client.get("/api/ocorrencias?status=pendente", headers=cabecalho(base)).json()
+    assert moderacao[0]["denuncias"] == 3  # continua na fila de moderacao
+
+
+def test_filtro_por_horas(client: TestClient, base: Session) -> None:
+    antigo = (AGORA - timedelta(hours=10)).isoformat()
+    client.post("/api/ocorrencias", data=dados())
+    client.post("/api/ocorrencias", data=dados(ocorreu_em=antigo))
+    assert len(client.get("/api/ocorrencias?com_pendentes=true&horas=6").json()) == 1
+    assert len(client.get("/api/ocorrencias?com_pendentes=true&horas=24").json()) == 2

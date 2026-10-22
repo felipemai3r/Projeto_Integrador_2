@@ -58,6 +58,7 @@
 .num {
   text-align: right !important;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap; /* "1,66 m" nao quebra a unidade para a linha de baixo */
 }
 .resumo {
   display: flex;

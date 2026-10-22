@@ -1,10 +1,12 @@
+import hashlib
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
 from common.config import obter_configuracao
 from common.geo import dentro_do_municipio
-from common.models import Moderacao, Ocorrencia, Usuario
+from common.models import Moderacao, Ocorrencia, ReacaoOcorrencia, Usuario
 from fastapi import (
     APIRouter,
     Depends,
@@ -16,7 +18,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from api.contexto import contexto_hidrologico
@@ -24,36 +26,70 @@ from api.deps import obter_agora, obter_sessao
 from api.fotos import FotoInvalida, tratar_e_salvar
 from api.limite import LimiteTaxa, exigir, ip_do_cliente
 from api.schemas import (
+    MOTIVOS_DENUNCIA,
     TIPOS_IMPACTO,
     ModeracaoIn,
     ModeracaoOut,
     OcorrenciaCriada,
     OcorrenciaOut,
+    ReacaoIn,
+    ReacaoOut,
 )
 from api.seguranca import exigir_moderador, usuario_opcional
 
 router = APIRouter(prefix="/ocorrencias", tags=["ocorrencias"])
 limite_registro = LimiteTaxa(obter_configuracao().limite_registros_hora, timedelta(hours=1))
+limite_reacao = LimiteTaxa(60, timedelta(hours=1))
+# com isso, um registro ainda nao conferido sai do mapa publico ate a moderacao olhar
+DENUNCIAS_PARA_OCULTAR = 3
 
 SessaoDep = Annotated[Session, Depends(obter_sessao)]
 AgoraDep = Annotated[datetime, Depends(obter_agora)]
 STATUS = ("pendente", "validada", "rejeitada")
 
 
-def _saida(o: Ocorrencia, moderador: bool = False) -> OcorrenciaOut:
+class Reacoes:
+    """Curtidas e denuncias por registro, contadas numa unica consulta."""
+
+    def __init__(self, s: Session, ids: list[int]) -> None:
+        self.curtidas: dict[int, int] = defaultdict(int)
+        self.motivos: dict[int, list[str]] = defaultdict(list)
+        if ids:
+            for r in s.scalars(
+                select(ReacaoOcorrencia).where(ReacaoOcorrencia.ocorrencia_id.in_(ids))
+            ):
+                if r.tipo == "curtida":
+                    self.curtidas[r.ocorrencia_id] += 1
+                else:
+                    self.motivos[r.ocorrencia_id].append(r.motivo or "outro")
+
+    def denuncias(self, id_: int) -> int:
+        return len(self.motivos[id_])
+
+
+def _saida(
+    o: Ocorrencia,
+    reacoes: Reacoes,
+    moderador: bool = False,
+    ocultar_conteudo: bool = False,
+) -> OcorrenciaOut:
+    """`ocultar_conteudo`: registro ainda nao conferido no mapa publico, sem texto nem foto."""
     return OcorrenciaOut(
         id=o.id,
         latitude=o.latitude,
         longitude=o.longitude,
         ocorreu_em=o.ocorreu_em,
         tipo_impacto=o.tipo_impacto,
-        descricao=o.descricao,
-        tem_foto=o.foto_path is not None,
+        descricao=None if ocultar_conteudo else o.descricao,
+        tem_foto=o.foto_path is not None and not ocultar_conteudo,
         status=o.status,
         contexto=o.contexto,
         criada_em=o.criada_em,
         moderado_por=o.moderado_por if moderador else None,
         moderado_em=o.moderado_em if moderador else None,
+        curtidas=reacoes.curtidas[o.id],
+        denuncias=reacoes.denuncias(o.id) if moderador else None,
+        motivos_denuncia=reacoes.motivos[o.id] if moderador else None,
     )
 
 
@@ -108,7 +144,8 @@ async def registrar(
         id=o.id,
         status=o.status,
         mensagem=(
-            "Recebemos o seu registro. Ele aparece no mapa depois que a Defesa Civil conferir."
+            "Recebemos o seu registro. Ele já aparece no mapa como aguardando conferência, "
+            "até a Defesa Civil conferir."
         ),
     )
 
@@ -120,19 +157,46 @@ def listar(
     usuario: Annotated[Usuario | None, Depends(usuario_opcional)],
     status: str = "validada",
     dias: Annotated[int, Query(ge=1, le=3650)] = 365,
+    horas: Annotated[int | None, Query(ge=1, le=87600)] = None,
+    com_pendentes: bool = False,
 ) -> list[OcorrenciaOut]:
-    """Publico: so validadas. Pendentes e rejeitadas exigem login de quem modera."""
+    """Publico: so validadas. Pendentes e rejeitadas exigem login de quem modera.
+
+    `com_pendentes` (so com status=validada) inclui no mapa os avisos ainda nao conferidos,
+    para sinalizar na hora; para o publico eles vao sem descricao e sem foto. Um pendente com
+    muitas denuncias sai do mapa publico ate a moderacao olhar. `horas` substitui `dias`.
+    """
     if status not in STATUS:
         raise HTTPException(422, "Status inválido.")
     if status != "validada" and usuario is None:
         raise HTTPException(401, "Entre para ver registros em análise.")
+    status_incluidos = (
+        ["validada", "pendente"] if com_pendentes and status == "validada" else [status]
+    )
     linhas = s.scalars(
         select(Ocorrencia)
-        .where(Ocorrencia.status == status, Ocorrencia.ocorreu_em >= agora - timedelta(days=dias))
+        .where(
+            Ocorrencia.status.in_(status_incluidos),
+            Ocorrencia.ocorreu_em
+            >= agora - (timedelta(hours=horas) if horas else timedelta(days=dias)),
+        )
         .order_by(Ocorrencia.ocorreu_em.desc())
         .limit(500)
-    )
-    return [_saida(o, moderador=usuario is not None) for o in linhas]
+    ).all()
+    reacoes = Reacoes(s, [o.id for o in linhas])
+    publico = usuario is None
+    return [
+        _saida(
+            o,
+            reacoes,
+            moderador=not publico,
+            ocultar_conteudo=o.status == "pendente" and publico,
+        )
+        for o in linhas
+        if not (
+            publico and o.status == "pendente" and reacoes.denuncias(o.id) >= DENUNCIAS_PARA_OCULTAR
+        )
+    ]
 
 
 def _obter(s: Session, id_: int) -> Ocorrencia:
@@ -195,7 +259,7 @@ def moderar(
     o.status, o.tipo_impacto = status_novo, tipo_novo
     o.moderado_por, o.moderado_em = moderador.nome, datetime.now(UTC)
     s.flush()
-    return _saida(o, moderador=True)
+    return _saida(o, Reacoes(s, [o.id]), moderador=True)
 
 
 @router.get("/{id_}/historico", response_model=list[ModeracaoOut])
@@ -222,3 +286,59 @@ def historico(
         )
         for m, u in linhas
     ]
+
+
+def _chave_do_aparelho(dispositivo: str) -> str:
+    """Hash do identificador do navegador: impede reacao repetida sem guardar quem e."""
+    sal = obter_configuracao().jwt_secret
+    return hashlib.sha256(f"{sal}:{dispositivo}".encode()).hexdigest()
+
+
+def _obter_visivel(s: Session, id_: int) -> Ocorrencia:
+    o = _obter(s, id_)
+    if o.status == "rejeitada":
+        raise HTTPException(404, "Registro não encontrado.")
+    return o
+
+
+@router.post("/{id_}/reacoes", response_model=ReacaoOut)
+def reagir(id_: int, dados: ReacaoIn, req: Request, s: SessaoDep, agora: AgoraDep) -> ReacaoOut:
+    """Curtir ("vi tambem") ou denunciar, sem login. Uma de cada por aparelho; repetir nao soma."""
+    exigir(limite_reacao, ip_do_cliente(req), agora)
+    o = _obter_visivel(s, id_)
+    if dados.tipo not in ("curtida", "denuncia"):
+        raise HTTPException(422, "Reação inválida.")
+    motivo = None
+    if dados.tipo == "denuncia":
+        if dados.motivo not in MOTIVOS_DENUNCIA:
+            raise HTTPException(422, "Escolha o motivo da denúncia.")
+        motivo = dados.motivo
+    chave = _chave_do_aparelho(dados.dispositivo)
+    existe = s.scalar(
+        select(ReacaoOcorrencia).where(
+            ReacaoOcorrencia.ocorrencia_id == o.id,
+            ReacaoOcorrencia.tipo == dados.tipo,
+            ReacaoOcorrencia.chave_hash == chave,
+        )
+    )
+    if existe is None:
+        s.add(
+            ReacaoOcorrencia(ocorrencia_id=o.id, tipo=dados.tipo, chave_hash=chave, motivo=motivo)
+        )
+        s.flush()
+    return ReacaoOut(curtidas=Reacoes(s, [o.id]).curtidas[o.id])
+
+
+@router.delete("/{id_}/reacoes", response_model=ReacaoOut)
+def desfazer(id_: int, dados: ReacaoIn, s: SessaoDep) -> ReacaoOut:
+    """Desfaz a curtida ou a denuncia deste aparelho."""
+    o = _obter_visivel(s, id_)
+    s.execute(
+        delete(ReacaoOcorrencia).where(
+            ReacaoOcorrencia.ocorrencia_id == o.id,
+            ReacaoOcorrencia.tipo == dados.tipo,
+            ReacaoOcorrencia.chave_hash == _chave_do_aparelho(dados.dispositivo),
+        )
+    )
+    s.flush()
+    return ReacaoOut(curtidas=Reacoes(s, [o.id]).curtidas[o.id])

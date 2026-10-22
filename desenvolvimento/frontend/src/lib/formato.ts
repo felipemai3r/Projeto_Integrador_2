@@ -4,10 +4,6 @@ const numero2 = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const numero1 = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
 const inteiro = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
 const hora = new Intl.DateTimeFormat('pt-BR', {
   hour: '2-digit',
@@ -23,7 +19,8 @@ const dataHora = new Intl.DateTimeFormat('pt-BR', {
 })
 
 export const formatarNivel = (m: number): string => numero2.format(m)
-export const formatarMm = (mm: number): string => numero1.format(mm)
+export const formatarMm = (mm: number): string => numero2.format(mm)
+export const formatarPercentual = (pct: number): string => inteiro.format(pct)
 export const formatarHora = (iso: string): string => hora.format(new Date(iso))
 export const formatarDataHora = (iso: string): string => dataHora.format(new Date(iso))
 

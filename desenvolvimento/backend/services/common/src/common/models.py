@@ -156,6 +156,23 @@ class Inscricao(Base):
     ativa: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
 
+class InscricaoEmail(Base):
+    """Aviso por e-mail. So recebe depois de confirmar pelo link (evita cadastrar terceiros).
+
+    Guarda so o hash do token: o token em si so existe nos links enviados ao proprio e-mail.
+    """
+
+    __tablename__ = "inscricao_email"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    email: Mapped[str] = mapped_column(Text, unique=True)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True)
+    estacao_id: Mapped[int | None] = mapped_column(ForeignKey("estacao.id"))
+    faixa_minima: Mapped[str] = mapped_column(Text)
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    confirmada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Ocorrencia(Base):
     __tablename__ = "ocorrencia"
 
@@ -255,3 +272,38 @@ class Notificacao(Base):
     status: Mapped[str] = mapped_column(Text)  # enviada | falha | expirada
     erro: Mapped[str | None] = mapped_column(Text)
     enviada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class NotificacaoEmail(Base):
+    """Resultado de cada envio de aviso por e-mail: auditoria e aviso de encerramento."""
+
+    __tablename__ = "notificacao_email"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    alerta_id: Mapped[int] = mapped_column(ForeignKey("alerta.id"))
+    inscricao_email_id: Mapped[int] = mapped_column(
+        ForeignKey("inscricao_email.id", ondelete="CASCADE")
+    )
+    tipo: Mapped[str] = mapped_column(Text)  # abertura | encerramento
+    status: Mapped[str] = mapped_column(Text)  # enviada | falha
+    erro: Mapped[str | None] = mapped_column(Text)
+    enviada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReacaoOcorrencia(Base):
+    """Curtida ("vi tambem") ou denuncia de um registro, uma por aparelho e tipo.
+
+    O aparelho e anonimo: guarda so o hash de um identificador gerado no navegador (RN06).
+    """
+
+    __tablename__ = "reacao_ocorrencia"
+    __table_args__ = (
+        UniqueConstraint("ocorrencia_id", "tipo", "chave_hash", name="uq_reacao_por_aparelho"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    ocorrencia_id: Mapped[int] = mapped_column(ForeignKey("ocorrencia.id", ondelete="CASCADE"))
+    tipo: Mapped[str] = mapped_column(Text)  # curtida | denuncia
+    chave_hash: Mapped[str] = mapped_column(Text)
+    motivo: Mapped[str | None] = mapped_column(Text)
+    criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

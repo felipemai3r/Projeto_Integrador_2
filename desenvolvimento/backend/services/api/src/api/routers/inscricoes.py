@@ -10,11 +10,12 @@ from sqlalchemy.orm import Session
 
 from api.deps import obter_agora, obter_sessao
 from api.limite import LimiteTaxa, exigir, ip_do_cliente
-from api.push import FAIXAS_VALIDAS
+from api.push import FAIXAS_VALIDAS, EnviadorWebPush
 from api.schemas import CancelamentoIn, ChavePublica, InscricaoIn
 
 router = APIRouter(tags=["avisos"])
 limite_inscricao = LimiteTaxa(20, timedelta(hours=1))
+limite_teste = LimiteTaxa(5, timedelta(hours=1))
 
 # O servidor envia para o endpoint informado pelo usuario. Aceitar qualquer URL abriria o servidor
 # para requisicoes a enderecos arbitrarios (SSRF). So os servicos de push dos navegadores passam.
@@ -90,3 +91,30 @@ def cancelar(dados: CancelamentoIn, s: Annotated[Session, Depends(obter_sessao)]
         s.delete(i)
         s.flush()
     return {"status": "cancelado"}
+
+
+@router.post("/inscricoes/teste")
+def testar(
+    dados: CancelamentoIn,
+    req: Request,
+    s: Annotated[Session, Depends(obter_sessao)],
+    agora: Annotated[object, Depends(obter_agora)],
+) -> dict[str, str]:
+    """Aviso de teste so para o proprio aparelho, que precisa ja estar inscrito."""
+    exigir(limite_teste, ip_do_cliente(req), agora)  # type: ignore[arg-type]
+    i = s.scalar(select(Inscricao).where(Inscricao.endpoint == dados.endpoint, Inscricao.ativa))
+    if i is None:
+        raise HTTPException(404, "Este aparelho não está inscrito nos avisos.")
+    r = EnviadorWebPush().enviar(
+        i,
+        {
+            "titulo": "Aviso de teste",
+            "corpo": "Os avisos estão funcionando neste aparelho. "
+            "Fonte oficial: Defesa Civil de Presidente Getúlio.",
+            "url": obter_configuracao().url_publica,
+            "tag": "teste",
+        },
+    )
+    if not r.ok:
+        raise HTTPException(502, "Não conseguimos entregar o aviso de teste agora.")
+    return {"status": "enviado"}

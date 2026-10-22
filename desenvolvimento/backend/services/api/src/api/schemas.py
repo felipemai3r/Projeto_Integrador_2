@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 EstadoDado = Literal["ok", "desatualizado", "indisponivel"]
 
@@ -128,6 +128,9 @@ class OcorrenciaOut(BaseModel):
     criada_em: datetime
     moderado_por: str | None = None
     moderado_em: datetime | None = None
+    curtidas: int = 0
+    denuncias: int | None = None  # so para quem modera
+    motivos_denuncia: list[str] | None = None  # so para quem modera
 
 
 class OcorrenciaCriada(BaseModel):
@@ -241,3 +244,31 @@ class SimulacaoIn(BaseModel):
     chuva_mm: dict[str, float]  # codigo da estacao -> mm no periodo
     janela_h: int = 6
     estacao: str = "DCSC-00043"
+
+
+class InscricaoEmailIn(BaseModel):
+    email: str = Field(max_length=254)
+    estacao: str | None = None  # codigo da estacao; None = todas as estacoes alvo
+    faixa_minima: str = "atencao"
+
+
+class TokenIn(BaseModel):
+    token: str = Field(max_length=200)
+
+
+class MensagemOut(BaseModel):
+    status: str
+    mensagem: str
+
+
+MOTIVOS_DENUNCIA = ("falso", "local_errado", "improprio", "outro")
+
+
+class ReacaoIn(BaseModel):
+    tipo: str  # curtida | denuncia
+    dispositivo: str = Field(min_length=16, max_length=100)
+    motivo: str | None = None  # obrigatorio na denuncia
+
+
+class ReacaoOut(BaseModel):
+    curtidas: int

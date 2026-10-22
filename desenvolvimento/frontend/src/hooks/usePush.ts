@@ -98,5 +98,23 @@ export function usePush() {
     }
   }, [])
 
-  return { situacao, erro, ocupado, inscrever, cancelar }
+  const testar = useCallback(async () => {
+    setErro(null)
+    setOcupado(true)
+    try {
+      const reg = await registro()
+      const sub = await reg?.pushManager.getSubscription()
+      if (!sub) {
+        setSituacao('nao-inscrito')
+        return
+      }
+      await api.testarPush(sub.endpoint)
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não conseguimos enviar o aviso de teste agora.')
+    } finally {
+      setOcupado(false)
+    }
+  }, [])
+
+  return { situacao, erro, ocupado, inscrever, cancelar, testar }
 }

@@ -16,6 +16,7 @@ from api.deps import obter_sessao
 from api.routers import (
     alertas,
     auth,
+    avisos_email,
     chuva,
     correlacao,
     estacoes,
@@ -55,6 +56,7 @@ api = APIRouter(prefix="/api")
 api.include_router(estacoes.router)
 api.include_router(alertas.router)
 api.include_router(auth.router)
+api.include_router(avisos_email.router)
 api.include_router(inscricoes.router)
 api.include_router(municipio.router)
 api.include_router(qualidade.router)

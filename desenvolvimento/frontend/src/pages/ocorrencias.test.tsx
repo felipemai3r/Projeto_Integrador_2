@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Mapa } from './Mapa'
 import { Moderacao } from './Moderacao'
 import { Registrar } from './Registrar'
 
@@ -11,6 +12,10 @@ import { Registrar } from './Registrar'
 vi.mock('../components/MapaBase', () => ({
   MapaBase: ({ children }: { children?: ReactNode }) => <div data-testid="mapa">{children}</div>,
   iconeDeMarcador: () => ({}),
+}))
+vi.mock('react-leaflet', () => ({
+  Marker: ({ children }: { children?: ReactNode }) => <div data-testid="marcador">{children}</div>,
+  Popup: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('../components/SeletorDePonto', () => ({
   SeletorDePonto: ({ onChange }: { onChange: (p: { lat: number; lon: number }) => void }) => (
@@ -35,6 +40,65 @@ const resposta = (corpo: unknown, status = 200) =>
 afterEach(() => {
   vi.unstubAllGlobals()
   sessionStorage.clear()
+})
+
+describe('Mapa', () => {
+  it('pede os avisos pendentes e sinaliza os que aguardam conferencia', async () => {
+    const base = {
+      latitude: -27.04,
+      longitude: -49.62,
+      ocorreu_em: '2026-10-22T10:00:00Z',
+      tipo_impacto: 'agua_calcada',
+      descricao: null,
+      tem_foto: false,
+      contexto: null,
+      criada_em: '2026-10-22T10:05:00Z',
+    }
+    const fetchFalso = vi.fn<(url: string) => Promise<Response>>(async () =>
+      resposta([
+        { ...base, id: 1, status: 'pendente' },
+        { ...base, id: 2, status: 'validada' },
+      ]),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    renderizar(<Mapa />)
+    await waitFor(() => expect(screen.getAllByTestId('marcador')).toHaveLength(2))
+    expect(fetchFalso.mock.calls[0]![0]).toContain('com_pendentes=true')
+    // um no popup do mapa e um na lista, so do aviso pendente
+    expect(screen.getAllByText('Aguardando conferência da Defesa Civil')).toHaveLength(2)
+  })
+})
+
+describe('Mapa: reacoes', () => {
+  it('curte uma vez e envia o identificador anonimo do aparelho', async () => {
+    const registro = {
+      id: 9,
+      latitude: -27.04,
+      longitude: -49.62,
+      ocorreu_em: '2026-10-22T10:00:00Z',
+      tipo_impacto: 'agua_calcada',
+      descricao: null,
+      tem_foto: false,
+      contexto: null,
+      criada_em: '2026-10-22T10:05:00Z',
+      status: 'validada',
+      curtidas: 0,
+    }
+    const fetchFalso = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
+      async (_url, init) =>
+        init?.method === 'POST' ? resposta({ curtidas: 1 }) : resposta([registro]),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    renderizar(<Mapa />)
+    const [botao] = await screen.findAllByRole('button', { name: /Curtir/ })
+    await userEvent.click(botao!)
+    const post = fetchFalso.mock.calls.find(([, init]) => init?.method === 'POST')!
+    expect(post[0]).toContain('/api/ocorrencias/9/reacoes')
+    const corpo = JSON.parse(post[1]!.body as string) as { tipo: string; dispositivo: string }
+    expect(corpo.tipo).toBe('curtida')
+    expect(corpo.dispositivo.length).toBeGreaterThanOrEqual(16)
+    expect(await screen.findAllByRole('button', { name: /Você curtiu/ })).not.toHaveLength(0)
+  })
 })
 
 describe('Registrar', () => {

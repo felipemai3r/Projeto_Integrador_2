@@ -5,6 +5,7 @@ dado suficiente). Sem ele, a resposta diz que esta indisponivel e por que, e o p
 continua. Nada aqui inventa numero.
 """
 
+import re
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -14,6 +15,7 @@ from modelo.dados import chuva_horaria, nivel_horario
 from modelo.features import HORIZONTES_H, NIVEL_VIZINHOS, PONTOS_CHUVA, montar_features
 from modelo.inferencia import aplicar_cenario, extrapola, prever_variacao_cm
 from modelo.registry import carregar_artefato, publicados, ultimos_treinos
+from modelo.treino import cm_br
 from sqlalchemy.orm import Session
 
 from api import consultas, risco
@@ -58,6 +60,8 @@ def _motivo_indisponivel(treino: Modelo | None) -> str:
             "O modelo ainda não foi treinado. Precisamos de mais dados para estimar com segurança."
         )
     motivo = (treino.metadados or {}).get("motivo", "")
+    # treinos antigos gravaram "45.2 cm": exibe sempre no formato brasileiro, com duas casas
+    motivo = re.sub(r"(\d+(?:\.\d+)?) cm", lambda m: f"{cm_br(float(m.group(1)))} cm", motivo)
     return f"A previsão ainda não está disponível. {motivo}".strip()
 
 

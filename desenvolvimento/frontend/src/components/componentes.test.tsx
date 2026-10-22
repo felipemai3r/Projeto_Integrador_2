@@ -114,7 +114,7 @@ describe('RainAccumulatedTable', () => {
     expect(screen.getByRole('rowheader', { name: /Dona Emma/ })).toHaveTextContent(
       '(desatualizado)',
     )
-    expect(screen.getByText('1,3')).toBeInTheDocument()
+    expect(screen.getByText('1,30')).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 })

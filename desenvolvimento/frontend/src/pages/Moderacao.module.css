@@ -92,3 +92,8 @@
   text-decoration: underline;
   cursor: pointer;
 }
+.denuncias {
+  margin: var(--fa-space-4) 0 0;
+  color: var(--fa-color-feedback-danger-content);
+  font-weight: 600;
+}

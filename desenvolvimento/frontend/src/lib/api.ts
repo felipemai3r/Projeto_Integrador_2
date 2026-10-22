@@ -16,6 +16,8 @@ export type PrevisaoOut = components['schemas']['PrevisaoOut']
 export type PrevisaoHorizonte = components['schemas']['PrevisaoHorizonte']
 export type ModeracaoOut = components['schemas']['ModeracaoOut']
 
+export type Mensagem = { status: string; mensagem: string }
+
 export class ErroApi extends Error {
   constructor(
     readonly status: number,
@@ -54,7 +56,20 @@ export const api = {
   correlacao: () => get<Correlacao[]>('/correlacao'),
   serie: (codigo: string, horas: number) => get<Serie>(`/estacoes/${codigo}/serie?horas=${horas}`),
   contorno: () => get<GeoJSON.FeatureCollection>('/municipio'),
-  ocorrencias: (dias: number) => get<OcorrenciaOut[]>(`/ocorrencias?dias=${dias}`),
+  ocorrencias: (horas: number) =>
+    get<OcorrenciaOut[]>(`/ocorrencias?horas=${horas}&com_pendentes=true`),
+  reagir: (id: number, corpo: { tipo: string; dispositivo: string; motivo?: string }) =>
+    pedir<{ curtidas: number }>(`/ocorrencias/${id}/reacoes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    }),
+  desfazerReacao: (id: number, corpo: { tipo: string; dispositivo: string }) =>
+    pedir<{ curtidas: number }>(`/ocorrencias/${id}/reacoes`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    }),
   registrarOcorrencia: (dados: FormData) =>
     pedir<{ id: number; status: string; mensagem: string }>('/ocorrencias', {
       method: 'POST',
@@ -108,6 +123,30 @@ export const api = {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint }),
+    }),
+  testarPush: (endpoint: string) =>
+    pedir<{ status: string }>('/inscricoes/teste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    }),
+  inscreverEmail: (corpo: { email: string; estacao: string | null; faixa_minima: string }) =>
+    pedir<Mensagem>('/inscricoes/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    }),
+  confirmarEmail: (token: string) =>
+    pedir<Mensagem>('/inscricoes/email/confirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }),
+  cancelarEmail: (token: string) =>
+    pedir<Mensagem>('/inscricoes/email/cancelar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
     }),
   fotoProtegida: async (token: string, id: number): Promise<string> => {
     const r = await fetch(`${BASE}/api/ocorrencias/${id}/foto`, {

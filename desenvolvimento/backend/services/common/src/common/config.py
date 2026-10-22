@@ -19,6 +19,13 @@ class Configuracao(BaseSettings):
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:equipe@exemplo.br"
     url_publica: str = "http://localhost:5173"
+    # avisos por e-mail; em desenvolvimento o compose aponta para o Mailpit (caixa local)
+    smtp_host: str = ""
+    smtp_porta: int = 587
+    smtp_usuario: str = ""
+    smtp_senha: str = ""
+    smtp_starttls: bool = True
+    email_remetente: str = "Rios de Presidente Getúlio <avisos@exemplo.br>"
     pasta_fotos: str = "/tmp/fotos-ocorrencias"
     pasta_artefatos: str = "/tmp/artefatos-modelo"
     limite_registros_hora: int = 5

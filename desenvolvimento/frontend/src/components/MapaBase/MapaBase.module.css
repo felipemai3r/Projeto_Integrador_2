@@ -1,4 +1,9 @@
 .mapa {
+  /* contexto de empilhamento proprio: os paineis do Leaflet (z-index 400 a 1000) ficam
+     contidos aqui e nao passam por cima do cabecalho fixo */
+  position: relative;
+  z-index: var(--fa-z-base);
+  isolation: isolate;
   border: 1px solid var(--fa-color-border-default);
   border-radius: var(--fa-shape-surface-md);
   overflow: hidden;
@@ -12,4 +17,20 @@
   .leaflet {
     height: 480px;
   }
+}
+/* popup do Leaflet com as cores do tema: no escuro o padrao (fundo branco) deixava o texto
+   claro ilegivel */
+.mapa :global(.leaflet-popup-content-wrapper),
+.mapa :global(.leaflet-popup-tip) {
+  background: var(--fa-color-surface-raised);
+  color: var(--fa-color-content-primary);
+  box-shadow: var(--fa-elevation-card-hover);
+}
+.mapa :global(.leaflet-popup-content) {
+  margin: var(--fa-space-12) var(--fa-space-16);
+  font: inherit;
+  line-height: 1.4;
+}
+.mapa :global(.leaflet-container a.leaflet-popup-close-button) {
+  color: var(--fa-color-content-secondary);
 }
