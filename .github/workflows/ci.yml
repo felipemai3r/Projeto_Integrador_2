@@ -53,4 +53,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp desenvolvimento/.env.example desenvolvimento/.env
+      # o compose exige JWT_SECRET; no CI so se constroi as imagens, entao vale um valor descartavel
+      - run: echo "JWT_SECRET=$(openssl rand -hex 32)" >> desenvolvimento/.env
       - run: docker compose -f desenvolvimento/docker-compose.yml build
