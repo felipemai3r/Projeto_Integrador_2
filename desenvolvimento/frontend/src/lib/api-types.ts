@@ -556,6 +556,18 @@ export interface components {
             };
         };
         /**
+         * ChuvaEstimada
+         * @description Ponto de chuva sem leitura em parte do periodo usado. As horas foram estimadas.
+         */
+        ChuvaEstimada: {
+            /** Codigo */
+            codigo: string;
+            /** Nome */
+            nome: string;
+            /** Horas */
+            horas: number;
+        };
+        /**
          * CorrelacaoOut
          * @description Um resultado da correlacao defasada (RF13). Exploratorio: leia `leitura`.
          */
@@ -875,6 +887,11 @@ export interface components {
             nivel_base_m: number | null;
             /** Horizontes */
             horizontes: components["schemas"]["PrevisaoHorizonte"][];
+            /**
+             * Chuva Estimada
+             * @default []
+             */
+            chuva_estimada: components["schemas"]["ChuvaEstimada"][];
             /**
              * Aviso
              * @default Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de Presidente Getúlio.

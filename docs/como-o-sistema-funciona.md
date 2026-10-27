@@ -255,12 +255,26 @@ Os valores são o RMSE do modelo, com o da persistência entre parênteses. A te
 
 1. O sistema pega os últimos 8 dias de leituras, agrega por hora e monta as variáveis.
 2. Usa a **última hora completa**, sem nenhuma variável desconhecida. Se ela tiver mais de **3 h**, a previsão fica indisponível: "Sem dados recentes o bastante para estimar agora".
+   - **Exceção, só aqui e nunca no treino:** se a chuva medida não basta para montar essa linha, o sistema tenta de novo **estimando as horas sem leitura de um ponto de chuva pela média dos outros pontos** (veja a seção 6.8). Só vale para chuva, nunca para o nível do rio.
 3. Para cada horizonte publicado:
    - **variação** = saída do modelo (cm);
    - **nível previsto** = nível atual + variação ÷ 100;
    - **incerteza (95%)** = ± 1,96 × σ, onde σ é o desvio dos erros na validação (ou o RMSE, se o desvio não estiver disponível);
    - **faixa prevista** = classificação do nível previsto pelos limites da seção 3.1.
 4. **Extrapolação:** o sistema confere se alguma variável de hoje está **fora da faixa vista no treino** (por exemplo, uma chuva maior que qualquer chuva do histórico). Se estiver, a previsão sai marcada, porque o modelo está "chutando" fora do que conhece.
+
+### 6.8 Chuva estimada quando um ponto fica sem leitura
+
+Às vezes a fonte (Defesa Civil) deixa um pluviômetro sem dados por muitas horas. Em 26 e 27/10, Vitor Meireles ficou 14 h sem leitura, e as janelas de 24, 48 e 72 h dele ficaram desconhecidas. Como o modelo não aceita variável desconhecida, a previsão e a simulação sumiam por dias.
+
+Para isso não acontecer, **na hora de estimar** (previsão e simulação) o sistema faz um segundo passo quando o primeiro falha:
+
+- cada hora sem leitura de um ponto recebe a **média dos outros pontos de chuva** que têm dado naquela mesma hora, e só se **pelo menos 2** outros pontos tiverem;
+- se um ponto precisaria de **mais de 24 h** estimadas nas últimas 168 h, ele não é tocado e a previsão continua indisponível;
+- o **nível do rio nunca é estimado**;
+- **o treino não usa isso.** No treino, hora sem leitura continua sendo "desconhecida", nunca zero e nunca inventada, para o modelo não aprender com chuva que ninguém mediu.
+
+A resposta da API traz `chuva_estimada` (ponto, nome e horas) e a tela Previsão mostra: "Sem leitura de chuva em Vitor Meireles por 14 h. Para essas horas usamos a média dos outros pontos medidos, por isso a previsão é menos precisa." Limite conhecido: chuva é local, e a média dos vizinhos pode estar longe do que de fato choveu naquele ponto. O aviso só aparece quando alguma hora estimada entrou nas janelas da linha usada.
 
 ---
 
@@ -345,19 +359,20 @@ Os textos usam linguagem simples, e a cor nunca vem sozinha: toda faixa tem íco
 11. **O modelo é linear e não físico.** A resposta a chuvas extremas é a parte menos confiável, e por isso existe o aviso de extrapolação.
 12. **A simulação supõe chuva uniforme na janela.** Uma tempestade concentrada em 1 h dentro de uma janela de 6 h é tratada como chuva constante.
 13. **Sem dado recente (mais de 3 h) não há previsão.** Uma falha na coleta também desliga a previsão até os dados voltarem.
+14. **Chuva faltando em um ponto é estimada pela média dos outros** (até 24 h, com pelo menos 2 pontos com dado), e a tela avisa. É um remendo para falhas da fonte: a previsão fica menos precisa e, acima do limite, volta a ficar indisponível (seção 6.8).
 
 ### Avisos e registros
 
-14. **Ninguém é avisado quando chega um registro novo.** Quem modera precisa abrir `/moderacao` por conta própria. Hoje existe só um usuário (admin).
-15. **O push só funciona no app publicado e instalado.** No iPhone é obrigatório adicionar à tela inicial.
-16. **O e-mail em desenvolvimento vai para o Mailpit.** O envio real exige configurar um SMTP.
-17. **Curtidas e denúncias são anônimas e por navegador.** Quem limpa os dados do navegador ou usa outro aparelho pode reagir de novo. O limite por IP (60 por hora) reduz, mas não elimina, a manipulação.
-18. **O limite de requisições é por instância da API.** Com várias instâncias, o limite efetivo é maior.
+15. **Ninguém é avisado quando chega um registro novo.** Quem modera precisa abrir `/moderacao` por conta própria. Hoje existe só um usuário (admin).
+16. **O push só funciona no app publicado e instalado.** No iPhone é obrigatório adicionar à tela inicial.
+17. **O e-mail em desenvolvimento vai para o Mailpit.** O envio real exige configurar um SMTP.
+18. **Curtidas e denúncias são anônimas e por navegador.** Quem limpa os dados do navegador ou usa outro aparelho pode reagir de novo. O limite por IP (60 por hora) reduz, mas não elimina, a manipulação.
+19. **O limite de requisições é por instância da API.** Com várias instâncias, o limite efetivo é maior.
 
 ### Operação
 
-19. **O repositório está no iCloud Drive.** Por isso não se usam *bind mounts* no Docker (eles travam o Docker Desktop), e o ambiente virtual do Python fica fora da pasta.
-20. **Testes de ponta a ponta e de acessibilidade (Playwright)** exigem `npx playwright install` antes de rodar.
+20. **O repositório está no iCloud Drive.** Por isso não se usam *bind mounts* no Docker (eles travam o Docker Desktop), e o ambiente virtual do Python fica fora da pasta.
+21. **Testes de ponta a ponta e de acessibilidade (Playwright)** exigem `npx playwright install` antes de rodar.
 
 ---
 

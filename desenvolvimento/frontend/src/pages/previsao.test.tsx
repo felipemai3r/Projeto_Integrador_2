@@ -120,4 +120,47 @@ describe('Previsao', () => {
     expect(screen.getByText(/Atenção \(cenário\)/)).toBeInTheDocument()
     expect(screen.getByText(/fora do que já foi observado/)).toBeInTheDocument()
   })
+
+  it('avisa quando a chuva de um ponto foi estimada pela media dos outros', async () => {
+    const h3 = horizonte(3, {
+      disponivel: true,
+      motivo: null,
+      nivel_m: 2.1,
+      incerteza_m: 0.2,
+      intervalo_m: [1.9, 2.3],
+      faixa: 'normal',
+    })
+    const chuva_estimada = [{ codigo: 'DCSC-00036', nome: 'PCD Vitor Meireles', horas: 14 }]
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        resposta({
+          ...base,
+          origem: url.includes('/simulacao') ? 'cenario' : 'operacional',
+          horizontes: [h3],
+          chuva_estimada,
+        }),
+      ),
+    )
+    renderizar()
+    const aviso = await screen.findByRole('status')
+    expect(aviso).toHaveTextContent('Sem leitura de chuva em Vitor Meireles por 14 h.')
+    expect(aviso).toHaveTextContent('usamos a média dos outros pontos medidos')
+    expect(aviso).toHaveTextContent('a previsão é menos precisa')
+    // o cenario simulado mostra o mesmo aviso
+    await userEvent.type(screen.getByLabelText(/Dona Emma/), '10')
+    await userEvent.click(screen.getByRole('button', { name: 'Simular' }))
+    await screen.findByText('Cenário hipotético. Não é uma previsão.')
+    expect(screen.getAllByText(/Sem leitura de chuva em Vitor Meireles/)).toHaveLength(2)
+  })
+
+  it('sem chuva estimada nao mostra o aviso', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => resposta({ ...base, horizontes: [horizonte(1)], chuva_estimada: [] })),
+    )
+    renderizar()
+    await screen.findByText('Previsão do nível')
+    expect(screen.queryByText(/Sem leitura de chuva/)).not.toBeInTheDocument()
+  })
 })

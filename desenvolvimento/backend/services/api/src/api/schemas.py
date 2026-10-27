@@ -229,12 +229,21 @@ class PrevisaoHorizonte(BaseModel):
     extrapolacao: list[str] = []
 
 
+class ChuvaEstimada(BaseModel):
+    """Ponto de chuva sem leitura em parte do periodo usado. As horas foram estimadas."""
+
+    codigo: str
+    nome: str
+    horas: int
+
+
 class PrevisaoOut(BaseModel):
     estacao: str
     origem: str  # operacional | cenario
     base_em: datetime | None
     nivel_base_m: float | None
     horizontes: list[PrevisaoHorizonte]
+    chuva_estimada: list[ChuvaEstimada] = []  # pontos cujas horas sem leitura foram estimadas
     aviso: str = (
         "Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de "
         "Presidente Getúlio."

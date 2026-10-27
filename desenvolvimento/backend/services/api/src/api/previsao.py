@@ -13,20 +13,46 @@ from common.enums import Faixa
 from common.models import Estacao, Modelo
 from modelo.dados import chuva_horaria, nivel_horario
 from modelo.features import HORIZONTES_H, NIVEL_VIZINHOS, PONTOS_CHUVA, montar_features
-from modelo.inferencia import aplicar_cenario, extrapola, prever_variacao_cm
+from modelo.inferencia import (
+    JANELA_IMPUTACAO_H,
+    aplicar_cenario,
+    extrapola,
+    imputar_chuva,
+    prever_variacao_cm,
+)
 from modelo.registry import carregar_artefato, publicados, ultimos_treinos
 from modelo.treino import cm_br
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from api import consultas, risco
-from api.schemas import PrevisaoHorizonte, PrevisaoOut, ResumoModelo
+from api.schemas import ChuvaEstimada, PrevisaoHorizonte, PrevisaoOut, ResumoModelo
 
 HISTORICO_H = 24 * 8  # cobre a janela de 168 h das variaveis
 IDADE_MAXIMA_H = 3  # a ultima linha completa nao pode ser mais velha que isso
 
 
-def linha_atual(s: Session, estacao: str, agora: datetime) -> tuple[pd.Series, pd.Timestamp] | None:
-    """Variaveis da ultima hora completa, ou None se os dados nao permitem (lacuna, falha)."""
+def _ultima_linha(
+    chuva: dict[str, pd.Series], nivel: dict[str, pd.Series], estacao: str, agora: datetime
+) -> tuple[pd.Series, pd.Timestamp] | None:
+    X = montar_features(chuva, nivel, alvo=estacao).dropna()
+    if X.empty:
+        return None
+    t = X.index[-1]
+    if pd.Timestamp(agora) - t > pd.Timedelta(hours=IDADE_MAXIMA_H):
+        return None
+    return X.iloc[-1], t
+
+
+def linha_atual(
+    s: Session, estacao: str, agora: datetime
+) -> tuple[pd.Series, pd.Timestamp, dict[str, int]] | None:
+    """Variaveis da ultima hora completa, ou None se os dados nao permitem (lacuna, falha).
+
+    Se a chuva medida nao basta, tenta de novo estimando as horas sem leitura de um ponto pela
+    media dos outros (`imputar_chuva`, so na inferencia). O terceiro item diz, por ponto, quantas
+    horas estimadas entraram nas janelas dessa linha; vazio quando tudo foi medido.
+    """
     fim = agora.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
     ini = fim - timedelta(hours=HISTORICO_H)
     chuva = {c: chuva_horaria(s, c, ini, fim) for c in PONTOS_CHUVA}
@@ -35,13 +61,33 @@ def linha_atual(s: Session, estacao: str, agora: datetime) -> tuple[pd.Series, p
     nivel = {c: v for c, v in nivel.items() if not v.empty}
     if estacao not in nivel:
         return None
-    X = montar_features(chuva, nivel, alvo=estacao).dropna()
-    if X.empty:
+    medida = _ultima_linha(chuva, nivel, estacao, agora)
+    if medida is not None:
+        return (*medida, {})
+    estimada_chuva, preenchidas = imputar_chuva(chuva)
+    if not preenchidas:
         return None
-    t = X.index[-1]
-    if pd.Timestamp(agora) - t > pd.Timedelta(hours=IDADE_MAXIMA_H):
+    estimada = _ultima_linha(estimada_chuva, nivel, estacao, agora)
+    if estimada is None:
         return None
-    return X.iloc[-1], t
+    linha, t = estimada
+    janela = pd.Timedelta(hours=JANELA_IMPUTACAO_H - 1)
+    usadas = {c: int(((h >= t - janela) & (h <= t)).sum()) for c, h in preenchidas.items()}
+    return linha, t, {c: n for c, n in usadas.items() if n > 0}
+
+
+def _chuva_estimada(s: Session, horas_por_ponto: dict[str, int]) -> list[ChuvaEstimada]:
+    if not horas_por_ponto:
+        return []
+    nomes = dict(
+        s.execute(
+            select(Estacao.codigo, Estacao.nome).where(Estacao.codigo.in_(horas_por_ponto))
+        ).all()
+    )
+    return [
+        ChuvaEstimada(codigo=c, nome=nomes.get(c, c), horas=n)
+        for c, n in sorted(horas_por_ponto.items())
+    ]
 
 
 def _resumo(m: Modelo) -> ResumoModelo:
@@ -98,7 +144,7 @@ def prever(
                 )
             )
             continue
-        linha, t = base
+        linha, t, _ = base
         entrada = aplicar_cenario(linha, chuva_mm, janela_h) if chuva_mm is not None else linha
         artefato = carregar_artefato(modelo.caminho_artefato)
         delta_cm = prever_variacao_cm(artefato, entrada)
@@ -118,10 +164,13 @@ def prever(
                 extrapolacao=extrapola(artefato, entrada),
             )
         )
+    # so avisa se alguma estimativa de fato sai: sem horizonte disponivel, nada usou a chuva
+    estimada = base[2] if base and any(h.disponivel for h in horizontes) else {}
     return PrevisaoOut(
         estacao=est.codigo,
         origem=origem,
         base_em=base[1].to_pydatetime() if base else None,
         nivel_base_m=round(float(base[0]["nivel_m"]), 2) if base else None,
         horizontes=horizontes,
+        chuva_estimada=_chuva_estimada(s, estimada),
     )

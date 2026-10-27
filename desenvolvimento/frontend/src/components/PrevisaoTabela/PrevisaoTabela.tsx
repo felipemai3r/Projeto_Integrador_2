@@ -2,6 +2,7 @@ import { Clock, TriangleAlert } from 'lucide-react'
 import type { PrevisaoHorizonte, PrevisaoOut } from '../../lib/api'
 import { formatarDataHora, formatarNivel } from '../../lib/formato'
 import { ehFaixa, type Origem } from '../../lib/risco'
+import { ChuvaEstimadaNotice } from '../ChuvaEstimadaNotice'
 import { RiskBadge } from '../RiskBadge'
 import styles from './PrevisaoTabela.module.css'
 
@@ -40,14 +41,20 @@ function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
   )
 }
 
-/** Previsao por horizonte (CDU02/CDU03). Onde nao ha modelo publicado, diz por que (RN07). */
+/**
+ * Previsao por horizonte (CDU02/CDU03). Onde nao ha modelo publicado, diz por que (RN07).
+ * Mostra tambem o aviso de chuva estimada, na previsao e no cenario.
+ */
 export function PrevisaoTabela({ previsao }: { previsao: PrevisaoOut }) {
   const origem: Origem = previsao.origem === 'cenario' ? 'cenario' : 'previsto'
   return (
-    <ul className={styles.lista}>
-      {previsao.horizontes.map((h) => (
-        <Linha key={h.horizonte_h} h={h} origem={origem} />
-      ))}
-    </ul>
+    <>
+      <ChuvaEstimadaNotice pontos={previsao.chuva_estimada ?? []} />
+      <ul className={styles.lista}>
+        {previsao.horizontes.map((h) => (
+          <Linha key={h.horizonte_h} h={h} origem={origem} />
+        ))}
+      </ul>
+    </>
   )
 }
