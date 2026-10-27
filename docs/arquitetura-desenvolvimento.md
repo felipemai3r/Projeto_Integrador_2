@@ -178,7 +178,7 @@ CREATE TABLE previsao_chuva (
 CREATE TABLE limiar (
     id              SERIAL PRIMARY KEY,
     estacao_id      INTEGER NOT NULL REFERENCES estacao(id),
-    faixa           TEXT NOT NULL,            -- observacao | atencao | alerta
+    faixa           TEXT NOT NULL,            -- atencao | alerta | alerta_alto | extremo
     valor_m         DOUBLE PRECISION NOT NULL,
     vigente_desde   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     autor           TEXT NOT NULL,

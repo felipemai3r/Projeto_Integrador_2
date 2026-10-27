@@ -10,16 +10,9 @@ import { Skeleton } from '../components/Skeleton'
 import { api, ErroApi, type OcorrenciaOut } from '../lib/api'
 import { idDoDispositivo, jaReagi, marcarReacao, type TipoReacao } from '../lib/dispositivo'
 import { formatarDataHora, formatarNivel } from '../lib/formato'
+import { PERIODO_PADRAO, PERIODOS } from '../lib/periodos'
 import { IMPACTOS, rotuloDoImpacto, type TipoImpacto } from '../lib/impacto'
 import styles from './Mapa.module.css'
-
-/** Periodos em horas: o recente mostra a situacao agora, o longo mostra onde costuma alagar. */
-const PERIODOS = [
-  { valor: 6, rotulo: '6 horas' },
-  { valor: 24, rotulo: '1 dia' },
-  { valor: 24 * 30, rotulo: '30 dias' },
-  { valor: 24 * 365, rotulo: '1 ano' },
-]
 
 const MOTIVOS = [
   { valor: 'falso', rotulo: 'Não alagou / informação falsa' },
@@ -172,7 +165,7 @@ function Detalhes({ o }: { o: OcorrenciaOut }) {
 }
 
 export function Mapa() {
-  const [horas, setHoras] = useState(24 * 30)
+  const [horas, setHoras] = useState(PERIODO_PADRAO)
   const { data, isPending, isError } = useQuery({
     queryKey: ['ocorrencias', horas],
     queryFn: () => api.ocorrencias(horas),

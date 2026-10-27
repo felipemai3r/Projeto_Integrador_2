@@ -34,7 +34,7 @@ Tokens **semânticos**, os que você consome. Vêm prontos ao importar `assets/f
 `action-primary` #055BBD · `action-hover` #064893 · `action-pressed` #063265 · `action-on` #FFFFFF (texto sobre ação) · `action-subtle` #D6E7FA · `action-surface` #EDF4FD · `action-disabled` #C9D0D9
 
 ### Destaque de marca (laranja Sinal)
-`accent` #F68128 · `accent-hover` #FAA361 · `accent-pressed` #D5630B · `accent-on` #141F2E (texto escuro sobre o laranja). **Uso pontual, nunca risco.**
+`accent` #F68128 · `accent-hover` #FAA361 · `accent-pressed` #D5630B · `accent-on` #141F2E. **Só assinatura da marca (filete do cabeçalho).** Nenhum botão ou dado usa: o laranja de dado é a faixa de risco Alerta (Chama).
 
 ### Feedback de interface
 Famílias `info`, `success`, `warning`, `danger`, cada uma com `-surface`, `-border`, `-content`. Não são faixas de risco.
@@ -49,14 +49,15 @@ Famílias `info`, `success`, `warning`, `danger`, cada uma com `-surface`, `-bor
 
 ## Risco (`--fa-risk-*`)
 
-Faixas: `normal` · `observacao` · `atencao` · `alerta`. Estados de dado: `desatualizado` · `indisponivel`. Cada uma com 5 tokens.
+Faixas (escala da Defesa Civil de SC): `normal` · `atencao` · `alerta` · `alerta-alto` · `extremo`. Estados de dado: `desatualizado` · `indisponivel`. Cada uma com 5 tokens.
 
 | Faixa | `-solid` | `-on-solid` | `-surface` | `-border` | `-content` |
 |---|---|---|---|---|---|
 | normal | #188644 | #FFFFFF | #DDF3E6 | #188644 | #095327 |
-| observacao | #036C8C | #FFFFFF | #D8F0F8 | #036C8C | #045067 |
 | atencao | #F9C824 | #141F2E | #FEF3CD | #8F6D00 | #664E00 |
-| alerta | #B4190E | #FFFFFF | #FDD6D3 | #B4190E | #680903 |
+| alerta | #E85A0C | #141F2E | #FFDFCB | #BF4308 | #6B2403 |
+| alerta-alto | #B4190E | #FFFFFF | #FDD6D3 | #B4190E | #680903 |
+| extremo | #6A2799 | #FFFFFF | #EADCF8 | #6A2799 | #3C1558 |
 | desatualizado | #515F70 | #FFFFFF | #E3E7ED | #677689 | #273445 |
 | indisponivel | #3D4A5C | #FFFFFF | #F3F5F7 | #677689 | #3D4A5C |
 

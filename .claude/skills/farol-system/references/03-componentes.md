@@ -6,7 +6,7 @@ Status: **contrato definido**, implementação acontece nas etapas do [plano de 
 
 Tipos compartilhados:
 ```ts
-type Faixa = 'normal' | 'observacao' | 'atencao' | 'alerta'
+type Faixa = 'normal' | 'atencao' | 'alerta' | 'alerta_alto' | 'extremo'
 type EstadoDado = 'ok' | 'desatualizado' | 'indisponivel'
 type Origem = 'observado' | 'previsto' | 'cenario'
 ```
@@ -45,15 +45,15 @@ Conteúdo, nesta ordem: nome do curso d'água · `RiskBadge` · nível em `dado-
 Estado `desatualizado`: o nível continua visível, com `StaleNotice` no topo e `RiskBadge` em cinza. Estado `indisponivel`: sem número, mensagem "Sem leitura desta estação" (CDU01 E2). Superfície `surface-md`, borda esquerda de 4px na cor `-border` da faixa.
 
 ### LevelGauge
-Régua vertical (ou horizontal em `compact`) do nível do rio com os três limiares (RN01) e o marcador atual.
+Régua vertical (ou horizontal em `compact`) do nível do rio com os limiares (RN01; o `extremo` só entra quando houver cota) e o marcador atual.
 
-Props: `nivelM`, `limiares: { observacao, atencao, alerta }`, `maxM`, `orientacao`. Faixas pintadas com `-surface` e linhas de limiar com `-border` e rótulo em metros ("4,50 m"). Marcador com seta e valor. Alternativa em texto obrigatória (`role="img"` + `aria-label`: "Nível 4,62 metros, entre atenção e alerta").
+Props: `nivelM`, `limiares: { atencao, alerta, alerta_alto, extremo? }`, `maxM`, `orientacao`. Faixas pintadas com `-solid` e linhas de limiar com `-border` e rótulo em metros ("4,50 m"). Marcador com seta e valor. Alternativa em texto obrigatória (`role="img"` + `aria-label`: "Nível 4,62 metros, faixa alerta").
 
 ### TrendIndicator
 Tendência do nível: ícone + texto + taxa. `subindo` (`trending-up`), `estavel` (`minus`), `descendo` (`trending-down`). Texto: "Subindo 12 cm por hora". Sinal de aceleração opcional ("e acelerando"). Nunca depende só da seta.
 
 ### RainAccumulatedTable
-Chuva acumulada por ponto de influência nas janelas 1h, 3h, 6h, 12h, 24h, 48h, 72h (RF17). Tabela semântica (`<table>`), colunas de janela, números `.fa-num` alinhados à direita. Destaca em `observacao`/`atencao` quando passa dos limiares de chuva configurados. No celular vira lista de cartões, um por ponto.
+Chuva acumulada por ponto de influência nas janelas 1h, 3h, 6h, 12h, 24h, 48h, 72h (RF17). Tabela semântica (`<table>`), colunas de janela, números `.fa-num` alinhados à direita. Destaca em `atencao`/`alerta` quando passa dos limiares de chuva configurados. No celular vira lista de cartões, um por ponto.
 
 ### SeriesChart
 Gráfico de série temporal (Recharts) para nível e previsão (RF18, RF19).
@@ -67,7 +67,7 @@ Linha de proveniência: "Fonte: Defesa Civil de SC · estação DCSC-00043 · me
 Aviso de dado desatualizado (RN04). `role="status"`. Texto: "Dado desatualizado. Última leitura boa às 13:10. Não é possível confirmar a situação agora." Cores `--fa-risk-desatualizado-*`. Nunca some sozinho.
 
 ### AlertBanner
-Faixa de alerta vigente, fixa no topo, `--fa-z-emergency`. Mostra faixa, estação, origem (`observado` ou `previsto`), horário e link "Ver situação". Usa `-solid` da faixa. `role="alert"` apenas na primeira renderização; atualizações via `role="status"`. Não pisca. Pode ser dispensado só para faixas `observacao`; `atencao` e `alerta` permanecem enquanto vigentes.
+Faixa de alerta vigente, fixa no topo, `--fa-z-emergency`. Mostra faixa, estação, origem (`observado` ou `previsto`), horário e link "Ver situação". Usa `-solid` da faixa. `role="alert"` apenas na primeira renderização; atualizações via `role="status"`. Não pisca. Pode ser dispensado só na faixa `atencao`; `alerta`, `alerta_alto` e `extremo` permanecem enquanto vigentes (`role="alert"` nas duas últimas).
 
 ### OfficialNotice
 Rodapé de aviso (RN09, RF33): "Estimativa de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio." Obrigatório em Painel, Previsão e Simulação e em todo alerta/push. `info-surface`, ícone `info`.
@@ -90,7 +90,7 @@ Densidade maior permitida (única exceção ao modo arejado), mantendo alvo de t
 
 | Componente | Notas de contrato |
 |---|---|
-| `Button` | `variant` `primary`\|`secondary`\|`ghost`; `tone` `action`\|`danger`; `size` `md`(44px)\|`lg`(48px, raio 14); `loading`, `block`, `leading`/`trailing`. `accent` (laranja, texto escuro) permitido **uma vez por tela** |
+| `Button` | `variant` `primary`\|`secondary`\|`ghost`; `tone` `action`\|`danger`; `size` `md`(44px)\|`lg`(48px, raio 14); `loading`, `block`, `leading`/`trailing`. Chamada principal da tela: `size` `lg` em azul de ação (uma por tela). Não existe botão laranja |
 | `IconButton` | `label` obrigatório (`aria-label`); 44×44 mínimo |
 | `Field` + `Input` / `Textarea` / `Select` | `label` visível sempre (placeholder não é rótulo), `hint`, `error` (texto + ícone, `role="alert"`), `required`. Altura 44px, borda `border-strong` |
 | `Checkbox`, `Radio`, `Switch` | Área clicável de 44px incluindo o rótulo |
@@ -101,10 +101,10 @@ Densidade maior permitida (única exceção ao modo arejado), mantendo alvo de t
 | `Tooltip` | Só complemento; nada essencial dentro dele (não existe hover no celular) |
 | `Skeleton` | Cor `surface-raised`, sem shimmer animado |
 | `Icon` | Wrapper do Lucide com `size` 16/20/24/40 e `label` opcional |
-| `Header` | Faixa de marca: fundo `surface-brand`, filete inferior laranja `brand-sinal` de 4px, nome do sistema, alternador de tema |
+| `Header` | Faixa de marca: fundo `surface-brand`, filete inferior `brand-sinal` (único uso do laranja da marca) de 4px, nome do sistema, alternador de tema |
 | `Text` | `variant` das escalas dado/titulo/texto/rotulo; `as` para a tag semântica correta |
 
 ## Regras de composição
 - Um componente de domínio nunca recebe cor por prop: recebe `faixa`/`estado` e resolve internamente pelos tokens.
 - Nenhum componente importa `--fa-prim-*`.
-- Todo componente tem story/teste cobrindo: 4 faixas, `desatualizado`, `indisponivel`, modo noite, 360px.
+- Todo componente tem story/teste cobrindo: 5 faixas, `desatualizado`, `indisponivel`, modo noite, 360px.

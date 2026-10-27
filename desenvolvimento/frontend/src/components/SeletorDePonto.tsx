@@ -5,7 +5,7 @@ export type Ponto = { lat: number; lon: number }
 
 const ICONE = iconeDeMarcador(
   'fa-marcador-selecao',
-  '<span style="display:block;width:20px;height:20px;border-radius:50%;background:var(--fa-color-accent);border:3px solid var(--fa-color-content-primary)"></span>',
+  '<span style="display:block;width:20px;height:20px;border-radius:50%;background:var(--fa-color-action-primary);border:3px solid var(--fa-color-content-primary)"></span>',
 )
 
 /** Toque no mapa escolhe o ponto do alagamento. */

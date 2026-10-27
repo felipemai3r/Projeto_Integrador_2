@@ -1,13 +1,14 @@
 """Classificacao de risco e tendencia do nivel. Funcoes puras, sem banco (RF09, RF10, RN01).
 
 Faixa: a mais grave cujo limiar o nivel atingiu (>=). Abaixo de todos os limiares e `normal`.
+Faixa sem limiar cadastrado (hoje, `extremo`) nunca e atingida.
 """
 
 from datetime import datetime, timedelta
 
 from common.enums import Faixa
 
-ORDEM = [Faixa.NORMAL, Faixa.OBSERVACAO, Faixa.ATENCAO, Faixa.ALERTA]
+ORDEM = [Faixa.NORMAL, Faixa.ATENCAO, Faixa.ALERTA, Faixa.ALERTA_ALTO, Faixa.EXTREMO]
 TOLERANCIA_PONTO = timedelta(minutes=7)
 LIMITE_ESTAVEL_CM_H = 2.0  # variacao menor que isso em 1 h e considerada estavel
 

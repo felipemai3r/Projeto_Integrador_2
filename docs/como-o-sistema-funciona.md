@@ -89,14 +89,15 @@ Uma estação cuja última leitura tem mais de **30 minutos** aparece como "desa
 
 ### 3.1 Faixas
 
-Cada estação com nível tem até três limites. A faixa é a mais grave cujo limite o nível atingiu:
+Cada estação com nível tem até quatro limites (hoje três, porque a cota do risco extremo ainda não foi cadastrada). A faixa é a mais grave cujo limite o nível atingiu:
 
 | Faixa | Rio dos Índios | Ribeirão Revólver |
 |---|---|---|
 | Normal | abaixo de 4,00 m | abaixo de 2,50 m |
-| Observação | a partir de 4,00 m | a partir de 2,50 m |
-| Atenção | a partir de 4,50 m | a partir de 3,00 m |
-| Alerta | a partir de 5,50 m | a partir de 3,50 m |
+| Atenção (amarelo) | a partir de 4,00 m | a partir de 2,50 m |
+| Alerta (laranja) | a partir de 4,50 m | a partir de 3,00 m |
+| Alerta alto (vermelho) | a partir de 5,50 m | a partir de 3,50 m |
+| Aja imediatamente, risco extremo (roxo) | sem cota cadastrada | sem cota cadastrada |
 
 Os limites vêm do painel municipal e ainda **aguardam confirmação oficial** (PE05). Ibirama e José Boiteux **não têm limites**, porque nenhuma fonte os fornece, e por isso aparecem sem faixa.
 
@@ -122,7 +123,7 @@ Roda dentro da API, com uma trava no banco para que só uma instância avalie po
 ### 4.1 Notificação no celular (Web Push)
 
 - **Inscrição:** não precisa de cadastro. O navegador gera uma inscrição, e o servidor guarda só o endereço técnico de entrega e as chaves.
-- **Escolhas da pessoa:** o rio (Índios ou todos) e a faixa mínima (Observação, Atenção ou Alerta).
+- **Escolhas da pessoa:** o rio (Índios ou todos) e a faixa mínima (Atenção, Alerta, Alerta alto ou risco extremo).
 - **Requisitos:** só funciona no app publicado, que tem *service worker*. No iPhone, só depois de "Adicionar à Tela de Início".
 - **Teste:** o botão "Enviar aviso de teste" manda uma notificação apenas para o próprio aparelho.
 - **Inscrição morta:** se o serviço de push responder 404 ou 410, a pessoa desinstalou ou revogou, e a inscrição é desativada.

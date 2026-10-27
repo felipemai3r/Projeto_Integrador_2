@@ -20,10 +20,6 @@
   background: var(--fa-risk-normal-solid);
   color: var(--fa-risk-normal-on-solid);
 }
-.selo[data-faixa='observacao'] {
-  background: var(--fa-risk-observacao-solid);
-  color: var(--fa-risk-observacao-on-solid);
-}
 .selo[data-faixa='atencao'] {
   background: var(--fa-risk-atencao-solid);
   color: var(--fa-risk-atencao-on-solid);
@@ -31,6 +27,14 @@
 .selo[data-faixa='alerta'] {
   background: var(--fa-risk-alerta-solid);
   color: var(--fa-risk-alerta-on-solid);
+}
+.selo[data-faixa='alerta_alto'] {
+  background: var(--fa-risk-alerta-alto-solid);
+  color: var(--fa-risk-alerta-alto-on-solid);
+}
+.selo[data-faixa='extremo'] {
+  background: var(--fa-risk-extremo-solid);
+  color: var(--fa-risk-extremo-on-solid);
 }
 .selo[data-faixa='desatualizado'] {
   background: var(--fa-risk-desatualizado-solid);

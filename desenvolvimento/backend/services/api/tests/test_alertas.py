@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from api.alertas import Transicao, avaliar_todas, decidir, faixa_vigente
 
 AGORA = datetime(2026, 10, 12, 20, 0, tzinfo=UTC)
-LIM = {Faixa.OBSERVACAO: 4.0, Faixa.ATENCAO: 4.5, Faixa.ALERTA: 5.5}
+LIM = {Faixa.ATENCAO: 4.0, Faixa.ALERTA: 4.5, Faixa.ALERTA_ALTO: 5.5}
 LIMITE = timedelta(minutes=30)
 
 
@@ -21,21 +21,23 @@ def serie(*niveis: float, idade_min: int = 0) -> list[tuple[datetime, float]]:
 
 def test_sobe_de_normal_para_atencao() -> None:
     t = decidir(Faixa.NORMAL, serie(4.62, 4.4, 4.0), LIM, AGORA, LIMITE)
-    assert t == Transicao("escala", Faixa.NORMAL, Faixa.ATENCAO)
+    assert t == Transicao("escala", Faixa.NORMAL, Faixa.ALERTA)
 
 
 def test_sobe_direto_para_alerta() -> None:
-    t = decidir(Faixa.OBSERVACAO, serie(5.6), LIM, AGORA, LIMITE)
-    assert t == Transicao("escala", Faixa.OBSERVACAO, Faixa.ALERTA)
+    t = decidir(Faixa.ATENCAO, serie(5.6), LIM, AGORA, LIMITE)
+    assert t == Transicao("escala", Faixa.ATENCAO, Faixa.ALERTA_ALTO)
 
 
 def test_permanecer_na_mesma_faixa_nao_gera_alerta() -> None:
-    assert decidir(Faixa.ATENCAO, serie(4.7, 4.6, 4.55), LIM, AGORA, LIMITE) is None
+    assert decidir(Faixa.ALERTA, serie(4.7, 4.6, 4.55), LIM, AGORA, LIMITE) is None
 
 
 def test_dado_desatualizado_nao_dispara_alerta_nem_encerra() -> None:
     assert decidir(Faixa.NORMAL, serie(5.9, idade_min=90), LIM, AGORA, LIMITE) is None
-    assert decidir(Faixa.ALERTA, serie(1.0, 1.0, 1.0, idade_min=90), LIM, AGORA, LIMITE) is None
+    assert (
+        decidir(Faixa.ALERTA_ALTO, serie(1.0, 1.0, 1.0, idade_min=90), LIM, AGORA, LIMITE) is None
+    )
 
 
 def test_sem_leitura_ou_sem_limiar_nao_decide() -> None:
@@ -44,28 +46,28 @@ def test_sem_leitura_ou_sem_limiar_nao_decide() -> None:
 
 
 def test_histerese_uma_leitura_baixa_nao_desce_a_faixa() -> None:
-    # estava em alerta; so a leitura mais recente caiu: ainda nao confirma
-    assert decidir(Faixa.ALERTA, serie(4.6, 5.7, 5.8), LIM, AGORA, LIMITE) is None
+    # estava em alerta alto; so a leitura mais recente caiu: ainda nao confirma
+    assert decidir(Faixa.ALERTA_ALTO, serie(4.6, 5.7, 5.8), LIM, AGORA, LIMITE) is None
 
 
 def test_histerese_tres_leituras_baixas_descem_para_a_mais_alta_delas() -> None:
-    t = decidir(Faixa.ALERTA, serie(4.4, 4.6, 4.55), LIM, AGORA, LIMITE)
-    assert t == Transicao("desce", Faixa.ALERTA, Faixa.ATENCAO)  # a mais alta das 3 e atencao
+    t = decidir(Faixa.ALERTA_ALTO, serie(4.4, 4.6, 4.55), LIM, AGORA, LIMITE)
+    assert t == Transicao("desce", Faixa.ALERTA_ALTO, Faixa.ALERTA)  # a mais alta das 3 e alerta
 
 
 def test_histerese_poucas_leituras_nao_confirmam() -> None:
-    assert decidir(Faixa.ALERTA, serie(3.0, 3.0), LIM, AGORA, LIMITE) is None
+    assert decidir(Faixa.ALERTA_ALTO, serie(3.0, 3.0), LIM, AGORA, LIMITE) is None
 
 
 def test_oscilacao_em_torno_do_limiar_nao_entra_e_sai() -> None:
-    # vigente atencao (4,50); nivel balanca entre 4,49 e 4,51
-    assert decidir(Faixa.ATENCAO, serie(4.49, 4.51, 4.49), LIM, AGORA, LIMITE) is None
-    assert decidir(Faixa.ATENCAO, serie(4.51, 4.49, 4.51), LIM, AGORA, LIMITE) is None
+    # vigente alerta (4,50); nivel balanca entre 4,49 e 4,51
+    assert decidir(Faixa.ALERTA, serie(4.49, 4.51, 4.49), LIM, AGORA, LIMITE) is None
+    assert decidir(Faixa.ALERTA, serie(4.51, 4.49, 4.51), LIM, AGORA, LIMITE) is None
 
 
 def test_volta_ao_normal_depois_de_tres_leituras() -> None:
-    t = decidir(Faixa.OBSERVACAO, serie(3.5, 3.6, 3.7), LIM, AGORA, LIMITE)
-    assert t == Transicao("desce", Faixa.OBSERVACAO, Faixa.NORMAL)
+    t = decidir(Faixa.ATENCAO, serie(3.5, 3.6, 3.7), LIM, AGORA, LIMITE)
+    assert t == Transicao("desce", Faixa.ATENCAO, Faixa.NORMAL)
 
 
 # ---------- persistencia ----------
@@ -103,16 +105,16 @@ def _id(s: Session, codigo: str) -> int:
 
 def test_ciclo_completo_subida_descida_e_normal(base: Session) -> None:
     s = base
-    # 1) o rio sobe para atencao: abre alerta
+    # 1) o rio sobe para alerta: abre alerta
     _grava(s, "DCSC-00043", [3.0, 3.5, 4.62], AGORA)
     feitas = avaliar_todas(s, AGORA, LIMITE)
     s.commit()
-    assert [(t.tipo, t.para) for _, t, _ in feitas] == [("escala", Faixa.ATENCAO)]
-    assert faixa_vigente(s, _id(s, "DCSC-00043")) == Faixa.ATENCAO
+    assert [(t.tipo, t.para) for _, t, _ in feitas] == [("escala", Faixa.ALERTA)]
+    assert faixa_vigente(s, _id(s, "DCSC-00043")) == Faixa.ALERTA
     aberto = s.scalars(select(Alerta).where(Alerta.encerrado_em.is_(None))).one()
     assert (aberto.faixa_anterior, aberto.faixa_nova, aberto.origem) == (
         "normal",
-        "atencao",
+        "alerta",
         "observado",
     )
 
@@ -121,13 +123,13 @@ def test_ciclo_completo_subida_descida_e_normal(base: Session) -> None:
     s.commit()
     assert s.scalars(select(Alerta)).all().__len__() == 1
 
-    # 3) sobe para alerta: fecha o anterior e abre outro
+    # 3) sobe para alerta alto: fecha o anterior e abre outro
     depois = AGORA + timedelta(minutes=5)
     _grava(s, "DCSC-00043", [5.7], depois)
     feitas = avaliar_todas(s, depois, LIMITE)
     s.commit()
-    assert feitas[0][2] is not None and feitas[0][2].faixa_nova == "alerta"
-    assert faixa_vigente(s, _id(s, "DCSC-00043")) == Faixa.ALERTA
+    assert feitas[0][2] is not None and feitas[0][2].faixa_nova == "alerta_alto"
+    assert faixa_vigente(s, _id(s, "DCSC-00043")) == Faixa.ALERTA_ALTO
     assert s.scalars(select(Alerta).where(Alerta.encerrado_em.is_(None))).all().__len__() == 1
 
     # 4) volta ao normal depois de 3 leituras baixas: encerra o episodio, sem novo alerta

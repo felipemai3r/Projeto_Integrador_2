@@ -11,15 +11,11 @@ import {
 } from 'recharts'
 import { useSerie } from '../../hooks/useDados'
 import { formatarDataHora, formatarHora, formatarNivel } from '../../lib/formato'
+import { PERIODO_PADRAO, PERIODOS } from '../../lib/periodos'
+import type { Limiares } from '../../lib/risco'
 import { SegmentedControl } from '../SegmentedControl'
 import { Skeleton } from '../Skeleton'
 import styles from './SeriesChart.module.css'
-
-interface Limiares {
-  observacao?: number | null
-  atencao?: number | null
-  alerta?: number | null
-}
 
 interface Props {
   codigo: string
@@ -27,16 +23,17 @@ interface Props {
   limiares: Limiares
 }
 
-const PERIODOS = [
-  { valor: 6, rotulo: '6 h' },
-  { valor: 24, rotulo: '24 h' },
-  { valor: 72, rotulo: '3 dias' },
-  { valor: 168, rotulo: '7 dias' },
-]
+/** Linhas de limiar do grafico. O rotulo e curto; `extremo` so aparece quando houver cota. */
+const MARCOS = [
+  { faixa: 'atencao', rotulo: 'Atenção', cor: 'var(--fa-risk-atencao-border)' },
+  { faixa: 'alerta', rotulo: 'Alerta', cor: 'var(--fa-risk-alerta-border)' },
+  { faixa: 'alerta_alto', rotulo: 'Alerta alto', cor: 'var(--fa-risk-alerta-alto-border)' },
+  { faixa: 'extremo', rotulo: 'Extremo', cor: 'var(--fa-risk-extremo-border)' },
+] as const
 
 /** Historico do nivel (RF18). Observado = linha cheia; limiares como linhas rotuladas. */
 export function SeriesChart({ codigo, titulo, limiares }: Props) {
-  const [horas, setHoras] = useState(24)
+  const [horas, setHoras] = useState(PERIODO_PADRAO)
   const { data, isPending, isError } = useSerie(codigo, horas)
 
   const pontos = data?.pontos ?? []
@@ -47,7 +44,7 @@ export function SeriesChart({ codigo, titulo, limiares }: Props) {
     Math.max(0, +(minimo - 0.1).toFixed(2)),
     +(maximo + 0.1).toFixed(2),
   ]
-  const proximo = [limiares.observacao, limiares.atencao, limiares.alerta].find(
+  const proximo = MARCOS.map((m) => limiares[m.faixa]).find(
     (l): l is number => l != null && l > maximo,
   )
   const ultimo = pontos.at(-1)
@@ -102,28 +99,23 @@ export function SeriesChart({ codigo, titulo, limiares }: Props) {
                     color: 'var(--fa-color-content-primary)',
                   }}
                 />
-                {(
-                  [
-                    ['Observação', limiares.observacao],
-                    ['Atenção', limiares.atencao],
-                    ['Alerta', limiares.alerta],
-                  ] as const
-                ).map(([nome, v]) =>
-                  v != null && v >= dominio[0] && v <= dominio[1] ? (
+                {MARCOS.map(({ faixa, rotulo, cor }) => {
+                  const v = limiares[faixa]
+                  return v != null && v >= dominio[0] && v <= dominio[1] ? (
                     <ReferenceLine
-                      key={nome}
+                      key={faixa}
                       y={v}
-                      stroke="var(--fa-color-border-strong)"
+                      stroke={cor}
                       strokeDasharray="4 4"
                       label={{
-                        value: `${nome} ${formatarNivel(v)} m`,
+                        value: `${rotulo} ${formatarNivel(v)} m`,
                         fill: 'var(--fa-color-content-secondary)',
                         fontSize: 12,
                         position: 'insideTopRight',
                       }}
                     />
-                  ) : null,
-                )}
+                  ) : null
+                })}
                 <Line
                   type="monotone"
                   dataKey="valor"

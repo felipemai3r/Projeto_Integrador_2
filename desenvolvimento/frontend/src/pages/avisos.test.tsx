@@ -36,7 +36,7 @@ describe('Avisos por e-mail', () => {
     expect(JSON.parse(init!.body as string)).toEqual({
       email: 'ana@exemplo.br',
       estacao: 'DCSC-00043',
-      faixa_minima: 'atencao',
+      faixa_minima: 'alerta',
     })
   })
 

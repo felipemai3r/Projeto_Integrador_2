@@ -1,20 +1,20 @@
 import { useState } from 'react'
 import type { Alerta } from '../../lib/api'
 import { formatarNivel } from '../../lib/formato'
-import { SELOS, type Faixa } from '../../lib/risco'
+import { FAIXAS, SELOS, ehFaixa } from '../../lib/risco'
 import styles from './AlertBanner.module.css'
 
-const ORDEM: Faixa[] = ['normal', 'observacao', 'atencao', 'alerta']
-const peso = (f: string) => ORDEM.indexOf(f as Faixa)
+const peso = (f: string) => FAIXAS.findIndex((x) => x === f)
 
 interface Props {
   alertas: Alerta[]
 }
 
 /**
- * Faixa de alerta vigente (CDU07). Mostra o mais grave. Observacao pode ser dispensada;
- * atencao e alerta ficam enquanto vigentes. Nao pisca. Faixa `alerta` usa `role="alert"`
- * (anuncio imediato); as demais usam `status` (anuncio educado). O texto so e anunciado quando muda.
+ * Faixa de alerta vigente (CDU07). Mostra o mais grave. Atencao pode ser dispensada; alerta,
+ * alerta alto e extremo ficam enquanto vigentes. Nao pisca. Alerta alto e extremo usam
+ * `role="alert"` (anuncio imediato); as demais usam `status` (anuncio educado). O texto so e
+ * anunciado quando muda.
  */
 export function AlertBanner({ alertas }: Props) {
   const [dispensados, setDispensados] = useState<number[]>([])
@@ -22,11 +22,11 @@ export function AlertBanner({ alertas }: Props) {
     .filter((a) => a.vigente && !dispensados.includes(a.id))
     .sort((a, b) => peso(b.faixa_nova) - peso(a.faixa_nova))
   const principal = visiveis[0]
-  if (!principal || !(principal.faixa_nova in SELOS)) return null
+  if (!principal || !ehFaixa(principal.faixa_nova)) return null
 
-  const faixa = principal.faixa_nova as Faixa
-  const { rotulo, Icone } = SELOS[faixa]
-  const titulo = `${principal.curso_dagua ?? principal.nome} em ${rotulo.toLowerCase()}`
+  const faixa = principal.faixa_nova
+  const { emFrase, Icone } = SELOS[faixa]
+  const titulo = `${principal.curso_dagua ?? principal.nome} em ${emFrase}`
   const origem = principal.origem === 'previsto' ? 'Previsão' : 'Observado'
   const outros = visiveis.length - 1
 
@@ -34,7 +34,7 @@ export function AlertBanner({ alertas }: Props) {
     <section
       className={styles.faixa}
       data-faixa={faixa}
-      role={faixa === 'alerta' ? 'alert' : 'status'}
+      role={faixa === 'alerta_alto' || faixa === 'extremo' ? 'alert' : 'status'}
       aria-label="Alerta vigente"
     >
       <Icone aria-hidden="true" size={32} className={styles.icone} />
@@ -48,7 +48,7 @@ export function AlertBanner({ alertas }: Props) {
           Fonte oficial: Defesa Civil de Presidente Getúlio.
         </p>
       </div>
-      {faixa === 'observacao' && (
+      {faixa === 'atencao' && (
         <button
           type="button"
           className={styles.dispensar}

@@ -2,7 +2,7 @@
 
 Repositório da disciplina 75PIN, Projeto Integrador II (UDESC/CEAVI, Engenharia de Software, 2026/2), prof. Pedro Sidnei Zanchett. Equipe: Diogo e Felipe.
 
-O sistema estima o comportamento do rio dos Índios e do ribeirão Revólver, em Presidente Getúlio, a partir da chuva observada e prevista nos pontos de influência a montante, e comunica esse risco para a população e para a Defesa Civil municipal. A base arquitetural é a [RADIAN](docs/radian.md), arquitetura de referência da tese de doutorado do professor (UFSC, 2025).
+O sistema estima o comportamento do rio dos Índios e do ribeirão Revólver, em Presidente Getúlio, a partir da chuva observada e prevista nos pontos de medição de influência, e comunica esse risco para a população e para a Defesa Civil municipal. A base arquitetural é a [RADIAN](docs/radian.md), arquitetura de referência da tese de doutorado do professor (UFSC, 2025).
 
 A pergunta que o sistema responde é operacional e veio do coordenador da Defesa Civil municipal: quando chove forte em Dona Emma e em José Boiteux ao mesmo tempo, a cidade alaga, mas quando chove em apenas um desses pontos o impacto é pequeno. Hoje essa relação não está em nenhum sistema.
 
@@ -52,6 +52,6 @@ O município já opera um painel de monitoramento bom, em `pdc.presidentegetulio
 
 O projeto se posiciona nas três lacunas que sobraram:
 
-1. A relação estatística entre a chuva nos pontos de influência a montante e a resposta do rio na cidade não é modelada por ninguém hoje.
+1. A relação estatística entre a chuva nos pontos de medição de influência e a resposta do rio na cidade não é modelada por ninguém hoje.
 2. Não existe registro georreferenciado de onde alagou, e o município confirmou que não possui mapeamento de cota por rua. O sistema constrói esse dado com registro participativo da população.
 3. A série histórica está se perdendo. A única API pública com série temporal retém cerca de 80 dias, o que torna a coleta contínua uma tarefa urgente e permanente.

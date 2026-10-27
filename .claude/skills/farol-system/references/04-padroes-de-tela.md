@@ -15,7 +15,7 @@ Ordem vertical no celular, tudo legível em 360×640 sem rolar até o primeiro c
 2. Um `StationCard` por estação alvo (Rio dos Índios, Ribeirão Revólver).
 3. `SeriesChart` do histórico recente com `SegmentedControl` de período.
 4. `RainAccumulatedTable` dos pontos de influência.
-5. Chamadas: "Ver previsão", "Simular chuva", "Registrar alagamento" (CTA com destaque laranja, único).
+5. Chamadas: "Ver previsão", "Simular chuva", "Registrar alagamento" (CTA em azul de ação, tamanho maior, único).
 6. `OfficialNotice`.
 
 ## Estados obrigatórios (toda tela de dado)
@@ -58,7 +58,7 @@ Ordem vertical no celular, tudo legível em 360×640 sem rolar até o primeiro c
 
 ## Gráfico de previsão (RF19)
 - Eixo X em horário local de Brasília (America/Sao_Paulo), 24h. Linha vertical "agora" separa passado e futuro.
-- Passado: linha cheia. Futuro: tracejada com faixa de incerteza. Cenário: tracejada laranja com selo.
+- Passado: linha cheia. Futuro: tracejada com faixa de incerteza. Cenário: tracejada cinza-ardósia com selo tracejado "Cenário hipotético".
 - Limiares como linhas horizontais rotuladas com a faixa e o valor em metros.
 
 ## Acessibilidade por tela (mínimo)

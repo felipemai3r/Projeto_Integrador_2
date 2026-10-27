@@ -9,9 +9,10 @@ import { api, ErroApi } from '../lib/api'
 import styles from './Avisos.module.css'
 
 const FAIXAS = [
-  { valor: 'observacao', rotulo: 'Observação (aviso mais cedo)' },
-  { valor: 'atencao', rotulo: 'Atenção (recomendado)' },
-  { valor: 'alerta', rotulo: 'Só no Alerta' },
+  { valor: 'atencao', rotulo: 'Atenção (aviso mais cedo)' },
+  { valor: 'alerta', rotulo: 'Alerta (recomendado)' },
+  { valor: 'alerta_alto', rotulo: 'Alerta alto' },
+  { valor: 'extremo', rotulo: 'Risco extremo (limite ainda não definido)' },
 ]
 const ESTACOES = [
   { valor: 'DCSC-00043', rotulo: 'Rio dos Índios' },
@@ -93,7 +94,7 @@ function LinkDoEmail() {
 
 function AvisosPorEmail() {
   const [email, setEmail] = useState('')
-  const [faixa, setFaixa] = useState('atencao')
+  const [faixa, setFaixa] = useState('alerta')
   const [estacao, setEstacao] = useState('DCSC-00043')
   const envio = useMutation({
     mutationFn: () =>
@@ -154,7 +155,7 @@ function AvisosPorEmail() {
 
 function AvisosNoCelular() {
   const { situacao, erro, ocupado, inscrever, cancelar, testar } = usePush()
-  const [faixa, setFaixa] = useState('atencao')
+  const [faixa, setFaixa] = useState('alerta')
   const [estacao, setEstacao] = useState('DCSC-00043')
 
   return (

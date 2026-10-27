@@ -6,28 +6,30 @@ Os Fundamentos são **a lei**. Os tokens materializam a lei e os componentes a i
 
 ## 01 Cor
 - **Três camadas:** primitivos (`--fa-prim-*`, paletas cruas) → semânticos (`--fa-color-*`, intenção) → modo noite (reescrita dos semânticos). O componente consome **só semânticos** e tokens de risco.
-- **Paletas:** Ardósia (neutro frio), **Defesa** (azul institucional, ação e marca), **Sinal** (laranja de sinalização, assinatura), Vale (verde), Maré (ciano), Âmbar (amarelo), Brasa (vermelho). Cada uma tem passos 50 a 900.
-- **Identidade Defesa Civil SC:** azul + laranja. O azul é a cor de **ação** (`--fa-color-action-primary`, Defesa 600, 6,5:1 com texto branco). O laranja é **marca**: faixa do cabeçalho, logotipo, e um único destaque por tela (CTA "Registrar alagamento"). Texto sobre laranja é sempre Ardósia 900.
+- **Paletas:** Ardósia (neutro frio), **Defesa** (azul institucional, ação e marca), **Sinal** (laranja da marca, só assinatura), Vale (verde), Maré (ciano, informação e chuva), Âmbar (amarelo), **Chama** (laranja de risco), Brasa (vermelho), **Trovão** (roxo). Cada uma tem passos 50 a 900.
+- **Identidade Defesa Civil SC:** azul + laranja. O azul é a cor de **ação** (`--fa-color-action-primary`, Defesa 600, 6,5:1 com texto branco). O laranja **Sinal** é só **marca**: o filete do cabeçalho e o logotipo. Não é botão nem destaque de conteúdo, porque o laranja que o usuário lê como dado é o de **risco** (Chama, faixa Alerta da escala da Defesa Civil de SC), propositalmente mais fechado e avermelhado. A chamada principal da tela usa o azul de ação. Texto sobre Chama é sempre Ardósia 900.
 - **Feedback de interface** (info, sucesso, aviso, perigo) é diferente de **risco hidrológico**. Não misture: um erro de formulário não usa a cor de "alerta" do rio.
 - **Contraste:** todo par validado em WCAG AA (texto 4,5:1, componente 3:1). `scripts/verificar-contraste.py` precisa sair com 0 falhas.
 
 ## 02 Risco *(exclusivo do Farol)*
-- A escala de risco é o produto. Quatro faixas e dois estados de dado, todos em `--fa-risk-*`:
+- A escala de risco é o produto. Cinco faixas, a escala de risco da Defesa Civil de SC, e dois estados de dado, todos em `--fa-risk-*` (o valor de dado usa sublinhado, `alerta_alto`; o token usa hífen, `--fa-risk-alerta-alto-*`):
 
 | Token | Significado | Cor base | Ícone (Lucide) | Rótulo |
 |---|---|---|---|---|
 | `normal` | Abaixo de todos os limiares | Vale | `circle-check` | Normal |
-| `observacao` | Atingiu o 1º limiar | Maré | `eye` | Observação |
-| `atencao` | Atingiu o 2º limiar | Âmbar | `triangle-alert` | Atenção |
-| `alerta` | Atingiu o 3º limiar | Brasa | `octagon-alert` | Alerta |
+| `atencao` | Atingiu o 1º limiar | Âmbar (amarelo) | `circle-alert` | Atenção |
+| `alerta` | Atingiu o 2º limiar | Chama (laranja) | `triangle-alert` | Alerta |
+| `alerta_alto` | Atingiu o 3º limiar, grande perigo | Brasa (vermelho) | `octagon-alert` | Alerta alto |
+| `extremo` | Risco extremo, aja imediatamente. Só existe com cota cadastrada | Trovão (roxo) | `siren` | Aja imediatamente |
 | `desatualizado` | Dado velho, fonte fora do ar (RN04) | Ardósia | `clock-alert` | Dado desatualizado |
 | `indisponivel` | Sem leitura para a estação | Ardósia | `circle-off` | Indisponível |
 
 - Cada faixa expõe `-solid`, `-on-solid`, `-surface`, `-border`, `-content`. **Solid** é para selo e faixa cheia, **surface/border/content** é para cartão suave.
 - **Cor nunca sozinha.** Toda faixa = cor + ícone + rótulo. Vale para daltonismo, sol na tela e impressão em preto e branco.
-- **Mapeamento de cor em aberto (PE05):** o rascunho da equipe cita verde/amarelo/vermelho. Observação recebeu ciano. Se a Defesa Civil indicar outra cor, muda **uma linha** em `risk.css`.
+- **Escala oficial:** verde, amarelo, laranja, vermelho e roxo, como na Defesa Civil de SC. A cota da faixa `extremo` ainda não foi cadastrada: sem limiar, nenhum nível é classificado como extremo e a faixa some das réguas e dos gráficos. Trocar a cor de uma faixa muda **uma linha** em `risk.css`.
+- **Cada faixa tem forma de ícone própria** (círculo, triângulo, octógono, sirene): a diferença entre laranja e vermelho não pode depender só da cor.
 - **Dado ≠ risco:** `desatualizado` e `indisponivel` são cinza de propósito. Um dado velho nunca pode parecer "normal" (verde) por engano.
-- **Séries de gráfico** (`--fa-data-*`): observado = linha cheia Defesa; estimado = tracejada + faixa de incerteza; cenário hipotético = tracejada laranja; chuva = barras Maré.
+- **Séries de gráfico** (`--fa-data-*`): observado = linha cheia Defesa; estimado = tracejada + faixa de incerteza; cenário hipotético = tracejada cinza-ardósia com selo (o laranja é de risco); chuva = barras Maré.
 
 ## 03 Tipografia
 - **Atkinson Hyperlegible Next** é a única família. 3 pesos: 400, 500, 700.
@@ -82,7 +84,7 @@ Os Fundamentos são **a lei**. Os tokens materializam a lei e os componentes a i
 ## O selo Farol, checklist
 - [ ] Zero cor solta: só `--fa-color-*` e `--fa-risk-*`.
 - [ ] Toda faixa de risco com cor + ícone + rótulo.
-- [ ] Laranja Sinal só em marca e no destaque único da tela, nunca para risco.
+- [ ] Laranja Sinal só no filete da marca. O laranja de dado é sempre a faixa Alerta (Chama), com ícone e rótulo.
 - [ ] Medidas na escala de 4px; alvos de toque ≥ 44px.
 - [ ] Pill só em chip/badge; raios da família certa.
 - [ ] Atkinson, 400/500/700; números com `.fa-num`.

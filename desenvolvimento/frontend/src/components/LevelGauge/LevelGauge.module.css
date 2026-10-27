@@ -13,16 +13,19 @@
   height: 100%;
 }
 .barra > span[data-faixa='normal'] {
-  background: var(--fa-risk-normal-surface);
-}
-.barra > span[data-faixa='observacao'] {
-  background: var(--fa-risk-observacao-surface);
+  background: var(--fa-risk-normal-solid);
 }
 .barra > span[data-faixa='atencao'] {
-  background: var(--fa-risk-atencao-surface);
+  background: var(--fa-risk-atencao-solid);
 }
 .barra > span[data-faixa='alerta'] {
-  background: var(--fa-risk-alerta-surface);
+  background: var(--fa-risk-alerta-solid);
+}
+.barra > span[data-faixa='alerta_alto'] {
+  background: var(--fa-risk-alerta-alto-solid);
+}
+.barra > span[data-faixa='extremo'] {
+  background: var(--fa-risk-extremo-solid);
 }
 .marcador {
   position: absolute;
@@ -32,6 +35,8 @@
   margin-left: -2px;
   background: var(--fa-color-content-primary);
   border-radius: 2px;
+  /* halo: o marcador continua visivel sobre as faixas escuras (vermelho, roxo) */
+  box-shadow: 0 0 0 2px var(--fa-color-surface-base);
 }
 .limiar {
   position: absolute;

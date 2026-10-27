@@ -259,9 +259,9 @@ Essas fontes entram como complemento. Nenhuma delas é caminho crítico para a p
 
 O portal `pdc.presidentegetulio.sc.gov.br` foi inspecionado para levantar os parâmetros oficiais em uso pelo município. Os valores abaixo passam a ser a referência do projeto, sujeitos a confirmação formal (pendência PE05).
 
-**Limiares de risco:**
+**Limiares de risco** (os limites do painel foram mapeados para a escala da Defesa Civil de SC: o antigo "observação" é Atenção, o antigo "atenção" é Alerta e o antigo "alerta" é Alerta alto; a faixa Extremo ainda não tem cota):
 
-| Curso d'água | Observação | Atenção | Alerta |
+| Curso d'água | Atenção | Alerta | Alerta alto |
 |---|---|---|---|
 | Rio dos Índios | 4,00 m | 4,50 m | 5,50 m |
 | Ribeirão Revólver | 2,50 m | 3,00 m | 3,50 m |

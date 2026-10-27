@@ -30,5 +30,6 @@ def test_limiares_do_rio_dos_indios_sao_crescentes(s: Session) -> None:
     valores = {
         li.faixa: li.valor_m for li in s.scalars(select(Limiar).where(Limiar.estacao_id == est.id))
     }
-    assert valores["observacao"] < valores["atencao"] < valores["alerta"]
-    assert valores["alerta"] == 5.5
+    assert valores["atencao"] < valores["alerta"] < valores["alerta_alto"]
+    assert valores["alerta_alto"] == 5.5
+    assert "extremo" not in valores  # limiar ainda nao cadastrado

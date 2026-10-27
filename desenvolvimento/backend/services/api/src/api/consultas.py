@@ -36,9 +36,10 @@ def estacao_out(s: Session, e: Estacao) -> EstacaoOut:
         latitude=e.latitude,
         longitude=e.longitude,
         limiares=Limiares(
-            observacao=lim.get(Faixa.OBSERVACAO),
             atencao=lim.get(Faixa.ATENCAO),
             alerta=lim.get(Faixa.ALERTA),
+            alerta_alto=lim.get(Faixa.ALERTA_ALTO),
+            extremo=lim.get(Faixa.EXTREMO),
         ),
     )
 

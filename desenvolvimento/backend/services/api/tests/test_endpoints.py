@@ -54,9 +54,14 @@ def test_lista_estacoes_com_limiares(client: TestClient, base: Session) -> None:
     corpo = client.get("/api/estacoes").json()
     assert len(corpo) == 8
     indios = next(e for e in corpo if e["codigo"] == "DCSC-00043")
-    assert indios["limiares"] == {"observacao": 4.0, "atencao": 4.5, "alerta": 5.5}
+    assert indios["limiares"] == {
+        "atencao": 4.0,
+        "alerta": 4.5,
+        "alerta_alto": 5.5,
+        "extremo": None,
+    }
     sem_limiar = next(e for e in corpo if e["codigo"] == "DCSC-00037")
-    assert sem_limiar["limiares"]["alerta"] is None
+    assert sem_limiar["limiares"]["alerta_alto"] is None
 
 
 def test_atual_classifica_e_calcula_tendencia(client: TestClient, base: Session) -> None:
@@ -66,7 +71,7 @@ def test_atual_classifica_e_calcula_tendencia(client: TestClient, base: Session)
     r = client.get("/api/estacoes/DCSC-00043/atual").json()
     assert r["estado"] == "ok"
     assert r["nivel_m"] == pytest.approx(4.62)
-    assert r["faixa"] == "atencao"
+    assert r["faixa"] == "alerta"
     assert r["tendencia"] == "subindo"
     assert r["taxa_cm_h"] == pytest.approx(21.0, abs=0.5)
     assert r["fonte"] == "dcsc_graphql"

@@ -9,9 +9,10 @@ EstadoDado = Literal["ok", "desatualizado", "indisponivel"]
 
 
 class Limiares(BaseModel):
-    observacao: float | None = None
     atencao: float | None = None
     alerta: float | None = None
+    alerta_alto: float | None = None
+    extremo: float | None = None  # ainda nao cadastrado: fica nulo
 
 
 class EstacaoOut(BaseModel):
@@ -165,7 +166,7 @@ class InscricaoIn(BaseModel):
     endpoint: str
     keys: ChavesPush
     estacao: str | None = None  # codigo da estacao; None = todas as estacoes alvo
-    faixa_minima: str = "atencao"
+    faixa_minima: str = "alerta"
 
 
 class CancelamentoIn(BaseModel):
@@ -249,7 +250,7 @@ class SimulacaoIn(BaseModel):
 class InscricaoEmailIn(BaseModel):
     email: str = Field(max_length=254)
     estacao: str | None = None  # codigo da estacao; None = todas as estacoes alvo
-    faixa_minima: str = "atencao"
+    faixa_minima: str = "alerta"
 
 
 class TokenIn(BaseModel):

@@ -1,11 +1,9 @@
 import { Clock, TriangleAlert } from 'lucide-react'
 import type { PrevisaoHorizonte, PrevisaoOut } from '../../lib/api'
 import { formatarDataHora, formatarNivel } from '../../lib/formato'
-import type { Origem, SeloRisco } from '../../lib/risco'
+import { ehFaixa, type Origem } from '../../lib/risco'
 import { RiskBadge } from '../RiskBadge'
 import styles from './PrevisaoTabela.module.css'
-
-const FAIXAS = ['normal', 'observacao', 'atencao', 'alerta']
 
 function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
   return (
@@ -25,9 +23,7 @@ function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
               confiança)
             </p>
           )}
-          {h.faixa && FAIXAS.includes(h.faixa) && (
-            <RiskBadge faixa={h.faixa as SeloRisco} origem={origem} />
-          )}
+          {ehFaixa(h.faixa) && <RiskBadge faixa={h.faixa} origem={origem} />}
           {h.extrapolacao.length > 0 && (
             <p className={styles.extrapolacao} role="note">
               <TriangleAlert aria-hidden="true" size={16} /> Este cenário está fora do que já foi

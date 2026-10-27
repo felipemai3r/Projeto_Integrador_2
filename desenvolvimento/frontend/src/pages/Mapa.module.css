@@ -71,8 +71,8 @@
   height: 36px;
   border-radius: var(--fa-shape-status-pill);
   border: 3px solid var(--fa-color-surface-base);
-  background: var(--fa-risk-observacao-solid);
-  color: var(--fa-risk-observacao-on-solid);
+  background: var(--fa-color-action-primary);
+  color: var(--fa-color-action-on);
   box-shadow: var(--fa-elevation-card-hover);
 }
 .pendente {
@@ -112,7 +112,7 @@
   height: 14px;
   border-radius: var(--fa-shape-status-pill);
   border: 3px solid var(--fa-color-action-primary);
-  background: var(--fa-risk-observacao-solid);
+  background: var(--fa-color-action-primary);
 }
 .amostra.pendente {
   background: var(--fa-color-surface-base);

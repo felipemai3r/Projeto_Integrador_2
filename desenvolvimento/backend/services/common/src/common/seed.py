@@ -63,8 +63,8 @@ ESTACOES = [
 
 # Limiares do painel municipal (RN01), pendentes de confirmacao formal (PE05)
 LIMIARES = {
-    "DCSC-00043": {Faixa.OBSERVACAO: 4.00, Faixa.ATENCAO: 4.50, Faixa.ALERTA: 5.50},
-    "DCSC-00174": {Faixa.OBSERVACAO: 2.50, Faixa.ATENCAO: 3.00, Faixa.ALERTA: 3.50},
+    "DCSC-00043": {Faixa.ATENCAO: 4.00, Faixa.ALERTA: 4.50, Faixa.ALERTA_ALTO: 5.50},
+    "DCSC-00174": {Faixa.ATENCAO: 2.50, Faixa.ALERTA: 3.00, Faixa.ALERTA_ALTO: 3.50},
 }
 JUSTIFICATIVA = "Limiar do painel da Defesa Civil municipal, pendente de confirmacao formal (PE05)"
 

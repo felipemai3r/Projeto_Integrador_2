@@ -70,8 +70,9 @@
   margin: 0;
   padding: var(--fa-space-8) var(--fa-space-12);
   border-radius: var(--fa-shape-status-sm);
-  background: var(--fa-color-accent);
-  color: var(--fa-color-accent-on);
+  border: 2px dashed var(--fa-data-scenario);
+  background: var(--fa-color-surface-subtle);
+  color: var(--fa-color-content-primary);
   font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
     var(--fa-font-family-base);
   justify-self: start;
