@@ -8,7 +8,8 @@ import pytest
 from common.models import Estacao, Modelo
 from common.seed import semear
 from fastapi.testclient import TestClient
-from modelo.features import alvo_deslocado, montar_features
+from modelo.features import PONTOS_CHUVA, alvo_deslocado, montar_features
+from modelo.inferencia import MAX_HORAS_IMPUTADAS
 from modelo.treino import avaliar_horizonte
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -70,8 +71,16 @@ def _publicar(s: Session, tmp: Path, horizonte: int = 3) -> tuple[Modelo, pd.Ser
     return m, linha
 
 
-def _com_linha(monkeypatch: pytest.MonkeyPatch, linha: pd.Series | None) -> None:
-    resultado = (linha, pd.Timestamp(AGORA - timedelta(hours=1))) if linha is not None else None
+def _com_linha(
+    monkeypatch: pytest.MonkeyPatch,
+    linha: pd.Series | None,
+    estimadas: dict[str, int] | None = None,
+) -> None:
+    resultado = (
+        (linha, pd.Timestamp(AGORA - timedelta(hours=1)), estimadas or {})
+        if linha is not None
+        else None
+    )
     monkeypatch.setattr("api.previsao.linha_atual", lambda s, estacao, agora: resultado)
 
 
@@ -182,3 +191,76 @@ def test_simulacao_sem_modelo_diz_indisponivel(client: TestClient, base: Session
 
 def test_estacao_inexistente_da_404(client: TestClient, base: Session) -> None:
     assert client.get("/api/previsao/XXX").status_code == 404
+
+
+# --- chuva estimada: ponto sem leitura por algumas horas (so na inferencia) ---
+
+VITOR = "DCSC-00036"
+
+
+def _series_reais(lacuna_h: int) -> tuple[dict, dict]:
+    """8 dias de chuva e nivel por hora ate AGORA; Vitor Meireles sem leitura nas ultimas horas."""
+    rng = np.random.default_rng(7)
+    fim = pd.Timestamp(AGORA)
+    idx = pd.date_range(end=fim, periods=24 * 8, freq="1h", tz="UTC")
+    chuva = {
+        c: pd.Series(np.where(rng.random(len(idx)) < 0.1, rng.gamma(2.0, 2.0, len(idx)), 0.0), idx)
+        for c in PONTOS_CHUVA
+    }
+    chuva[VITOR].iloc[len(idx) - lacuna_h :] = np.nan
+    nivel_base = pd.Series(2.0 + 0.01 * np.arange(len(idx)), idx)
+    nivel = {"DCSC-00043": nivel_base, "DCSC-00021": nivel_base * 1.1, "DCSC-00020": nivel_base}
+    return chuva, nivel
+
+
+def _com_series(monkeypatch: pytest.MonkeyPatch, lacuna_h: int, nivel_sem_h: int = 0) -> None:
+    chuva, nivel = _series_reais(lacuna_h)
+    if nivel_sem_h:
+        nivel["DCSC-00043"].iloc[-nivel_sem_h:] = np.nan
+    monkeypatch.setattr("api.previsao.chuva_horaria", lambda s, c, ini, fim: chuva[c])
+    monkeypatch.setattr("api.previsao.nivel_horario", lambda s, c, ini, fim: nivel[c])
+
+
+def test_lacuna_pequena_de_um_ponto_de_chuva_ainda_estima_e_avisa(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _publicar(base, tmp_path, 3)
+    _com_series(monkeypatch, lacuna_h=14)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
+    assert tres["disponivel"] is True and tres["nivel_m"] is not None
+    assert r["chuva_estimada"] == [{"codigo": VITOR, "nome": "PCD Vitor Meireles", "horas": 14}]
+    # a simulacao passa pelo mesmo caminho e traz o mesmo aviso
+    sim = client.post("/api/simulacao", json={"chuva_mm": {"DCSC-00043": 10}}).json()
+    assert sim["origem"] == "cenario" and sim["chuva_estimada"][0]["horas"] == 14
+
+
+def test_lacuna_acima_do_limite_continua_sem_estimativa(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _publicar(base, tmp_path, 3)
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 1)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
+    assert tres["disponivel"] is False and "Sem dados recentes" in tres["motivo"]
+    assert r["chuva_estimada"] == []
+
+
+def test_sem_lacuna_nao_mostra_chuva_estimada(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _publicar(base, tmp_path, 3)
+    _com_series(monkeypatch, lacuna_h=0)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
+    assert r["chuva_estimada"] == []
+
+
+def test_nivel_nunca_e_estimado(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _publicar(base, tmp_path, 3)
+    _com_series(monkeypatch, lacuna_h=0, nivel_sem_h=5)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
+    assert tres["disponivel"] is False and r["chuva_estimada"] == []

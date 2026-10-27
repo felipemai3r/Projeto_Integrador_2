@@ -13,6 +13,7 @@ export type OcorrenciaOut = components['schemas']['OcorrenciaOut']
 export type TokenOut = components['schemas']['TokenOut']
 export type QualidadeOut = components['schemas']['Qualidade']
 export type PrevisaoOut = components['schemas']['PrevisaoOut']
+export type ChuvaEstimada = components['schemas']['ChuvaEstimada']
 export type PrevisaoHorizonte = components['schemas']['PrevisaoHorizonte']
 export type ModeracaoOut = components['schemas']['ModeracaoOut']
 
