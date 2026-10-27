@@ -5,7 +5,7 @@ from common.enums import Faixa
 
 from api.risco import classificar, taxa_e_aceleracao, tendencia
 
-LIM = {Faixa.OBSERVACAO: 4.0, Faixa.ATENCAO: 4.5, Faixa.ALERTA: 5.5}
+LIM = {Faixa.ATENCAO: 4.0, Faixa.ALERTA: 4.5, Faixa.ALERTA_ALTO: 5.5}
 T0 = datetime(2026, 10, 12, 20, 0, tzinfo=UTC)
 
 
@@ -14,12 +14,12 @@ T0 = datetime(2026, 10, 12, 20, 0, tzinfo=UTC)
     [
         (1.8, Faixa.NORMAL),
         (3.99, Faixa.NORMAL),
-        (4.0, Faixa.OBSERVACAO),  # no limiar ja conta como atingido
-        (4.49, Faixa.OBSERVACAO),
-        (4.5, Faixa.ATENCAO),
-        (5.49, Faixa.ATENCAO),
-        (5.5, Faixa.ALERTA),
-        (9.0, Faixa.ALERTA),
+        (4.0, Faixa.ATENCAO),  # no limiar ja conta como atingido
+        (4.49, Faixa.ATENCAO),
+        (4.5, Faixa.ALERTA),
+        (5.49, Faixa.ALERTA),
+        (5.5, Faixa.ALERTA_ALTO),
+        (9.0, Faixa.ALERTA_ALTO),
     ],
 )
 def test_classificacao_por_limiar(nivel: float, esperada: Faixa) -> None:
@@ -27,7 +27,16 @@ def test_classificacao_por_limiar(nivel: float, esperada: Faixa) -> None:
 
 
 def test_faixa_ausente_nos_limiares_e_ignorada() -> None:
-    assert classificar(5.0, {Faixa.ALERTA: 5.5}) == Faixa.NORMAL
+    assert classificar(5.0, {Faixa.ALERTA_ALTO: 5.5}) == Faixa.NORMAL
+
+
+def test_extremo_sem_limiar_nunca_e_atingido() -> None:
+    assert classificar(99.0, LIM) == Faixa.ALERTA_ALTO
+
+
+def test_extremo_com_limiar_cadastrado_vence_o_alerta_alto() -> None:
+    assert classificar(7.0, {**LIM, Faixa.EXTREMO: 7.0}) == Faixa.EXTREMO
+    assert classificar(6.99, {**LIM, Faixa.EXTREMO: 7.0}) == Faixa.ALERTA_ALTO
 
 
 def serie(valores_por_hora: list[float]) -> list[tuple[datetime, float]]:

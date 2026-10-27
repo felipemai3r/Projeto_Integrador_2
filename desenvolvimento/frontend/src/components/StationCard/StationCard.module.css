@@ -11,14 +11,17 @@
 .cartao[data-faixa='normal'] {
   border-left-color: var(--fa-risk-normal-border);
 }
-.cartao[data-faixa='observacao'] {
-  border-left-color: var(--fa-risk-observacao-border);
-}
 .cartao[data-faixa='atencao'] {
   border-left-color: var(--fa-risk-atencao-border);
 }
 .cartao[data-faixa='alerta'] {
   border-left-color: var(--fa-risk-alerta-border);
+}
+.cartao[data-faixa='alerta_alto'] {
+  border-left-color: var(--fa-risk-alerta-alto-border);
+}
+.cartao[data-faixa='extremo'] {
+  border-left-color: var(--fa-risk-extremo-border);
 }
 .cartao[data-faixa='desatualizado'] {
   border-left-color: var(--fa-risk-desatualizado-border);

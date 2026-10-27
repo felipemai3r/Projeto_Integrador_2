@@ -49,7 +49,7 @@ for modo in ("dia", "noite"):
     for f in ("info", "success", "warning", "danger"):
         pares.append((f"{modo}: feedback-{f} content sobre surface", f"--fa-color-feedback-{f}-content", f"--fa-color-feedback-{f}-surface", 4.5, modo))
         pares.append((f"{modo}: feedback-{f} border sobre surface (3:1)", f"--fa-color-feedback-{f}-border", f"--fa-color-feedback-{f}-surface", 3.0, modo))
-    for r in ("normal", "observacao", "atencao", "alerta", "desatualizado", "indisponivel"):
+    for r in ("normal", "atencao", "alerta", "alerta-alto", "extremo", "desatualizado", "indisponivel"):
         pares.append((f"{modo}: risco {r} on-solid sobre solid", f"--fa-risk-{r}-on-solid", f"--fa-risk-{r}-solid", 4.5, modo))
         pares.append((f"{modo}: risco {r} content sobre surface", f"--fa-risk-{r}-content", f"--fa-risk-{r}-surface", 4.5, modo))
         pares.append((f"{modo}: risco {r} border sobre surface (3:1)", f"--fa-risk-{r}-border", f"--fa-risk-{r}-surface", 3.0, modo))

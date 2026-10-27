@@ -86,10 +86,10 @@ export function Painel() {
 
       <section aria-labelledby="titulo-chuva">
         <h2 id="titulo-chuva" className={styles.titulo}>
-          Chuva nos pontos a montante
+          Chuva nos pontos medidos
         </h2>
         <p className={styles.apoio}>
-          O que chove nos pontos acima da cidade chega ao rio horas depois. Veja quanto já choveu.
+          A chuva que cai nesses pontos pode chegar ao rio horas depois. Veja quanto já choveu.
         </p>
         {chuva.isPending && <Skeleton altura={200} />}
         {chuva.isError && (

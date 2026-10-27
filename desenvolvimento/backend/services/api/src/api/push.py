@@ -22,8 +22,14 @@ from sqlalchemy.orm import Session
 from api.alertas import ORDEM
 
 log = logging.getLogger("api.push")
-ROTULOS = {"normal": "normal", "observacao": "observação", "atencao": "atenção", "alerta": "alerta"}
-FAIXAS_VALIDAS = ("observacao", "atencao", "alerta")
+ROTULOS = {
+    "normal": "normal",
+    "atencao": "atenção",
+    "alerta": "alerta",
+    "alerta_alto": "alerta alto",
+    "extremo": "risco extremo",
+}
+FAIXAS_VALIDAS = ("atencao", "alerta", "alerta_alto", "extremo")
 
 
 @dataclass(frozen=True)

@@ -52,3 +52,28 @@
   outline: 3px solid var(--fa-color-state-focus-ring);
   outline-offset: -3px;
 }
+
+/* Celular: seis opcoes nao cabem numa linha. Viram uma grade de 3 colunas (2 linhas); o espaco de
+   1px entre as celulas mostra a cor da borda, entao o desenho continua um bloco so. */
+@media (max-width: 599px) {
+  .opcoes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--fa-color-border-strong);
+  }
+  .opcao {
+    padding: 0 var(--fa-space-8);
+    background: var(--fa-color-surface-base);
+    text-align: center;
+  }
+  .opcao + .opcao {
+    border-left: 0;
+  }
+  .opcao:hover {
+    background: var(--fa-color-state-hover-action);
+  }
+  .opcao:has(input:checked) {
+    background: var(--fa-color-action-primary);
+  }
+}

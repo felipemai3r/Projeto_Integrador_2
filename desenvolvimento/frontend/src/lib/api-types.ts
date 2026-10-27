@@ -671,7 +671,7 @@ export interface components {
             estacao?: string | null;
             /**
              * Faixa Minima
-             * @default atencao
+             * @default alerta
              */
             faixa_minima: string;
         };
@@ -684,18 +684,20 @@ export interface components {
             estacao?: string | null;
             /**
              * Faixa Minima
-             * @default atencao
+             * @default alerta
              */
             faixa_minima: string;
         };
         /** Limiares */
         Limiares: {
-            /** Observacao */
-            observacao?: number | null;
             /** Atencao */
             atencao?: number | null;
             /** Alerta */
             alerta?: number | null;
+            /** Alerta Alto */
+            alerta_alto?: number | null;
+            /** Extremo */
+            extremo?: number | null;
         };
         /** LoginIn */
         LoginIn: {

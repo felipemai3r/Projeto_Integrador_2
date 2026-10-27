@@ -138,25 +138,32 @@ def test_chave_publica_informa_se_esta_configurada(client: TestClient) -> None:
 
 def test_so_recebe_quem_tem_estacao_e_faixa_minima_compativeis(base: Session) -> None:
     _insc(base, "atencao")  # minimo atencao
-    _insc(base, "alerta", faixa="alerta")  # so quer alerta
-    _insc(base, "observacao", faixa="observacao")
+    _insc(base, "alerta", faixa="alerta")  # so quer alerta ou mais
+    _insc(base, "alerta-alto", faixa="alerta_alto")
     _insc(base, "todas", estacao=None)  # todas as estacoes
     _insc(base, "outra", estacao="DCSC-00174")  # outra estacao
     env = EnviadorFalso()
     n = notificar_abertura(base, _est(base), _alerta(base, "normal", "atencao"), env)
-    assert sorted(e.rsplit("/", 1)[1] for e, _ in env.enviados) == [
-        "atencao",
-        "observacao",
-        "todas",
-    ]
-    assert n == 3
+    assert sorted(e.rsplit("/", 1)[1] for e, _ in env.enviados) == ["atencao", "todas"]
+    assert n == 2
 
 
-def test_alerta_maximo_chega_a_quem_pediu_so_alerta(base: Session) -> None:
-    _insc(base, "alerta", faixa="alerta")
+def test_alerta_maximo_chega_a_quem_pediu_so_alerta_alto(base: Session) -> None:
+    _insc(base, "alto", faixa="alerta_alto")
     env = EnviadorFalso()
-    notificar_abertura(base, _est(base), _alerta(base, "atencao", "alerta"), env)
+    notificar_abertura(base, _est(base), _alerta(base, "alerta", "alerta_alto"), env)
     assert len(env.enviados) == 1
+    assert env.enviados[0][1]["titulo"] == "Rio dos Índios em alerta alto"
+
+
+def test_extremo_chega_a_todos_e_tem_rotulo_proprio(base: Session) -> None:
+    _insc(base, "a")
+    _insc(base, "alto", faixa="alerta_alto")
+    _insc(base, "extremo", faixa="extremo")
+    env = EnviadorFalso()
+    notificar_abertura(base, _est(base), _alerta(base, "alerta_alto", "extremo"), env)
+    assert len(env.enviados) == 3
+    assert env.enviados[0][1]["titulo"] == "Rio dos Índios em risco extremo"
 
 
 def test_texto_diz_origem_nivel_e_fonte_oficial(base: Session) -> None:
@@ -192,7 +199,7 @@ def test_inscricao_expirada_410_e_desativada(base: Session) -> None:
     assert base.scalars(select(Notificacao)).one().status == "expirada"
     # e nao recebe mais
     env2 = EnviadorFalso()
-    notificar_abertura(base, _est(base), _alerta(base, "atencao", "alerta"), env2)
+    notificar_abertura(base, _est(base), _alerta(base, "alerta", "alerta_alto"), env2)
     assert env2.enviados == []
 
 
@@ -250,16 +257,16 @@ def test_descida_para_faixa_ainda_nao_normal_nao_gera_push(base: Session) -> Non
     _nivel(base, 4.6, AGORA)
     desce = Alerta(
         estacao_id=_est(base).id,
-        faixa_anterior="alerta",
-        faixa_nova="atencao",
-        severidade="atencao",
+        faixa_anterior="alerta_alto",
+        faixa_nova="alerta",
+        severidade="alerta",
         origem="observado",
         criado_em=AGORA,
     )
     base.add(desce)
     base.commit()
     env = EnviadorFalso()
-    _notificar(base, _est(base), "atencao", desce, env)
+    _notificar(base, _est(base), "alerta", desce, env)
     assert env.enviados == []
 
 

@@ -125,7 +125,7 @@ O município opera o portal `pdc.presidentegetulio.sc.gov.br`, que é bom e bem 
 
 Limiares oficiais extraídos do próprio painel municipal, que passam a ser os limiares de referência deste projeto:
 
-| Curso d'água | Observação | Atenção | Alerta |
+| Curso d'água | Atenção | Alerta | Alerta alto |
 |---|---|---|---|
 | Rio dos Índios | 4,00 m | 4,50 m | 5,50 m |
 | Ribeirão Revólver | 2,50 m | 3,00 m | 3,50 m |
@@ -241,7 +241,7 @@ Prioridade pela escala MoSCoW: O (obrigatório), I (importante), D (desejável).
 | ID | Requisito | Prioridade |
 |---|---|---|
 | RF09 | O sistema deve calcular, para cada estação alvo, a taxa de variação do nível (cm/h) e a aceleração (cm/h²). | O |
-| RF10 | O sistema deve classificar o nível atual de cada estação alvo nas faixas normal, observação, atenção e alerta, conforme os limiares parametrizados. | O |
+| RF10 | O sistema deve classificar o nível atual de cada estação alvo nas faixas normal, atenção, alerta, alerta alto e extremo (escala da Defesa Civil de SC), conforme os limiares parametrizados. Faixa sem limiar cadastrado, hoje a extremo, nunca é atingida. | O |
 | RF11 | O sistema deve estimar o nível futuro de cada estação alvo para os horizontes de 1h, 3h, 6h, 12h e 24h, a partir da chuva observada e prevista nos pontos de influência, do nível atual e do estado da Barragem Norte. | O |
 | RF12 | O sistema deve apresentar a estimativa acompanhada de medida de incerteza e da informação de quantos dados sustentam aquela estimativa. | O |
 | RF13 | O sistema deve calcular e apresentar a correlação defasada entre a chuva de cada ponto de influência e o nível na cidade, indicando o tempo de resposta típico de cada ponto. | O |
@@ -321,7 +321,7 @@ Prioridade pela escala MoSCoW: O (obrigatório), I (importante), D (desejável).
 
 | ID | Regra |
 |---|---|
-| RN01 | As faixas de risco seguem os limiares oficiais do município: rio dos Índios em 4,00 m (observação), 4,50 m (atenção) e 5,50 m (alerta); ribeirão Revólver em 2,50 m, 3,00 m e 3,50 m. |
+| RN01 | As faixas de risco seguem os limiares oficiais do município: rio dos Índios em 4,00 m (atenção), 4,50 m (alerta) e 5,50 m (alerta alto); ribeirão Revólver em 2,50 m, 3,00 m e 3,50 m. A faixa extremo (aja imediatamente) existe na escala, mas a cota ainda não foi cadastrada. |
 | RN02 | Alerta só é gerado em transição para faixa mais grave. Permanência na mesma faixa não gera novo alerta. |
 | RN03 | Alerta baseado em estimativa deve ser rotulado como previsão, e alerta baseado em leitura observada deve ser rotulado como observado. |
 | RN04 | Dado marcado como desatualizado não pode disparar alerta, para evitar alarme falso por falha de fonte. |

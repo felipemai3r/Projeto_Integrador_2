@@ -1,6 +1,6 @@
 ---
 name: farol-system
-description: Construir qualquer tela, componente ou protótipo do sistema de suporte à decisão para enchentes de Presidente Getúlio (SC) com o Farol Design System, a identidade visual inspirada na Defesa Civil de Santa Catarina (azul institucional, laranja de sinalização, escala de risco verde/ciano/amarelo/vermelho). Use sempre que for projetar ou codar UI do projeto (painel, previsão, simulação, mapa de ocorrências, inscrição de push, administração), criar componente React, escolher cor, tipografia, espaço, ícone ou texto de interface, ou garantir que algo "tem a cara do Farol". Carrega os 9 Fundamentos, os tokens CSS `--fa-*` e o catálogo de componentes React.
+description: Construir qualquer tela, componente ou protótipo do sistema de suporte à decisão para enchentes de Presidente Getúlio (SC) com o Farol Design System, a identidade visual inspirada na Defesa Civil de Santa Catarina (azul institucional, laranja de sinalização, escala de risco da Defesa Civil de SC: verde, amarelo, laranja, vermelho e roxo). Use sempre que for projetar ou codar UI do projeto (painel, previsão, simulação, mapa de ocorrências, inscrição de push, administração), criar componente React, escolher cor, tipografia, espaço, ícone ou texto de interface, ou garantir que algo "tem a cara do Farol". Carrega os 9 Fundamentos, os tokens CSS `--fa-*` e o catálogo de componentes React.
 ---
 
 # farol-system, o construtor do Farol DS
@@ -25,8 +25,8 @@ Fundamentos 01–09  →  Tokens (--fa-*)  →  Componentes (React)  →  A tela
 
 | Aspecto | Farol | Por quê |
 |---|---|---|
-| Identidade | Azul Defesa (`defesa`) + laranja Sinal (`sinal`) | Remete à Defesa Civil de SC. O laranja é assinatura e **nunca** significa risco |
-| Risco | Dimensão própria, `--fa-risk-*`, 4 faixas + 2 estados de dado | A informação central do produto. Espelha a escala oficial (RF32) |
+| Identidade | Azul Defesa (`defesa`) + laranja Sinal (`sinal`) | Remete à Defesa Civil de SC. O laranja Sinal é só assinatura (filete do cabeçalho). O laranja de **risco** é outro (Chama), mais fechado |
+| Risco | Dimensão própria, `--fa-risk-*`, 5 faixas + 2 estados de dado | A informação central do produto. Espelha a escala da Defesa Civil de SC (RF32) |
 | Fonte | Atkinson Hyperlegible Next | Desenhada para distinguir caracteres; o número do nível é o dado mais importante |
 | Layout | Mobile-first, 4/8/12 colunas | Quem usa durante a chuva está no celular, com rede ruim |
 | Modo noite | Obrigatório e automático | Consulta de madrugada é o caso de uso real |
@@ -52,9 +52,9 @@ Tela de risco? Formulário? Mapa? Identifique quais Fundamentos pesam. Painel: C
 ### 4. Honre os inegociáveis (o selo)
 - **Cor:** só semânticos `--fa-color-*` e `--fa-risk-*`. Nunca `--fa-prim-*` em componente, nunca hex.
 - **Risco:** toda faixa aparece com **cor + ícone + rótulo de texto**. Cor sozinha é falha de acessibilidade.
-- **Laranja Sinal** só em marca e destaque pontual (faixa do cabeçalho, CTA "Registrar ocorrência"). Nunca para indicar risco.
+- **Laranja:** o Sinal da marca só no filete do cabeçalho, nunca em botão ou dado. O laranja que aparece em dado é sempre a faixa `alerta` (Chama), com ícone e rótulo. A chamada principal da tela usa o azul de ação.
 - **Dado sempre assinado:** todo número exibido carrega fonte e horário (`SourceStamp`, RNF16). Dado velho vira `desatualizado`, nunca some em silêncio (RN04).
-- **Estimativa nunca parece observação:** observado = linha cheia, estimado = tracejada com faixa de incerteza, cenário = tracejada laranja com selo "cenário hipotético" (RN03, RF19).
+- **Estimativa nunca parece observação:** observado = linha cheia, estimado = tracejada com faixa de incerteza, cenário = tracejada cinza-ardósia com selo "cenário hipotético" (RN03, RF19).
 - **Aviso oficial:** toda tela com risco ou previsão mostra que a fonte oficial é a Defesa Civil (RN09, RF33).
 - **Espaço:** múltiplo de 4. Alvo de toque mínimo 44px.
 - **Forma:** `pill` só em chip e badge de status, trilha de switch. Nunca em botão, card, campo.
@@ -65,7 +65,7 @@ Tela de risco? Formulário? Mapa? Identifique quais Fundamentos pesam. Painel: C
 ### 5. Valide antes de declarar pronto
 - Renderize de verdade (navegador), em 360px de largura e em 1280px, nos modos dia e noite.
 - `grep` de higiene no código novo: sem `#[0-9a-fA-F]{3,8}` fora de `tokens/`, sem `transition: all`, sem `z-index` numérico, sem `font-family` diferente da do token.
-- Teste com o risco em cada uma das 4 faixas e nos estados `desatualizado` e `indisponivel`.
+- Teste com o risco em cada uma das 5 faixas e nos estados `desatualizado` e `indisponivel`.
 
 ## A voz do Farol (texto de interface)
 

@@ -11,14 +11,20 @@ const FAIXAS: { selo: SeloRisco; texto: string }[] = [
     selo: 'normal',
     texto: 'O nível está abaixo de todos os limites que preocupam a Defesa Civil.',
   },
-  { selo: 'observacao', texto: 'O nível chegou ao primeiro limite. É hora de acompanhar.' },
+  { selo: 'atencao', texto: 'O nível chegou ao primeiro limite. É hora de acompanhar.' },
   {
-    selo: 'atencao',
+    selo: 'alerta',
     texto: 'O nível chegou ao segundo limite. Fique atento e evite áreas baixas.',
   },
   {
-    selo: 'alerta',
-    texto: 'O nível chegou ao limite mais alto. Siga as orientações da Defesa Civil.',
+    selo: 'alerta_alto',
+    texto:
+      'O nível chegou ao terceiro limite, de grande perigo. Siga as orientações da Defesa Civil.',
+  },
+  {
+    selo: 'extremo',
+    texto:
+      'Risco extremo: aja imediatamente, conforme a Defesa Civil orientar. Ainda não há cota cadastrada para esta faixa.',
   },
   {
     selo: 'desatualizado',
@@ -31,10 +37,10 @@ const FAIXAS: { selo: SeloRisco; texto: string }[] = [
 export function ComoFunciona() {
   const { data, isPending, isError } = useCorrelacao()
   const chuvaLocal = data?.find((c) => c.explicativa === 'chuva_bruta' && c.ponto === 'DCSC-00043')
-  const aMontante = data?.filter(
+  const pontosMedidos = data?.filter(
     (c) => c.explicativa === 'chuva_sem_local' && c.ponto !== 'DCSC-00020',
   )
-  const algumSinal = aMontante?.some((c) => c.sinal_claro) ?? false
+  const algumSinal = pontosMedidos?.some((c) => c.sinal_claro) ?? false
 
   return (
     <article className={styles.pagina}>
@@ -44,8 +50,8 @@ export function ComoFunciona() {
         <h3>O que é este sistema</h3>
         <p>
           Mostra como estão o rio dos Índios e o ribeirão Revólver em Presidente Getúlio e quanto
-          choveu nos pontos acima da cidade. É uma ferramenta de apoio, feita por estudantes da
-          UDESC. <strong>Não substitui a Defesa Civil.</strong> A fonte oficial é a Defesa Civil de
+          choveu nos pontos medidos. É uma ferramenta de apoio, feita por estudantes da UDESC.{' '}
+          <strong>Não substitui a Defesa Civil.</strong> A fonte oficial é a Defesa Civil de
           Presidente Getúlio.
         </p>
       </section>
@@ -63,7 +69,8 @@ export function ComoFunciona() {
         <h3>O que significam as cores</h3>
         <p>
           A cor nunca vem sozinha: toda faixa tem também um ícone e uma palavra. Os limites são os
-          mesmos usados pela Defesa Civil municipal.
+          mesmos usados pela Defesa Civil municipal, na escala de risco da Defesa Civil de Santa
+          Catarina.
         </p>
         <ul className={styles.faixas}>
           {FAIXAS.map(({ selo, texto }) => (
@@ -93,8 +100,8 @@ export function ComoFunciona() {
               )}
               <li>
                 {algumSinal
-                  ? 'Há indício de que a chuva em algum ponto acima da cidade acrescenta efeito, mas é fraco.'
-                  : 'Depois de descontar a chuva que cai na cidade, não encontramos relação clara entre a chuva nos pontos acima (Dona Emma, José Boiteux, Witmarsum, Vitor Meireles) e a subida do rio. Isso não prova que não exista: temos poucos meses de dados e poucas cheias fortes.'}
+                  ? 'Há indício de que a chuva em algum dos outros pontos medidos acrescenta efeito, mas é fraco.'
+                  : 'Depois de descontar a chuva que cai na cidade, não encontramos relação clara entre a chuva nos outros pontos medidos (Dona Emma, José Boiteux, Witmarsum, Vitor Meireles) e a subida do rio. Isso não prova que não exista: temos poucos meses de dados e poucas cheias fortes.'}
               </li>
               <li>
                 A hipótese de que a chuva forte em Dona Emma e José Boiteux <em>ao mesmo tempo</em>{' '}

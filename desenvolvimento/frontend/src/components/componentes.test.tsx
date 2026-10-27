@@ -15,14 +15,14 @@ const estacao = {
   papel: 'alvo',
   latitude: -27.04,
   longitude: -49.62,
-  limiares: { observacao: 4, atencao: 4.5, alerta: 5.5 },
+  limiares: { atencao: 4, alerta: 4.5, alerta_alto: 5.5 },
 }
 
 const base: NivelAtual = {
   estacao,
   estado: 'ok',
   nivel_m: 4.62,
-  faixa: 'atencao',
+  faixa: 'alerta',
   taxa_cm_h: 12,
   aceleracao_cm_h2: 1,
   tendencia: 'subindo',
@@ -37,6 +37,17 @@ describe('RiskBadge', () => {
     expect(screen.getByText('Alerta')).toBeInTheDocument()
   })
 
+  it('cada faixa da escala da Defesa Civil tem seu proprio rotulo', () => {
+    render(
+      <>
+        <RiskBadge faixa="alerta_alto" />
+        <RiskBadge faixa="extremo" />
+      </>,
+    )
+    expect(screen.getByText('Alerta alto')).toBeInTheDocument()
+    expect(screen.getByText('Aja imediatamente')).toBeInTheDocument()
+  })
+
   it('rotula a origem quando e previsao', () => {
     render(<RiskBadge faixa="atencao" origem="previsto" />)
     expect(screen.getByText(/Atenção \(previsão\)/)).toBeInTheDocument()
@@ -48,7 +59,7 @@ describe('StationCard', () => {
     render(<StationCard atual={base} />)
     expect(screen.getByRole('heading', { name: 'Rio dos Índios' })).toBeInTheDocument()
     expect(screen.getByText('4,62')).toBeInTheDocument()
-    expect(screen.getByText('Atenção')).toBeInTheDocument()
+    expect(screen.getByText('Alerta')).toBeInTheDocument()
     expect(screen.getByText('Subindo 12 cm por hora')).toBeInTheDocument()
     expect(screen.getByText(/Fonte: Defesa Civil de SC · DCSC-00043/)).toBeInTheDocument()
   })
@@ -85,7 +96,16 @@ describe('LevelGauge', () => {
   it('descreve o nivel e os limiares para leitor de tela', () => {
     render(<LevelGauge nivelM={4.62} limiares={estacao.limiares} />)
     const regua = screen.getByRole('img')
-    expect(regua).toHaveAccessibleName(/Nível 4,62 metros, faixa atenção/)
+    expect(regua).toHaveAccessibleName(/Nível 4,62 metros, faixa alerta\./)
+  })
+
+  it('so desenha o extremo quando ha cota cadastrada', () => {
+    const { rerender } = render(<LevelGauge nivelM={9} limiares={estacao.limiares} />)
+    expect(screen.getByRole('img')).toHaveAccessibleName(/faixa alerta alto/)
+    expect(screen.queryByText(/Aja imediatamente/)).not.toBeInTheDocument()
+    rerender(<LevelGauge nivelM={9} limiares={{ ...estacao.limiares, extremo: 7 }} />)
+    expect(screen.getByRole('img')).toHaveAccessibleName(/faixa risco extremo/)
+    expect(screen.getByText('Aja imediatamente 7,00 m')).toBeInTheDocument()
   })
 
   it('nao desenha nada sem limiares', () => {
@@ -137,8 +157,8 @@ const alerta = {
 
 describe('AlertBanner', () => {
   it('mostra o alerta mais grave com nivel, origem e fonte oficial', () => {
-    render(<AlertBanner alertas={[alerta, { ...alerta, id: 2, faixa_nova: 'alerta' }]} />)
-    expect(screen.getByText('Rio dos Índios em alerta')).toBeInTheDocument()
+    render(<AlertBanner alertas={[alerta, { ...alerta, id: 2, faixa_nova: 'alerta_alto' }]} />)
+    expect(screen.getByText('Rio dos Índios em alerta alto')).toBeInTheDocument()
     expect(screen.getByText(/Nível 4,62 m\. Observado\./)).toBeInTheDocument()
     expect(screen.getByText(/Mais 1 alerta vigente/)).toBeInTheDocument()
     expect(screen.getByText(/Fonte oficial: Defesa Civil/)).toBeInTheDocument()
@@ -154,12 +174,17 @@ describe('AlertBanner', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('so a observacao pode ser dispensada; atencao permanece', async () => {
-    const { rerender } = render(<AlertBanner alertas={[{ ...alerta, faixa_nova: 'observacao' }]} />)
+  it('so a atencao pode ser dispensada; alerta permanece', async () => {
+    const { rerender } = render(<AlertBanner alertas={[alerta]} />)
     await userEvent.click(screen.getByRole('button', { name: 'Dispensar' }))
-    expect(screen.queryByText(/em observação/)).not.toBeInTheDocument()
-    rerender(<AlertBanner alertas={[{ ...alerta, id: 3 }]} />)
+    expect(screen.queryByText(/em atenção/)).not.toBeInTheDocument()
+    rerender(<AlertBanner alertas={[{ ...alerta, id: 3, faixa_nova: 'alerta' }]} />)
     expect(screen.queryByRole('button', { name: 'Dispensar' })).not.toBeInTheDocument()
-    expect(screen.getByText('Rio dos Índios em atenção')).toBeInTheDocument()
+    expect(screen.getByText('Rio dos Índios em alerta')).toBeInTheDocument()
+  })
+
+  it('risco extremo usa o anuncio imediato e o texto proprio', () => {
+    render(<AlertBanner alertas={[{ ...alerta, faixa_nova: 'extremo' }]} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Rio dos Índios em risco extremo')
   })
 })

@@ -45,7 +45,7 @@ Seguem o que a [arquitetura](arquitetura-desenvolvimento.md) já adotou.
 | Arquivos Python | `snake_case.py` | `dcsc_graphql.py` |
 | Arquivos TypeScript | Componente em `PascalCase.tsx`; demais em `camelCase.ts` | `StationCard.tsx`, `api.ts` |
 | Unidade no nome | Sempre que o tipo não carrega a unidade | `nivel_m`, `chuva_mm`, `taxa_cm_h`, `duracao_ms`, `frequencia_s` |
-| Faixas de risco | Valores fixos: `normal`, `observacao`, `atencao`, `alerta` (sem acento) | enum único em `common` e espelhado no front |
+| Faixas de risco | Valores fixos: `normal`, `atencao`, `alerta`, `alerta_alto`, `extremo` (sem acento) | enum único em `common` e espelhado no front |
 | Origem do dado | `observado`, `previsto`, `cenario` | |
 | Textos para o usuário | Português do Brasil, com acento, na voz do Farol | ver [padrões de tela](../.claude/skills/farol-system/references/04-padroes-de-tela.md) |
 | Comentários e docstrings | Português, explicam o **porquê** (regra de negócio, armadilha da fonte), não o quê | |

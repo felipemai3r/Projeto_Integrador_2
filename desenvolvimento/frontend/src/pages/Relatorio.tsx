@@ -9,13 +9,9 @@ import { useAlertasVigentes, useEstacoes, useNivelAtual, useQualidade } from '..
 import { api } from '../lib/api'
 import { formatarDataHora, formatarNivel, formatarPercentual, rotuloFonte } from '../lib/formato'
 import { rotuloDoImpacto } from '../lib/impacto'
-import { seloDe } from '../lib/risco'
+import { descreverPeriodo, PERIODO_PADRAO, PERIODOS } from '../lib/periodos'
+import { nomeDaFaixa, seloDe } from '../lib/risco'
 import styles from './Relatorio.module.css'
-
-const PERIODOS = [
-  { valor: 7, rotulo: '7 dias' },
-  { valor: 30, rotulo: '30 dias' },
-]
 
 function SituacaoAtual({ codigo }: { codigo: string }) {
   const { data } = useNivelAtual(codigo)
@@ -34,10 +30,10 @@ function SituacaoAtual({ codigo }: { codigo: string }) {
   )
 }
 
-function NivelNoPeriodo({ codigo, dias }: { codigo: string; dias: number }) {
+function NivelNoPeriodo({ codigo, horas }: { codigo: string; horas: number }) {
   const { data } = useQuery({
-    queryKey: ['serie-relatorio', codigo, dias],
-    queryFn: () => api.serie(codigo, dias * 24),
+    queryKey: ['serie-relatorio', codigo, horas],
+    queryFn: () => api.serie(codigo, horas),
   })
   if (!data) return <Skeleton altura={40} />
   const v = data.pontos.map((p) => p.valor)
@@ -63,18 +59,18 @@ function NivelNoPeriodo({ codigo, dias }: { codigo: string; dias: number }) {
 
 /** Relatorio consolidado do periodo (CDU15, RF21). Imprima ou salve como PDF pelo navegador. */
 export function Relatorio() {
-  const [dias, setDias] = useState(7)
+  const [horas, setHoras] = useState(PERIODO_PADRAO)
   const estacoes = useEstacoes()
   const vigentes = useAlertasVigentes()
   const qualidade = useQualidade()
   const historico = useQuery({ queryKey: ['alertas-historico'], queryFn: api.alertasHistorico })
   const ocorrencias = useQuery({
-    queryKey: ['ocorrencias', dias],
-    queryFn: () => api.ocorrencias(dias),
+    queryKey: ['ocorrencias', horas],
+    queryFn: () => api.ocorrencias(horas),
   })
   const alvos = estacoes.data?.filter((e) => e.papel === 'alvo') ?? []
   const [agora] = useState(() => Date.now()) // fixo durante a visita: nao muda a cada render
-  const desde = agora - dias * 24 * 3600 * 1000
+  const desde = agora - horas * 3600 * 1000
   const alertasNoPeriodo = (historico.data ?? []).filter(
     (a) => new Date(a.criado_em).getTime() >= desde,
   )
@@ -90,10 +86,10 @@ export function Relatorio() {
       </div>
       <h2 className={styles.tituloImpressao}>Rios de Presidente Getúlio: relatório de situação</h2>
       <p className={styles.meta}>
-        Período: últimos {dias} dias · Gerado em {formatarDataHora(new Date().toISOString())}
+        Período: {descreverPeriodo(horas)} · Gerado em {formatarDataHora(new Date().toISOString())}
       </p>
       <div className="nao-imprimir">
-        <SegmentedControl rotulo="Período" opcoes={PERIODOS} valor={dias} onChange={setDias} />
+        <SegmentedControl rotulo="Período" opcoes={PERIODOS} valor={horas} onChange={setHoras} />
       </div>
 
       <section aria-labelledby="r-agora">
@@ -101,7 +97,10 @@ export function Relatorio() {
         {vigentes.data && vigentes.data.length > 0 && (
           <p className={styles.destaque}>
             Há {vigentes.data.length} alerta(s) vigente(s):{' '}
-            {vigentes.data.map((a) => `${a.curso_dagua ?? a.nome} em ${a.faixa_nova}`).join('; ')}.
+            {vigentes.data
+              .map((a) => `${a.curso_dagua ?? a.nome} em ${nomeDaFaixa(a.faixa_nova)}`)
+              .join('; ')}
+            .
           </p>
         )}
         <table className={styles.tabela}>
@@ -125,7 +124,7 @@ export function Relatorio() {
 
       <section aria-labelledby="r-nivel">
         <h3 id="r-nivel">Nível do rio dos Índios no período</h3>
-        <NivelNoPeriodo codigo="DCSC-00043" dias={dias} />
+        <NivelNoPeriodo codigo="DCSC-00043" horas={horas} />
       </section>
 
       <section aria-labelledby="r-alertas">
@@ -136,8 +135,9 @@ export function Relatorio() {
           <ul className={styles.lista}>
             {alertasNoPeriodo.map((a) => (
               <li key={a.id}>
-                {formatarDataHora(a.criado_em)}: {a.curso_dagua ?? a.nome}, de {a.faixa_anterior}{' '}
-                para <strong>{a.faixa_nova}</strong> ({a.origem})
+                {formatarDataHora(a.criado_em)}: {a.curso_dagua ?? a.nome}, de{' '}
+                {nomeDaFaixa(a.faixa_anterior)} para <strong>{nomeDaFaixa(a.faixa_nova)}</strong> (
+                {a.origem})
                 {a.encerrado_em
                   ? `, encerrado em ${formatarDataHora(a.encerrado_em)}`
                   : ', vigente'}

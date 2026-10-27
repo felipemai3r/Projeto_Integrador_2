@@ -112,9 +112,10 @@ def test_horizonte_publicado_traz_valor_intervalo_e_faixa(
     tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
     assert tres["disponivel"] and tres["faixa"] in (
         "normal",
-        "observacao",
         "atencao",
         "alerta",
+        "alerta_alto",
+        "extremo",
         None,
     )
     lo, hi = tres["intervalo_m"]

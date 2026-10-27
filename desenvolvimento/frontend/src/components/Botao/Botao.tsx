@@ -7,7 +7,7 @@ type Variante = 'primario' | 'secundario' | 'destaque' | 'perigo'
 const classe = (v: Variante, bloco?: boolean) =>
   `${styles.botao} ${styles[v]} ${bloco ? styles.bloco : ''}`
 
-/** Botao do Farol. `destaque` (laranja) aparece no maximo uma vez por tela. */
+/** Botao do Farol. `destaque` e o azul de acao em tamanho maior, para a chamada principal da tela (uma por tela). */
 export function Botao({
   variante = 'primario',
   bloco,

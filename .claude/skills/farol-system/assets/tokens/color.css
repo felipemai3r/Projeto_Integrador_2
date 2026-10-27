@@ -5,9 +5,12 @@
    tokens de risco (--fa-risk-*). Nunca primitivo, nunca hex.
 
    Identidade: azul e laranja da Defesa Civil de Santa Catarina.
-   O azul é a cor de ação. O laranja é assinatura institucional
-   (faixa de marca, destaque pontual) e NUNCA significa risco.
-   Risco tem família própria em risk.css.
+   O azul é a cor de ação. O laranja Sinal é só assinatura da marca
+   (o filete do cabeçalho): não é botão, não é destaque de conteúdo.
+   O laranja de RISCO é outro, a família Chama (alerta da escala da
+   Defesa Civil de SC), mais fechado e avermelhado que o Sinal. Para
+   não confundir, o Sinal não pinta nada que o usuário leia como
+   dado ou estado. Risco tem família própria em risk.css.
 
    Todo par texto/fundo usado nos semânticos foi validado em
    WCAG AA (4,5:1 para texto, 3:1 para componente de interface).
@@ -39,7 +42,7 @@
   --fa-prim-defesa-800: #063265;
   --fa-prim-defesa-900: #051F3D;
 
-  /* Sinal: laranja de sinalização (assinatura da marca) */
+  /* Sinal: laranja de sinalização (assinatura da marca, só o filete do cabeçalho) */
   --fa-prim-sinal-50:  #FFF3EB;
   --fa-prim-sinal-100: #FFE2CC;
   --fa-prim-sinal-200: #FDC59B;
@@ -63,7 +66,7 @@
   --fa-prim-vale-800: #095327;
   --fa-prim-vale-900: #043417;
 
-  /* Maré: ciano (observação, informação) */
+  /* Maré: ciano (informação, chuva) */
   --fa-prim-mare-50:  #EEF9FC;
   --fa-prim-mare-100: #D8F0F8;
   --fa-prim-mare-200: #B3E1EF;
@@ -75,7 +78,7 @@
   --fa-prim-mare-800: #045067;
   --fa-prim-mare-900: #03313F;
 
-  /* Âmbar: amarelo (atenção) */
+  /* Âmbar: amarelo (risco: atenção) */
   --fa-prim-ambar-50:  #FFFAEB;
   --fa-prim-ambar-100: #FEF3CD;
   --fa-prim-ambar-200: #FDE69B;
@@ -87,7 +90,19 @@
   --fa-prim-ambar-800: #664E00;
   --fa-prim-ambar-900: #3D2F00;
 
-  /* Brasa: vermelho (alerta, erro) */
+  /* Chama: laranja de risco (alerta). Mais fechado que o Sinal da marca */
+  --fa-prim-chama-50:  #FFF1E8;
+  --fa-prim-chama-100: #FFDFCB;
+  --fa-prim-chama-200: #FFBE95;
+  --fa-prim-chama-300: #FF9A5C;
+  --fa-prim-chama-400: #F9742B;
+  --fa-prim-chama-500: #E85A0C;
+  --fa-prim-chama-600: #BF4308;
+  --fa-prim-chama-700: #993406;
+  --fa-prim-chama-800: #6B2403;
+  --fa-prim-chama-900: #421602;
+
+  /* Brasa: vermelho (risco: alerta alto; também erro de interface) */
   --fa-prim-brasa-50:  #FEECEB;
   --fa-prim-brasa-100: #FDD6D3;
   --fa-prim-brasa-200: #FAADA8;
@@ -98,6 +113,18 @@
   --fa-prim-brasa-700: #931006;
   --fa-prim-brasa-800: #680903;
   --fa-prim-brasa-900: #410602;
+
+  /* Trovão: roxo (risco: extremo, aja imediatamente) */
+  --fa-prim-trovao-50:  #F6EFFC;
+  --fa-prim-trovao-100: #EADCF8;
+  --fa-prim-trovao-200: #D5B8F0;
+  --fa-prim-trovao-300: #BB8DE5;
+  --fa-prim-trovao-400: #9E5CD6;
+  --fa-prim-trovao-500: #8238BC;
+  --fa-prim-trovao-600: #6A2799;
+  --fa-prim-trovao-700: #541E7A;
+  --fa-prim-trovao-800: #3C1558;
+  --fa-prim-trovao-900: #260D38;
 
   /* ---------- Semânticos (modo dia) ---------- */
   /* Superfície */
@@ -132,7 +159,8 @@
   --fa-color-action-surface:  var(--fa-prim-defesa-50);
   --fa-color-action-disabled: var(--fa-prim-ardosia-200);
 
-  /* Destaque de marca (laranja Sinal). Uso pontual, nunca para risco */
+  /* Destaque de marca (laranja Sinal). Só assinatura (filete do cabeçalho). Nenhum
+     componente de conteúdo usa: o laranja que o usuário vê em dado é sempre risco (Chama) */
   --fa-color-accent:         var(--fa-prim-sinal-400);
   --fa-color-accent-hover:   var(--fa-prim-sinal-300);
   --fa-color-accent-pressed: var(--fa-prim-sinal-500);

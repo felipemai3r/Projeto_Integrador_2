@@ -37,11 +37,12 @@ describe('ComoFunciona', () => {
   it('explica as faixas com texto e nao so cor, e lembra que nao substitui a Defesa Civil', async () => {
     renderizar([])
     expect(screen.getByText(/Não substitui a Defesa Civil/i)).toBeInTheDocument()
-    expect(screen.getAllByText('Atenção').length).toBeGreaterThan(0)
+    for (const rotulo of ['Atenção', 'Alerta', 'Alerta alto', 'Aja imediatamente'])
+      expect(screen.getAllByText(rotulo).length).toBeGreaterThan(0)
     expect(await screen.findByText(/ainda não foi calculada/)).toBeInTheDocument()
   })
 
-  it('sem relacao clara a montante, diz isso sem exagerar e sem descartar a hipotese', async () => {
+  it('sem relacao clara nos pontos medidos, diz isso sem exagerar e sem descartar a hipotese', async () => {
     renderizar([
       {
         ...base,

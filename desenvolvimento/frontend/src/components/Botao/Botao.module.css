@@ -38,14 +38,15 @@
 .secundario:hover:not(:disabled) {
   background: var(--fa-color-state-hover-action);
 }
+/* Azul de acao, so maior. O laranja saiu dos botoes: laranja agora e a faixa de risco "alerta" */
 .destaque {
-  background: var(--fa-color-accent);
-  color: var(--fa-color-accent-on);
+  background: var(--fa-color-action-primary);
+  color: var(--fa-color-action-on);
   min-height: var(--fa-target-comfortable);
   border-radius: var(--fa-shape-control-lg);
 }
 .destaque:hover:not(:disabled) {
-  background: var(--fa-color-accent-hover);
+  background: var(--fa-color-action-hover);
 }
 .perigo {
   background: var(--fa-color-feedback-danger-border);

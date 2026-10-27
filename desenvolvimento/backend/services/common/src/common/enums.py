@@ -44,7 +44,10 @@ class StatusColeta(StrEnum):
 
 
 class Faixa(StrEnum):
+    """Escala de risco da Defesa Civil de SC, da menos para a mais grave."""
+
     NORMAL = "normal"
-    OBSERVACAO = "observacao"
-    ATENCAO = "atencao"
-    ALERTA = "alerta"
+    ATENCAO = "atencao"  # amarelo
+    ALERTA = "alerta"  # laranja
+    ALERTA_ALTO = "alerta_alto"  # vermelho, grande perigo
+    EXTREMO = "extremo"  # roxo, aja imediatamente (limiar ainda nao cadastrado)
