@@ -95,7 +95,16 @@ def link(acao: str, token: str) -> str:
     return f"{obter_configuracao().url_publica}/avisos?{acao}={token}"
 
 
-def mensagem_confirmacao(token: str) -> tuple[str, str]:
+def mensagem_confirmacao(token: str, ja_ativa: bool = False) -> tuple[str, str]:
+    if ja_ativa:
+        # vai para o dono do e-mail: pode dizer que ja recebe, sem expor nada a quem pediu
+        return (
+            "Confirme a mudança nos avisos do nível do rio",
+            "Alguém pediu para mudar os avisos de cheia que este e-mail recebe de Presidente "
+            "Getúlio.\n\n"
+            f"Para aplicar a mudança, abra: {link('confirmar', token)}\n\n"
+            "Se não foi você, ignore esta mensagem: seus avisos continuam como estão.",
+        )
     return (
         "Confirme os avisos do nível do rio",
         "Alguém pediu para receber neste e-mail os avisos de cheia dos rios de Presidente "

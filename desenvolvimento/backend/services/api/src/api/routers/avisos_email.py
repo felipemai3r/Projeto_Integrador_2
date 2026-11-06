@@ -54,16 +54,33 @@ def inscrever(
     token, token_hash = avisos_email.novo_token()
     i = s.scalar(select(InscricaoEmail).where(InscricaoEmail.email == email))
     if i is None:
-        i = InscricaoEmail(email=email, faixa_minima=dados.faixa_minima, estacao_id=estacao_id)
-        s.add(i)
-    # preferencias novas so valem depois de confirmar de novo pelo link
-    i.token_hash, i.criada_em, i.confirmada_em = token_hash, agora, None
-    i.estacao_id, i.faixa_minima = estacao_id, dados.faixa_minima
+        s.add(
+            InscricaoEmail(
+                email=email,
+                faixa_minima=dados.faixa_minima,
+                estacao_id=estacao_id,
+                token_hash=token_hash,
+                criada_em=agora,
+            )
+        )
+        ja_ativa = False
+    elif i.confirmada_em is None:
+        # ainda nao confirmou (nada recebe): renovar token e preferencias nao desliga ninguem
+        i.token_hash, i.criada_em = token_hash, agora
+        i.estacao_id, i.faixa_minima = estacao_id, dados.faixa_minima
+        ja_ativa = False
+    else:
+        # Ja confirmada e recebendo: quem pede de novo pode ser outra pessoa que so sabe o e-mail.
+        # A inscricao segue ativa como esta; o pedido espera o clique do dono no link.
+        i.token_hash_pendente, i.pendente_em = token_hash, agora
+        i.estacao_id_pendente, i.faixa_minima_pendente = estacao_id, dados.faixa_minima
+        ja_ativa = True
     s.flush()
-    assunto, texto = avisos_email.mensagem_confirmacao(token)
+    assunto, texto = avisos_email.mensagem_confirmacao(token, ja_ativa)
     r = enviador.enviar(email, assunto, texto)
     if not r.ok:
         raise HTTPException(503, "Não conseguimos enviar o e-mail agora. Tente de novo mais tarde.")
+    # mesma resposta nos dois casos: nao revela se o e-mail ja estava inscrito
     return MensagemOut(
         status="pendente",
         mensagem="Enviamos um link para o seu e-mail. Abra o link para confirmar os avisos.",
@@ -72,18 +89,34 @@ def inscrever(
 
 @router.post("/confirmar", response_model=MensagemOut)
 def confirmar(dados: TokenIn, s: SessaoDep, agora: AgoraDep, enviador: EnviadorDep) -> MensagemOut:
+    h = avisos_email.hash_token(dados.token)
     i = s.scalar(
         select(InscricaoEmail).where(
-            InscricaoEmail.token_hash == avisos_email.hash_token(dados.token)
+            (InscricaoEmail.token_hash == h) | (InscricaoEmail.token_hash_pendente == h)
         )
     )
-    if i is None or (i.confirmada_em is None and agora - i.criada_em > VALIDADE_CONFIRMACAO):
+    if i is None:
         raise HTTPException(404, "Link inválido ou vencido. Peça os avisos de novo.")
-    if i.confirmada_em is None:
+    if i.token_hash_pendente == h:
+        # clique do dono num pedido de mudanca: agora as preferencias novas valem
+        if i.pendente_em is None or agora - i.pendente_em > VALIDADE_CONFIRMACAO:
+            raise HTTPException(404, "Link inválido ou vencido. Peça os avisos de novo.")
+        assert i.faixa_minima_pendente is not None
+        i.faixa_minima, i.estacao_id = i.faixa_minima_pendente, i.estacao_id_pendente
+        i.confirmada_em = i.confirmada_em or agora
+        i.token_hash_pendente = i.estacao_id_pendente = i.faixa_minima_pendente = None
+        i.pendente_em = None
+        s.flush()
+        assunto, texto = avisos_email.mensagem_ativado(i)
+        enviador.enviar(i.email, assunto, texto)
+    elif i.confirmada_em is None:
+        if agora - i.criada_em > VALIDADE_CONFIRMACAO:
+            raise HTTPException(404, "Link inválido ou vencido. Peça os avisos de novo.")
         i.confirmada_em = agora
         s.flush()
         assunto, texto = avisos_email.mensagem_ativado(i)
         enviador.enviar(i.email, assunto, texto)  # boas-vindas: falha aqui nao desfaz
+    # token original de quem ja confirmou: nada a fazer (clicar de novo e inofensivo)
     return MensagemOut(status="confirmado", mensagem="Pronto! Os avisos por e-mail estão ativos.")
 
 

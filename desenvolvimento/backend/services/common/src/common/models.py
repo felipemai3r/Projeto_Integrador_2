@@ -171,6 +171,13 @@ class InscricaoEmail(Base):
     faixa_minima: Mapped[str] = mapped_column(Text)
     criada_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     confirmada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Pedido de mudanca de preferencias de quem JA confirmou. Fica de lado ate o dono clicar no
+    # link: a inscricao confirmada segue ativa com as preferencias atuais, e quem so sabe o
+    # e-mail dela nao consegue desliga-la nem alterar o que ela recebe.
+    token_hash_pendente: Mapped[str | None] = mapped_column(Text, unique=True)
+    estacao_id_pendente: Mapped[int | None] = mapped_column(ForeignKey("estacao.id"))
+    faixa_minima_pendente: Mapped[str | None] = mapped_column(Text)
+    pendente_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Ocorrencia(Base):
