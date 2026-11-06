@@ -381,10 +381,10 @@ def test_lacuna_pequena_de_um_ponto_de_chuva_ainda_estima_e_avisa(
     r = client.get("/api/previsao/DCSC-00043").json()
     tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
     assert tres["disponivel"] is True and tres["nivel_m"] is not None
-    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 14}]
+    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 12}]
     # a simulacao passa pelo mesmo caminho e traz o mesmo aviso
     sim = client.post("/api/simulacao", json={"chuva_mm": {"DCSC-00043": 10}}).json()
-    assert sim["origem"] == "cenario" and sim["chuva_estimada"][0]["horas"] == 14
+    assert sim["origem"] == "cenario" and sim["chuva_estimada"][0]["horas"] == 12
 
 
 def test_lacuna_pequena_modelo_antigo_tambem_estima_e_avisa(
@@ -394,7 +394,7 @@ def test_lacuna_pequena_modelo_antigo_tambem_estima_e_avisa(
     _com_series(monkeypatch, lacuna_h=14, ponto=WITMARSUM)
     r = client.get("/api/previsao/DCSC-00043").json()
     assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
-    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 14}]
+    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 12}]
 
 
 def test_lacuna_acima_do_limite_modelo_antigo_continua_sem_estimativa(
@@ -489,7 +489,9 @@ def test_boiteux_e_vitor_nunca_entram_nas_variaveis_do_rio_dos_indios(
     assert any("serra_indios" in c for c in colunas) and any("revolver" in c for c in colunas)
     q = montar_quadros(None, "DCSC-00043", AGORA)  # type: ignore[arg-type]
     achada = escolher_linha(q, colunas, AGORA)  # type: ignore[arg-type]
-    assert achada is not None and achada[1] == pd.Timestamp(AGORA) and achada[2] == {}
+    # a ultima hora FECHADA em AGORA e a de AGORA - 2 h (a de AGORA - 1 h so fecha em AGORA + 1 min)
+    assert achada is not None and achada[1] == pd.Timestamp(AGORA) - pd.Timedelta(hours=2)
+    assert achada[2] == {}
 
 
 def test_ponto_do_conjunto_fora_do_ar_derruba_so_o_modelo_antigo_que_o_usa(
@@ -501,16 +503,17 @@ def test_ponto_do_conjunto_fora_do_ar_derruba_so_o_modelo_antigo_que_o_usa(
     assert escolher_linha(q, colunas, AGORA) is None  # type: ignore[arg-type]
     # modelo que aceita NaN: so as obrigatorias contam, e a hora mais recente serve
     achada = escolher_linha(q, colunas, AGORA, ["nivel_m", "taxa_1h_cm", "taxa_3h_cm_h"])  # type: ignore[arg-type]
-    assert achada is not None and achada[1] == pd.Timestamp(AGORA)
+    assert achada is not None and achada[1] == pd.Timestamp(AGORA) - pd.Timedelta(hours=2)
     assert np.isnan(achada[0]["chuva_witmarsum_1h"])  # em branco, nunca zero
 
 
 def test_lacuna_pequena_de_serra_e_estimada_como_qualquer_ponto(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _com_series(monkeypatch, lacuna_h=5, ponto=SERRA)
+    _com_series(monkeypatch, lacuna_h=7, ponto=SERRA)
     q = montar_quadros(None, REVOLVER, AGORA)  # type: ignore[arg-type]
     achada = escolher_linha(q, _todas_as_colunas(REVOLVER), AGORA)  # type: ignore[arg-type]
+    # 7 horas sem leitura no fim; a linha (ultima hora fechada) ve 5 delas
     assert achada is not None and achada[2] == {SERRA: 5}
 
 
@@ -541,13 +544,14 @@ def test_boiteux_com_lacuna_nao_derruba_nenhum_dos_dois_alvos(
 def test_horizontes_diferentes_usam_linhas_diferentes(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Serras sem dado nas 2 ultimas horas (e sem vizinhos para estimar): o modelo que as usa
-    fica com a hora de 2 h atras; o que nao as usa, com a hora mais recente."""
+    """Serras sem dado nas 3 ultimas horas (e sem vizinhos para estimar): o modelo que as usa
+    fica com a hora de 3 h atras (o limite de idade); o que nao as usa, com a ultima hora
+    fechada (2 h atras)."""
     _publicar(base, tmp_path, 3, codigo=REVOLVER)
     _publicar(base, tmp_path, 6, codigo=REVOLVER, com_serras=True, antigo=True)
     _com_series(
         monkeypatch,
-        lacuna_h=2,
+        lacuna_h=3,
         ponto="DC-PEU-003",
         tambem_sem=("DC-PEU-004", "DC-PEU-002", REVOLVER),
     )
@@ -555,11 +559,12 @@ def test_horizontes_diferentes_usam_linhas_diferentes(
     h = {x["horizonte_h"]: x for x in r["horizontes"]}
     agora = pd.Timestamp(AGORA)
     assert h[3]["disponivel"] and h[6]["disponivel"]
-    assert pd.Timestamp(h[3]["valido_para"]) == agora + pd.Timedelta(hours=3)
-    assert pd.Timestamp(h[6]["valido_para"]) == agora - pd.Timedelta(hours=2) + pd.Timedelta(
+    fechada = agora - pd.Timedelta(hours=2)  # ultima hora ja terminada em AGORA
+    assert pd.Timestamp(h[3]["valido_para"]) == fechada + pd.Timedelta(hours=3)
+    assert pd.Timestamp(h[6]["valido_para"]) == agora - pd.Timedelta(hours=3) + pd.Timedelta(
         hours=6
     )
-    assert pd.Timestamp(r["base_em"]) == agora  # a base e a hora mais recente usada
+    assert pd.Timestamp(r["base_em"]) == fechada  # a base e a hora mais recente usada
     assert r["chuva_estimada"] == []
 
 

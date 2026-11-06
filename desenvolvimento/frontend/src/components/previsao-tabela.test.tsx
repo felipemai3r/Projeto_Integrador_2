@@ -89,11 +89,12 @@ describe('PrevisaoTabela', () => {
     expect(screen.getByText(/Sem dados recentes\./)).toBeInTheDocument()
   })
 
-  it('previsao fora do que o modelo conhece traz o aviso de confianca baixa', () => {
+  it('previsao fora do que o modelo conhece avisa e nao mostra a faixa', () => {
     render(
       <PrevisaoTabela previsao={previsao([disponivel(3, { extrapolacao: ['chuva_local_1h'] })])} />,
     )
-    expect(screen.getByRole('note')).toHaveTextContent(/confiança baixa/)
+    expect(screen.getByRole('note')).toHaveTextContent(/o nível real pode ser bem maior/)
+    expect(screen.queryByText(/Alerta \(previsão\)/)).not.toBeInTheDocument()
   })
 
   it('sem extrapolacao nao ha aviso de confianca baixa', () => {

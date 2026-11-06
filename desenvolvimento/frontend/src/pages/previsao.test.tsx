@@ -28,6 +28,11 @@ const base = {
   base_em: '2026-10-13T00:00:00Z',
   nivel_base_m: 1.78,
   aviso: 'Estimativa de apoio.',
+  pontos_cenario: [
+    { codigo: 'DCSC-00043', nome: 'PCD Presidente Getúlio' },
+    { codigo: 'DCSC-00037', nome: 'PCD Dona Emma' },
+    { codigo: 'DC-PEU-003', nome: 'PCD Serra dos Índios (Posto de Saúde)' },
+  ],
 }
 
 function renderizar() {
@@ -81,7 +86,7 @@ describe('Previsao', () => {
     const f = vi.fn(async () => resposta({ ...base, horizontes: [] }))
     vi.stubGlobal('fetch', f)
     renderizar()
-    await screen.findByText('Previsão do nível')
+    await screen.findByLabelText(/Dona Emma/)
     const chamadasIniciais = f.mock.calls.length
     await userEvent.click(screen.getByRole('button', { name: 'Simular' }))
     expect(screen.getByRole('alert')).toHaveTextContent('pelo menos um ponto')
@@ -105,6 +110,44 @@ describe('Previsao', () => {
                 incerteza_m: 0.3,
                 intervalo_m: [4.8, 5.4],
                 faixa: 'atencao',
+              }),
+            ],
+          })
+        : resposta({ ...base, horizontes: [] }),
+    )
+    vi.stubGlobal('fetch', f)
+    renderizar()
+    await userEvent.type(await screen.findByLabelText(/Dona Emma/), '50')
+    await userEvent.click(screen.getByRole('button', { name: 'Simular' }))
+    expect(await screen.findByText('Cenário hipotético. Não é uma previsão.')).toBeInTheDocument()
+    expect(screen.getByText(/Atenção \(cenário\)/)).toBeInTheDocument()
+  })
+
+  it('simulador mostra os pontos que o modelo usa, vindos da API', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => resposta({ ...base, horizontes: [] })),
+    )
+    renderizar()
+    expect(await screen.findByLabelText(/Serra dos Índios, em milímetros/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Presidente Getúlio \(na cidade\)/)).toBeInTheDocument()
+    // ponto que o modelo nao usa nao aparece (a chuva dele seria ignorada)
+    expect(screen.queryByLabelText(/José Boiteux/)).not.toBeInTheDocument()
+  })
+
+  it('cenario acima do que ja foi observado nao mostra faixa e avisa que pode ser maior', async () => {
+    const f = vi.fn(async (url: string) =>
+      url.includes('/simulacao')
+        ? resposta({
+            ...base,
+            origem: 'cenario',
+            horizontes: [
+              horizonte(6, {
+                disponivel: true,
+                motivo: null,
+                nivel_m: 2.3,
+                intervalo_m: [1.9, 3.5],
+                faixa: 'normal',
                 extrapolacao: ['chuva_local_1h'],
               }),
             ],
@@ -113,12 +156,10 @@ describe('Previsao', () => {
     )
     vi.stubGlobal('fetch', f)
     renderizar()
-    await screen.findByText('Previsão do nível')
-    await userEvent.type(screen.getByLabelText(/Dona Emma/), '50')
+    await userEvent.type(await screen.findByLabelText(/Dona Emma/), '100')
     await userEvent.click(screen.getByRole('button', { name: 'Simular' }))
-    expect(await screen.findByText('Cenário hipotético. Não é uma previsão.')).toBeInTheDocument()
-    expect(screen.getByText(/Atenção \(cenário\)/)).toBeInTheDocument()
-    expect(screen.getByText(/fora do que já foi observado/)).toBeInTheDocument()
+    expect(await screen.findByText(/o nível real pode ser bem maior/)).toBeInTheDocument()
+    expect(screen.queryByText(/Normal \(cenário\)/)).not.toBeInTheDocument()
   })
 
   it('avisa quando a chuva de um ponto foi estimada pela media dos outros', async () => {

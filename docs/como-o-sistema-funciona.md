@@ -221,7 +221,7 @@ O motivo é prático: uma única hora com poucas leituras não pode apagar a pre
 
 ### 6.3 Modelo
 
-- **Gradient boosting** (`HistGradientBoostingRegressor`, perda de erro absoluto, 600 árvores, semente fixa), no lugar do Ridge. Em 24 h o Ridge perdia para a persistência; o novo modelo vence nos cinco horizontes (ADR 0006).
+- **Gradient boosting** (`HistGradientBoostingRegressor`, perda quadrática, 600 árvores, semente fixa), no lugar do Ridge, com **restrição monótona na chuva**: mais chuva nunca prevê subida menor. A perda absoluta, usada no primeiro dia, encolhia as cheias (ADR 0006, seção 1.1). Em 24 h o Ridge perdia para a persistência; o novo modelo vence nos cinco horizontes (ADR 0006).
 - O modelo **aceita variável desconhecida (NaN)**: só o alvo e as colunas obrigatórias (nível, taxa de 1 h e taxa de 3 h) precisam existir para a linha entrar no treino. Em cada ajuste saem as colunas com menos de 50 valores.
 - **Intervalo da previsão:** quantis dos erros fora da amostra, **por regime de chuva** (seco, chuva, chuva forte), com o nível do quantil calibrado para cobrir de fato o prometido: **95% até 6 h e 80% em 12 h e 24 h**, porque nesses horizontes a chuva que ainda vai cair domina o erro e um intervalo de 95% ficaria largo demais para orientar. A tela mostra o nível usado. Sem chuva o intervalo é bem mais estreito. Modelos antigos (Ridge) seguem com ±1,96 desvio.
 
@@ -259,7 +259,7 @@ Os valores são o RMSE do modelo, com o da persistência entre parênteses. A te
 ### 6.7 Como uma previsão é montada na hora
 
 1. O sistema pega os últimos 8 dias de leituras, agrega por hora e monta as variáveis.
-2. Usa a **última hora completa**, sem nenhuma variável desconhecida. Se ela tiver mais de **3 h**, a previsão fica indisponível: "Sem dados recentes o bastante para estimar agora".
+2. Usa a **última hora já fechada** (a hora `t` só vale depois de `t + 1 h + 1 min`; a hora corrente, incompleta, nunca entra), sem nenhuma variável desconhecida. Se ela tiver mais de **3 h**, a previsão fica indisponível: "Sem dados recentes o bastante para estimar agora".
    - **Exceção, só aqui e nunca no treino:** se a chuva medida não basta para montar essa linha, o sistema tenta de novo **estimando as horas sem leitura de um ponto de chuva pela média dos outros pontos** (veja a seção 6.8). Só vale para chuva, nunca para o nível do rio.
 3. Para cada horizonte publicado:
    - **variação** = saída do modelo (cm);

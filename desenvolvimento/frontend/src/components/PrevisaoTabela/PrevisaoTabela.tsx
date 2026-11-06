@@ -7,6 +7,7 @@ import { RiskBadge } from '../RiskBadge'
 import styles from './PrevisaoTabela.module.css'
 
 function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
+  const extrapola = h.extrapolacao.length > 0
   return (
     <li className={styles.linha}>
       <div className={styles.horizonte}>
@@ -24,12 +25,18 @@ function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
               {Math.round((h.confianca ?? 0.95) * 100)}% de confiança)
             </p>
           )}
-          {ehFaixa(h.faixa) && <RiskBadge faixa={h.faixa} origem={origem} />}
-          {h.extrapolacao.length > 0 && (
+          {/* Fora do que o modelo ja viu (ex.: chuva maior que qualquer uma do historico), ele
+              nao sabe estimar alem e tende a subestimar: mostrar "Normal" seria tranquilizar sem
+              base. Nesse caso a faixa nao aparece, so o aviso. */}
+          {extrapola ? (
             <p className={styles.extrapolacao} role="note">
-              <TriangleAlert aria-hidden="true" size={16} /> Este cenário está fora do que já foi
-              observado. A estimativa tem confiança baixa.
+              <TriangleAlert aria-hidden="true" size={16} /> Passa do que já foi observado (por
+              exemplo, chuva maior que qualquer uma do histórico). O modelo não sabe estimar além
+              disso: o nível real pode ser bem maior. Trate este valor como um mínimo, não como
+              garantia.
             </p>
+          ) : (
+            ehFaixa(h.faixa) && <RiskBadge faixa={h.faixa} origem={origem} />
           )}
         </div>
       ) : (

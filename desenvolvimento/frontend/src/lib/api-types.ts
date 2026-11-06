@@ -877,6 +877,16 @@ export interface components {
              */
             extrapolacao: string[];
         };
+        /**
+         * PontoCenario
+         * @description Ponto de chuva que o modelo do alvo usa: o que faz sentido preencher na simulacao.
+         */
+        PontoCenario: {
+            /** Codigo */
+            codigo: string;
+            /** Nome */
+            nome: string;
+        };
         /** PrevisaoOut */
         PrevisaoOut: {
             /** Estacao */
@@ -894,6 +904,11 @@ export interface components {
              * @default []
              */
             chuva_estimada: components["schemas"]["ChuvaEstimada"][];
+            /**
+             * Pontos Cenario
+             * @default []
+             */
+            pontos_cenario?: components["schemas"]["PontoCenario"][];
             /**
              * Aviso
              * @default Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de Presidente Getúlio.

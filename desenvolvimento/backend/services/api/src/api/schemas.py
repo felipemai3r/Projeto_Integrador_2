@@ -239,6 +239,13 @@ class ChuvaEstimada(BaseModel):
     horas: int
 
 
+class PontoCenario(BaseModel):
+    """Ponto de chuva que o modelo do alvo usa: o que faz sentido preencher na simulacao."""
+
+    codigo: str
+    nome: str
+
+
 class PrevisaoOut(BaseModel):
     estacao: str
     origem: str  # operacional | cenario
@@ -246,6 +253,8 @@ class PrevisaoOut(BaseModel):
     nivel_base_m: float | None
     horizontes: list[PrevisaoHorizonte]
     chuva_estimada: list[ChuvaEstimada] = []  # pontos cujas horas sem leitura foram estimadas
+    # pontos de chuva do modelo deste alvo, na ordem do modelo (a tela monta a simulacao daqui)
+    pontos_cenario: list[PontoCenario] = []
     aviso: str = (
         "Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de "
         "Presidente Getúlio."

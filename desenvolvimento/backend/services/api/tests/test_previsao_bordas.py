@@ -581,3 +581,22 @@ def test_cenario_marca_a_origem_e_nao_altera_a_previsao_de_quem_nao_usa_chuva(
     com_linha(monkeypatch, 2.0)
     r = prever(base, estacao(base, REVOLVER), AGORA, chuva_mm={REVOLVER: 50.0})
     assert r.origem == "cenario" and horizonte(r, 3).nivel_m == 2.1
+
+
+def test_hora_que_ainda_nao_terminou_nunca_entra_na_previsao() -> None:
+    """Regressao: as 11:40 a linha das 11:00 tem nivel parcial e chuva em branco; o modelo que
+    aceita NaN a usava, previa sem chuva e caia no regime de chuva forte (intervalo enorme)."""
+    from api.previsao import so_horas_fechadas
+
+    idx = pd.date_range("2026-11-06 08:00", periods=4, freq="h", tz="UTC")  # 08, 09, 10, 11
+    X = pd.DataFrame({"nivel_m": [2.0, 1.99, 1.97, 1.96]}, index=idx)
+    as_11h40 = datetime(2026, 11, 6, 11, 40, tzinfo=UTC)
+    assert list(so_horas_fechadas(X, as_11h40).index.hour) == [8, 9, 10]
+    # a hora das 10:00 so fecha as 11:01 (folga da leitura que fecha a hora)
+    as_11h00 = datetime(2026, 11, 6, 11, 0, 30, tzinfo=UTC)
+    assert list(so_horas_fechadas(X, as_11h00).index.hour) == [8, 9]
+    assert list(so_horas_fechadas(X, datetime(2026, 11, 6, 11, 1, tzinfo=UTC)).index.hour) == [
+        8,
+        9,
+        10,
+    ]
