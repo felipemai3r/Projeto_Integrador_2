@@ -224,6 +224,8 @@ class PrevisaoHorizonte(BaseModel):
     nivel_m: float | None = None
     incerteza_m: float | None = None
     intervalo_m: tuple[float, float] | None = None
+    # nivel de confianca do intervalo (0,95 ate 6 h; 0,80 em 12 e 24 h no modelo novo)
+    confianca: float | None = None
     faixa: str | None = None
     modelo: ResumoModelo | None = None
     extrapolacao: list[str] = []

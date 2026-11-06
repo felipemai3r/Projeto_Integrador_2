@@ -20,8 +20,8 @@ function Linha({ h, origem }: { h: PrevisaoHorizonte; origem: Origem }) {
           </p>
           {h.intervalo_m && (
             <p className={styles.meta}>
-              Entre {formatarNivel(h.intervalo_m[0])} e {formatarNivel(h.intervalo_m[1])} m (95% de
-              confiança)
+              Entre {formatarNivel(h.intervalo_m[0])} e {formatarNivel(h.intervalo_m[1])} m (
+              {Math.round((h.confianca ?? 0.95) * 100)}% de confiança)
             </p>
           )}
           {ehFaixa(h.faixa) && <RiskBadge faixa={h.faixa} origem={origem} />}

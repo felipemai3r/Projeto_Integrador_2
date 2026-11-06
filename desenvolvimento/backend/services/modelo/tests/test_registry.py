@@ -46,6 +46,14 @@ def resultado(h: int = 3, publicar: bool = True, pipeline: object | None = None)
         colunas=["a", "b"],
         pipeline=Pipe() if pipeline is None and publicar else pipeline,
         faixa_treino={"a": (0.0, 1.0), "b": (-1.0, 1.0)},
+        intervalo_por_regime={
+            "seco": [-9.0, 9.5],
+            "chuva": [-40.0, 55.0],
+            "chuva_forte": [-70.0, 80.0],
+        },
+        alfa_intervalo=0.015,
+        cobertura_validacao=0.957,
+        colunas_obrigatorias=["a"],
     )
 
 
@@ -60,6 +68,9 @@ def test_modelo_publicado_grava_artefato_legivel_e_caminho_por_estacao_e_horizon
     art = carregar_artefato(m.caminho_artefato)
     assert art["colunas"] == ["a", "b"] and art["faixa_treino"]["a"] == (0.0, 1.0)
     assert isinstance(art["pipeline"], Pipe)
+    # campos do modelo novo: a API usa para aceitar NaN e para o intervalo por regime
+    assert art["aceita_nan"] is True and art["colunas_obrigatorias"] == ["a"]
+    assert art["intervalo_por_regime"]["chuva"] == [-40.0, 55.0] and art["alfa_intervalo"] == 0.015
 
 
 def test_metadados_guardam_motivo_colunas_e_erros_para_explicar_a_previsao(
@@ -75,8 +86,18 @@ def test_metadados_guardam_motivo_colunas_e_erros_para_explicar_a_previsao(
         "colunas": ["a", "b"],
         "rmse_tendencia_cm": 6.0,
         "desvio_residual_cm": 3.5,
+        "intervalo_por_regime": {
+            "seco": [-9.0, 9.5],
+            "chuva": [-40.0, 55.0],
+            "chuva_forte": [-70.0, 80.0],
+        },
+        "alfa_intervalo": 0.015,
+        "cobertura_validacao": 0.957,
+        "confianca_intervalo": 0.95,
+        "colunas_obrigatorias": ["a"],
+        "aceita_nan": True,
     }
-    assert (m.algoritmo, m.amostras, m.treinado_em) == ("ridge", 500, T0)
+    assert (m.algoritmo, m.amostras, m.treinado_em) == ("hist_gradient_boosting", 500, T0)
     assert (m.rmse_cm, m.mae_cm, m.rmse_persistencia_cm) == (4.0, 3.0, 8.0)
 
 

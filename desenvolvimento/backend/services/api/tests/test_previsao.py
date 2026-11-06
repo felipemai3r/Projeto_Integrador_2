@@ -1,3 +1,4 @@
+import functools
 from datetime import timedelta
 from pathlib import Path
 
@@ -11,6 +12,9 @@ from fastapi.testclient import TestClient
 from modelo.features import PONTOS_CHUVA, alvo_deslocado, montar_features
 from modelo.inferencia import MAX_HORAS_IMPUTADAS
 from modelo.treino import avaliar_horizonte
+from sklearn.linear_model import RidgeCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from tempo_api import AGORA
@@ -22,6 +26,7 @@ def _idx(n: int) -> pd.DatetimeIndex:
     return pd.date_range("2026-07-01", periods=n, freq="1h", tz="UTC")
 
 
+@functools.cache  # o treino e o trecho caro dos testes; o resultado nao e alterado por ninguem
 def _treinar_artefato(
     horizonte: int = 3,
     alvo: str = "DCSC-00043",
@@ -30,10 +35,15 @@ def _treinar_artefato(
 ):
     rng = np.random.default_rng(1)
     n = 24 * 120
-    chuva = pd.Series(np.where(rng.random(n) < 0.08, rng.gamma(2.0, 3.0, n), 0.0), _idx(n))
+    # chuva frequente: o gradient boosting (perda absoluta) so aprende a relacao se ela for tipica
+    chuva = pd.Series(np.where(rng.random(n) < 0.3, rng.gamma(2.0, 3.0, n), 0.0), _idx(n))
     resposta = np.zeros(n)
-    resposta[2:] = chuva.to_numpy()[: n - 2] * 0.02
-    nivel = pd.Series(1.0 + np.cumsum(resposta - 0.003), _idx(n)).clip(lower=0.5)
+    resposta[2:] = chuva.to_numpy()[: n - 2] * 0.03
+    v = np.empty(n)
+    v[0] = 1.0
+    for i in range(1, n):  # sobe com a chuva e volta ao normal (recessao): fica limitado
+        v[i] = v[i - 1] + resposta[i] - 0.15 * (v[i - 1] - 1.0)
+    nivel = pd.Series(v, _idx(n))
     chuvas = {"DCSC-00043": chuva, "DCSC-00037": chuva.shift(1).fillna(0)}
     if com_serras:
         chuvas |= {"DC-PEU-003": chuva * 1.5, "DC-PEU-004": chuva.shift(2).fillna(0)}
@@ -68,17 +78,34 @@ def _publicar(
     codigo: str = "DCSC-00043",
     com_serras: bool = False,
     extras: tuple[str, ...] = (),
+    antigo: bool = False,
 ) -> tuple[Modelo, pd.Series]:
+    """Publica um modelo treinado de verdade. `antigo` grava so o que um artefato Ridge gravava
+    (sem `aceita_nan` nem `intervalo_por_regime`): a API deve trata-lo como sempre."""
     r, linha = _treinar_artefato(horizonte, codigo, com_serras, extras)
     assert r.pipeline is not None
     caminho = tmp / f"m{codigo}_{horizonte}.joblib"
-    joblib.dump(
-        {"pipeline": r.pipeline, "colunas": r.colunas, "faixa_treino": r.faixa_treino}, caminho
-    )
+    artefato = {"pipeline": r.pipeline, "colunas": r.colunas, "faixa_treino": r.faixa_treino}
+    metadados = {"desvio_residual_cm": r.desvio_residual_cm or 1.0, "motivo": "ok"}
+    if not antigo:
+        artefato |= {
+            "colunas_obrigatorias": r.colunas_obrigatorias,
+            "aceita_nan": r.aceita_nan,
+            "intervalo_por_regime": r.intervalo_por_regime,
+            "alfa_intervalo": r.alfa_intervalo,
+        }
+        metadados |= {
+            "intervalo_por_regime": r.intervalo_por_regime,
+            "alfa_intervalo": r.alfa_intervalo,
+            "cobertura_validacao": r.cobertura_validacao,
+            "colunas_obrigatorias": r.colunas_obrigatorias,
+            "aceita_nan": r.aceita_nan,
+        }
+    joblib.dump(artefato, caminho)
     m = Modelo(
         estacao_id=_est(s, codigo).id,
         horizonte_h=horizonte,
-        algoritmo="ridge",
+        algoritmo="ridge" if antigo else "hist_gradient_boosting",
         treinado_em=AGORA,
         amostras=r.amostras,
         rmse_cm=r.rmse_cm or 1.0,
@@ -86,7 +113,7 @@ def _publicar(
         rmse_persistencia_cm=r.rmse_persistencia_cm or 2.0,
         publicado=True,
         caminho_artefato=str(caminho),
-        metadados={"desvio_residual_cm": r.desvio_residual_cm or 1.0, "motivo": "ok"},
+        metadados=metadados,
     )
     s.add(m)
     s.commit()
@@ -162,6 +189,84 @@ def test_horizonte_publicado_traz_valor_intervalo_e_faixa(
     assert [h["disponivel"] for h in r["horizontes"] if h["horizonte_h"] != 3] == [False] * 4
 
 
+def test_artefato_ridge_antigo_segue_igual_na_api(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Compatibilidade: artefato do Ridge (sem `aceita_nan`, `colunas_obrigatorias` nem
+    `intervalo_por_regime`) mantem o intervalo +-1,96 sigma e a exigencia de TODAS as colunas."""
+    rng = np.random.default_rng(3)
+    colunas = ["nivel_m", "taxa_1h_cm", "taxa_3h_cm_h", "chuva_local_6h"]
+    X = pd.DataFrame(rng.normal(size=(300, 4)), columns=colunas)
+    ridge = make_pipeline(StandardScaler(), RidgeCV(alphas=(0.1, 1.0, 10.0))).fit(
+        X, 5.0 * X["chuva_local_6h"]
+    )
+    caminho = tmp_path / "ridge.joblib"
+    faixa = {c: (float(X[c].min()), float(X[c].max())) for c in colunas}
+    joblib.dump({"pipeline": ridge, "colunas": colunas, "faixa_treino": faixa}, caminho)
+    base.add(
+        Modelo(
+            estacao_id=_est(base).id,
+            horizonte_h=3,
+            algoritmo="ridge",
+            treinado_em=AGORA,
+            amostras=300,
+            rmse_cm=9.0,
+            mae_cm=7.0,
+            rmse_persistencia_cm=15.0,
+            publicado=True,
+            caminho_artefato=str(caminho),
+            metadados={"desvio_residual_cm": 10.0, "motivo": "ok", "colunas": colunas},
+        )
+    )
+    base.commit()
+    linha = pd.Series(
+        {"nivel_m": 2.0, "taxa_1h_cm": 0.1, "taxa_3h_cm_h": 0.2, "chuva_local_6h": 1.0}
+    )
+    _com_linha(monkeypatch, linha)
+    previsto = 2.0 + float(ridge.predict(linha.to_frame().T.astype(float))[0]) / 100
+    tres = next(
+        h
+        for h in client.get("/api/previsao/DCSC-00043").json()["horizontes"]
+        if h["horizonte_h"] == 3
+    )
+    assert tres["disponivel"] is True and tres["nivel_m"] == round(previsto, 2)
+    assert tres["incerteza_m"] == 0.2  # 1,96 * 10 cm
+    assert tres["confianca"] == 0.95  # +-1,96 sigma
+    assert tres["intervalo_m"] == [round(previsto - 0.196, 2), round(previsto + 0.196, 2)]
+    # todas as colunas continuam obrigatorias: uma em branco e "sem dados recentes"
+    _com_linha(monkeypatch, linha.where(linha.index != "chuva_local_6h"))
+    sem = next(
+        h
+        for h in client.get("/api/previsao/DCSC-00043").json()["horizontes"]
+        if h["horizonte_h"] == 3
+    )
+    assert sem["disponivel"] is False and "Sem dados recentes" in sem["motivo"]
+
+
+def test_modelo_novo_traz_intervalo_por_regime_pela_api(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    m, linha = _publicar(base, tmp_path, 3)
+    por_regime = m.metadados["intervalo_por_regime"]
+    assert set(por_regime) == {"seco", "chuva", "chuva_forte"}
+    _com_linha(monkeypatch, linha)
+    tres = next(
+        h
+        for h in client.get("/api/previsao/DCSC-00043").json()["horizontes"]
+        if h["horizonte_h"] == 3
+    )
+    lo, hi = tres["intervalo_m"]
+    assert lo < tres["nivel_m"] < hi
+    assert tres["incerteza_m"] == pytest.approx((hi - lo) / 2, abs=0.011)
+    assert tres["confianca"] == 0.95  # 3 h: 95% (12 e 24 h usam 80%, ADR 0006)
+    # uma simulacao de chuva forte nunca fica com intervalo mais estreito que a de tempo seco
+    seco = client.post("/api/simulacao", json={"chuva_mm": {"DCSC-00043": 0}}).json()
+    forte = client.post("/api/simulacao", json={"chuva_mm": {"DCSC-00043": 80}}).json()
+    h_seco = next(h for h in seco["horizontes"] if h["horizonte_h"] == 3)
+    h_forte = next(h for h in forte["horizontes"] if h["horizonte_h"] == 3)
+    assert h_forte["incerteza_m"] >= h_seco["incerteza_m"]
+
+
 def test_sem_dados_recentes_modelo_existe_mas_nao_estima(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -222,7 +327,8 @@ def test_estacao_inexistente_da_404(client: TestClient, base: Session) -> None:
 
 # --- chuva estimada: ponto sem leitura por algumas horas (so na inferencia) ---
 
-VITOR = "DCSC-00036"
+VITOR = "DCSC-00036"  # fora do conjunto do rio dos Indios desde o ADR 0006
+WITMARSUM = "DCSC-00015"
 
 
 def _series_reais(
@@ -270,25 +376,48 @@ def _com_series(
 def test_lacuna_pequena_de_um_ponto_de_chuva_ainda_estima_e_avisa(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _publicar(base, tmp_path, 3, extras=(VITOR,))  # o modelo usa a chuva da Vitor
-    _com_series(monkeypatch, lacuna_h=14)
+    _publicar(base, tmp_path, 3, extras=(WITMARSUM,))  # o modelo usa a chuva de Witmarsum
+    _com_series(monkeypatch, lacuna_h=14, ponto=WITMARSUM)
     r = client.get("/api/previsao/DCSC-00043").json()
     tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
     assert tres["disponivel"] is True and tres["nivel_m"] is not None
-    assert r["chuva_estimada"] == [{"codigo": VITOR, "nome": "PCD Vitor Meireles", "horas": 14}]
+    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 14}]
     # a simulacao passa pelo mesmo caminho e traz o mesmo aviso
     sim = client.post("/api/simulacao", json={"chuva_mm": {"DCSC-00043": 10}}).json()
     assert sim["origem"] == "cenario" and sim["chuva_estimada"][0]["horas"] == 14
 
 
-def test_lacuna_acima_do_limite_continua_sem_estimativa(
+def test_lacuna_pequena_modelo_antigo_tambem_estima_e_avisa(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _publicar(base, tmp_path, 3, extras=(VITOR,))
-    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 1)
+    _publicar(base, tmp_path, 3, extras=(WITMARSUM,), antigo=True)
+    _com_series(monkeypatch, lacuna_h=14, ponto=WITMARSUM)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
+    assert r["chuva_estimada"] == [{"codigo": WITMARSUM, "nome": "PCD Witmarsum", "horas": 14}]
+
+
+def test_lacuna_acima_do_limite_modelo_antigo_continua_sem_estimativa(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _publicar(base, tmp_path, 3, extras=(WITMARSUM,), antigo=True)  # exige todas as colunas
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 1, ponto=WITMARSUM)
     r = client.get("/api/previsao/DCSC-00043").json()
     tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
     assert tres["disponivel"] is False and "Sem dados recentes" in tres["motivo"]
+    assert r["chuva_estimada"] == []
+
+
+def test_lacuna_acima_do_limite_modelo_novo_estima_com_nan_e_sem_aviso_de_estimativa(
+    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O modelo que aceita NaN segue estimando com a chuva de Witmarsum em branco (nunca zero);
+    como nada foi estimado por vizinhos, nao ha aviso de chuva estimada."""
+    _publicar(base, tmp_path, 3, extras=(WITMARSUM,))
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 1, ponto=WITMARSUM)
+    r = client.get("/api/previsao/DCSC-00043").json()
+    tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
+    assert tres["disponivel"] is True and tres["nivel_m"] is not None
     assert r["chuva_estimada"] == []
 
 
@@ -305,8 +434,8 @@ def test_sem_lacuna_nao_mostra_chuva_estimada(
 def test_ponto_que_o_modelo_nao_usa_fora_do_ar_nao_derruba_nem_gera_aviso(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _publicar(base, tmp_path, 3)  # usa so a chuva local e a de Dona Emma
-    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=VITOR)
+    _publicar(base, tmp_path, 3, antigo=True)  # usa so a chuva local e a de Dona Emma
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=WITMARSUM)
     r = client.get("/api/previsao/DCSC-00043").json()
     assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
     assert r["chuva_estimada"] == []
@@ -315,17 +444,22 @@ def test_ponto_que_o_modelo_nao_usa_fora_do_ar_nao_derruba_nem_gera_aviso(
 def test_aviso_so_lista_ponto_estimado_que_o_modelo_usa(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _publicar(base, tmp_path, 3)  # nao usa a Vitor
-    _com_series(monkeypatch, lacuna_h=14, ponto=VITOR)
+    _publicar(base, tmp_path, 3)  # nao usa Witmarsum
+    _com_series(monkeypatch, lacuna_h=14, ponto=WITMARSUM)
     r = client.get("/api/previsao/DCSC-00043").json()
     assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
     assert r["chuva_estimada"] == []  # a linha e toda medida nas colunas do modelo
 
 
+@pytest.mark.parametrize("antigo", [False, True])
 def test_nivel_nunca_e_estimado(
-    client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    client: TestClient,
+    base: Session,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    antigo: bool,
 ) -> None:
-    _publicar(base, tmp_path, 3)
+    _publicar(base, tmp_path, 3, antigo=antigo)  # o nivel e obrigatorio nos dois formatos
     _com_series(monkeypatch, lacuna_h=0, nivel_sem_h=5)
     r = client.get("/api/previsao/DCSC-00043").json()
     tres = next(h for h in r["horizontes"] if h["horizonte_h"] == 3)
@@ -345,20 +479,30 @@ def _todas_as_colunas(estacao: str) -> list[str]:
     return list(q.medido.columns)
 
 
-def test_serra_nunca_entra_nas_variaveis_do_rio_dos_indios(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Serra fora do ar nao afeta o Indios: ela nem faz parte das variaveis desse alvo."""
-    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=SERRA)
+def test_boiteux_e_vitor_nunca_entram_nas_variaveis_do_rio_dos_indios(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Boiteux/Ibirama/Vitor fora do ar nao afetam o Indios: nem fazem parte das variaveis."""
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=VITOR, boiteux_sem_h=30)
     colunas = _todas_as_colunas("DCSC-00043")
-    assert not any("serra" in c or "revolver" in c for c in colunas)
+    assert not any("boiteux" in c or "vitor" in c or "ibirama" in c for c in colunas)
+    assert any("serra_indios" in c for c in colunas) and any("revolver" in c for c in colunas)
     q = montar_quadros(None, "DCSC-00043", AGORA)  # type: ignore[arg-type]
     achada = escolher_linha(q, colunas, AGORA)  # type: ignore[arg-type]
     assert achada is not None and achada[1] == pd.Timestamp(AGORA) and achada[2] == {}
 
 
-def test_ponto_antigo_fora_do_ar_continua_sem_estimativa(monkeypatch: pytest.MonkeyPatch) -> None:
-    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=VITOR)
+def test_ponto_do_conjunto_fora_do_ar_derruba_so_o_modelo_antigo_que_o_usa(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=WITMARSUM)
     q = montar_quadros(None, "DCSC-00043", AGORA)  # type: ignore[arg-type]
-    assert escolher_linha(q, _todas_as_colunas("DCSC-00043"), AGORA) is None  # type: ignore[arg-type]
+    colunas = _todas_as_colunas("DCSC-00043")
+    assert escolher_linha(q, colunas, AGORA) is None  # type: ignore[arg-type]
+    # modelo que aceita NaN: so as obrigatorias contam, e a hora mais recente serve
+    achada = escolher_linha(q, colunas, AGORA, ["nivel_m", "taxa_1h_cm", "taxa_3h_cm_h"])  # type: ignore[arg-type]
+    assert achada is not None and achada[1] == pd.Timestamp(AGORA)
+    assert np.isnan(achada[0]["chuva_witmarsum_1h"])  # em branco, nunca zero
 
 
 def test_lacuna_pequena_de_serra_e_estimada_como_qualquer_ponto(
@@ -374,7 +518,7 @@ def test_serra_fora_do_ar_nao_afeta_o_modelo_que_nao_a_usa_e_o_que_usa_fica_sem_
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _publicar(base, tmp_path, 3, codigo=REVOLVER)  # sem colunas de serra
-    _publicar(base, tmp_path, 6, codigo=REVOLVER, com_serras=True)  # exige a serra
+    _publicar(base, tmp_path, 6, codigo=REVOLVER, com_serras=True, antigo=True)  # exige a serra
     _com_series(monkeypatch, lacuna_h=MAX_HORAS_IMPUTADAS + 6, ponto=SERRA)
     r = client.get(f"/api/previsao/{REVOLVER}").json()
     h = {x["horizonte_h"]: x for x in r["horizontes"]}
@@ -383,17 +527,15 @@ def test_serra_fora_do_ar_nao_afeta_o_modelo_que_nao_a_usa_e_o_que_usa_fica_sem_
     assert r["base_em"] is not None and r["nivel_base_m"] is not None
 
 
-def test_boiteux_com_lacuna_nao_derruba_o_revolver_mas_derruba_o_indios(
+def test_boiteux_com_lacuna_nao_derruba_nenhum_dos_dois_alvos(
     client: TestClient, base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _publicar(base, tmp_path, 3, codigo=REVOLVER)  # nao usa Boiteux
-    _publicar(base, tmp_path, 3, codigo="DCSC-00043")  # usa o nivel de Boiteux (remanso)
+    _publicar(base, tmp_path, 3, codigo=REVOLVER, antigo=True)  # nao usa Boiteux
+    _publicar(base, tmp_path, 3, codigo="DCSC-00043", antigo=True)  # tambem nao (ADR 0006)
     _com_series(monkeypatch, lacuna_h=0, boiteux_sem_h=30)
-    revolver = client.get(f"/api/previsao/{REVOLVER}").json()
-    indios = client.get("/api/previsao/DCSC-00043").json()
-    assert next(h for h in revolver["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
-    ind3 = next(h for h in indios["horizontes"] if h["horizonte_h"] == 3)
-    assert ind3["disponivel"] is False and "Sem dados recentes" in ind3["motivo"]
+    for codigo in (REVOLVER, "DCSC-00043"):
+        r = client.get(f"/api/previsao/{codigo}").json()
+        assert next(h for h in r["horizontes"] if h["horizonte_h"] == 3)["disponivel"] is True
 
 
 def test_horizontes_diferentes_usam_linhas_diferentes(
@@ -402,7 +544,7 @@ def test_horizontes_diferentes_usam_linhas_diferentes(
     """Serras sem dado nas 2 ultimas horas (e sem vizinhos para estimar): o modelo que as usa
     fica com a hora de 2 h atras; o que nao as usa, com a hora mais recente."""
     _publicar(base, tmp_path, 3, codigo=REVOLVER)
-    _publicar(base, tmp_path, 6, codigo=REVOLVER, com_serras=True)
+    _publicar(base, tmp_path, 6, codigo=REVOLVER, com_serras=True, antigo=True)
     _com_series(
         monkeypatch,
         lacuna_h=2,

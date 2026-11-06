@@ -9,7 +9,8 @@ FIM dessa hora (nivel medio e chuva de [t, t+1h), `valido_para = t + h`). A chuv
 que se sabe ate t+1h; o que acontece depois so entra no alvo. A chuva por h001 (dados.py) usa a
 leitura que fecha a hora, com folga de no maximo 1 min depois dela.
 
-Cada hora sem cobertura vira NaN (nunca zero). Linhas com NaN nao entram no treino.
+Cada hora sem cobertura vira NaN (nunca zero). O modelo aceita NaN (ADR 0006): so as colunas
+obrigatorias (`treino.COLUNAS_OBRIGATORIAS`) tiram a linha do treino.
 """
 
 from dataclasses import dataclass
@@ -36,7 +37,8 @@ PONTOS_CHUVA = {
     "DC-PEU-004": "serra_vencida",  # Serra Vencida
     "DC-PEU-002": "serra_mirador",  # Serra Mirador / Mirante das Antenas
 }
-# Pontos de chuva do alvo padrao (rio dos Indios), na ordem de sempre. O conjunto e FIXO: o
+# Conjunto de chuva e vizinhos de nivel de uma estacao FORA de ALVOS (era o padrao do rio dos
+# Indios, que hoje tem o proprio ConfigAlvo: ADR 0006). O conjunto de cada alvo e FIXO: o
 # retreino diario nao pode acrescentar variaveis ao modelo publicado sem uma decisao (ADR 0005).
 PONTOS_CHUVA_PADRAO = (
     "DCSC-00043",
@@ -45,7 +47,7 @@ PONTOS_CHUVA_PADRAO = (
     "DCSC-00015",
     "DCSC-00036",
 )
-NIVEL_VIZINHOS = {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}  # vizinhos do alvo padrao
+NIVEL_VIZINHOS = {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}
 
 
 @dataclass(frozen=True)
@@ -58,23 +60,35 @@ class ConfigAlvo:
     # estacoes cuja chuva vira variavel deste alvo (ordem = ordem das colunas). O rotulo vem de
     # PONTOS_CHUVA. Treino, inferencia, imputacao por vizinhos e simulacao usam so este conjunto.
     pontos_chuva: tuple[str, ...] = PONTOS_CHUVA_PADRAO
-    interacoes: bool = True  # interacoes da hipotese do coordenador / remanso do Ibirama
+    # interacoes da hipotese do coordenador / remanso do Ibirama (so valem com Boiteux e Ibirama,
+    # ou seja, para estacao fora de ALVOS)
+    interacoes: bool = True
     # janela de treino padrao em dias; None = todo o historico (desde treinar.INICIO_HISTORICO).
-    # Depende de onde vem cada variavel do alvo: ver ADR 0005.
+    # Depende de onde vem cada variavel do alvo: ver ADR 0005 e 0006.
     janela_dias: int | None = None
 
 
 ALVOS: dict[str, ConfigAlvo] = {
-    # 120 dias: Boiteux (chuva e nivel) e Ibirama (nivel) so tem ~80 dias de serie (API REST).
-    # Com janela longa cairiam por cobertura e o modelo perderia emma_x_boiteux_6h e o remanso do
-    # Ibirama, que sao as hipoteses centrais deste alvo.
-    # Chuva: exatamente os cinco pontos de sempre (as serras e o Revolver nao entram).
+    # Rio dos Indios: todo o historico (desde 13/09/2025) e chuva do painel municipal, serras e
+    # Revolver. Boiteux e Ibirama SAIRAM por ora: so tem ~4 meses de serie (API REST) e, com NaN
+    # no resto do periodo, pioraram a validacao em 12 h (0,93) e 24 h (1,00 da persistencia).
+    # Voltar a testar quando tiverem >= 1 ano (ADR 0006). Sem interacoes explicitas: o gradient
+    # boosting as aprende sozinho.
     "DCSC-00043": ConfigAlvo(
         "DCSC-00043",
         "Rio dos Índios (Presidente Getúlio)",
-        NIVEL_VIZINHOS,
-        pontos_chuva=PONTOS_CHUVA_PADRAO,
-        janela_dias=120,
+        {},
+        pontos_chuva=(
+            "DCSC-00043",
+            "DCSC-00037",
+            "DCSC-00015",
+            "DCSC-00174",
+            "DC-PEU-003",
+            "DC-PEU-004",
+            "DC-PEU-002",
+        ),
+        interacoes=False,
+        janela_dias=None,
     ),
     # Ribeirao Revolver: bacia urbana pequena que desagua no rio dos Indios dentro da cidade.
     # - O unico vizinho de nivel e o proprio rio dos Indios em Presidente Getulio (DCSC-00043):
@@ -152,6 +166,11 @@ def montar_features(
     cols["taxa_1h_cm"] = n_alvo.diff(1) * 100
     cols["taxa_3h_cm_h"] = n_alvo.diff(3) * 100 / 3
     cols["aceleracao_cm"] = cols["taxa_1h_cm"].diff(1)
+    # tendencia de prazo mais longo e faixa de variacao das ultimas 24 h (so o passado)
+    cols["taxa_6h_cm_h"] = n_alvo.diff(6) * 100 / 6
+    cols["taxa_24h_cm_h"] = n_alvo.diff(24) * 100 / 24
+    cols["nivel_min_24h_m"] = n_alvo.rolling(24, min_periods=18).min()
+    cols["nivel_max_24h_m"] = n_alvo.rolling(24, min_periods=18).max()
 
     for cod, rotulo in vizinhos_nivel(alvo).items():
         if cod in nivel:

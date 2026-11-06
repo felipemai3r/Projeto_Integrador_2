@@ -170,7 +170,7 @@ Marco: **notificação push chega ao aparelho** em transição de faixa observad
 | Critério de publicação RN07 aplicado de ponta a ponta (previsão indisponível com motivo) | O |
 | `/previsao` e `/simulacao`; telas Previsão e Simulação com `ScenarioForm` (CDU02, CDU03, CDU09, RF11, RF12, RF14, RF19) | O |
 | Alerta por **previsão**, com rótulo (RN03) | I |
-| LightGBM, comparado ao Ridge (estágio 3) | D |
+| LightGBM, comparado ao Ridge (estágio 3); adotado em 06/11/2026 como HistGradientBoosting, ADR 0006 | D |
 
 Marco: critérios 4 e 5 atendidos, ou a previsão fica documentada como indisponível por dado insuficiente, com a análise de correlação como entrega.
 

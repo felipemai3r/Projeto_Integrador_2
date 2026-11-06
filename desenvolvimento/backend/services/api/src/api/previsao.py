@@ -25,6 +25,8 @@ from modelo.inferencia import (
     aplicar_cenario,
     extrapola,
     imputar_chuva,
+    intervalo_cm,
+    obrigatorias_do_artefato,
     prever_variacao_cm,
 )
 from modelo.registry import carregar_artefato, publicados, ultimos_treinos
@@ -86,16 +88,26 @@ def _horas_completas(
     return X.index[ok.to_numpy()]
 
 
-def escolher_linha(quadros: Quadros, colunas: list[str], agora: datetime) -> Linha | None:
-    """Linha MAIS RECENTE (ate IDADE_MAXIMA_H atras) com todas as `colunas` do modelo preenchidas.
+def escolher_linha(
+    quadros: Quadros,
+    colunas: list[str],
+    agora: datetime,
+    obrigatorias: list[str] | None = None,
+) -> Linha | None:
+    """Linha MAIS RECENTE (ate IDADE_MAXIMA_H atras) com as colunas exigidas do modelo preenchidas.
 
-    So as colunas do proprio modelo contam: uma serra fora do ar nao afeta quem nao a usa, e cada
-    horizonte (cada artefato) pode ficar com uma hora diferente. Para a mesma hora vale a chuva
-    medida; so se ela nao completa as colunas se usa a estimada pelos vizinhos. Devolve None se
+    Modelo antigo (`obrigatorias` None): todas as `colunas` mais o nivel. Modelo que aceita NaN:
+    so `obrigatorias` mais o nivel; as demais podem estar vazias (NaN, nunca zero) e o modelo
+    lida com isso. So as colunas do proprio modelo contam: uma serra fora do ar nao afeta quem
+    nao a usa, e cada horizonte (cada artefato) pode ficar com uma hora diferente. Para a mesma
+    hora vale a chuva medida; so se ela nao completa as colunas se usa a estimada pelos vizinhos
+    (no modelo que aceita NaN, quando a estimada deixa menos colunas vazias). Devolve None se
     nenhuma hora serve ("Sem dados recentes"). O terceiro item diz, por ponto de chuva que o
     modelo usa, quantas horas estimadas entraram nas janelas da linha (vazio se tudo foi medido).
     """
-    exigidas = list(dict.fromkeys([*colunas, "nivel_m"]))
+    exigidas = list(
+        dict.fromkeys([*(colunas if obrigatorias is None else obrigatorias), "nivel_m"])
+    )
     limite = pd.Timestamp(agora) - pd.Timedelta(hours=IDADE_MAXIMA_H)
     medidas = _horas_completas(quadros.medido, exigidas, limite)
     estimadas = _horas_completas(quadros.estimado, exigidas, limite)
@@ -103,7 +115,13 @@ def escolher_linha(quadros: Quadros, colunas: list[str], agora: datetime) -> Lin
     if candidatas.empty:
         return None
     t = candidatas.max()
-    if t in medidas or quadros.estimado is None:
+    usar_estimada = t not in medidas
+    if not usar_estimada and obrigatorias is not None and t in estimadas:
+        # aceita NaN: a medida serve, mas a estimada pode deixar menos chuva em branco
+        vazias_medida = quadros.medido.loc[t].reindex(colunas).isna().sum()
+        vazias_estimada = quadros.estimado.loc[t].reindex(colunas).isna().sum()  # type: ignore[union-attr]
+        usar_estimada = vazias_estimada < vazias_medida
+    if not usar_estimada or quadros.estimado is None:
         return quadros.medido.loc[t], t, {}
     janela = pd.Timedelta(hours=JANELA_IMPUTACAO_H - 1)
     usadas = {}
@@ -191,7 +209,9 @@ def prever(
         artefato: dict = {}
         if quadros is not None:
             artefato = carregar_artefato(modelo.caminho_artefato)
-            escolhida = escolher_linha(quadros, artefato["colunas"], agora)
+            escolhida = escolher_linha(
+                quadros, artefato["colunas"], agora, obrigatorias_do_artefato(artefato)
+            )
         if escolhida is None:
             # sem nivel do alvo, ou nenhuma hora recente com as colunas DESTE modelo preenchidas
             horizontes.append(
@@ -212,7 +232,21 @@ def prever(
         )
         delta_cm = prever_variacao_cm(artefato, entrada)
         nivel = float(linha["nivel_m"]) + delta_cm / 100
-        sigma = ((modelo.metadados or {}).get("desvio_residual_cm") or modelo.rmse_cm) / 100
+        # modelo novo: intervalo assimetrico do regime de chuva da linha usada (ADR 0006);
+        # modelo antigo (sem `intervalo_por_regime`): +-1,96 desvios, como sempre
+        limites = intervalo_cm(artefato, entrada, modelo.metadados)
+        confianca = 0.95  # modelo antigo: +-1,96 sigma
+        if limites is not None:
+            inferior, superior = nivel + limites[0] / 100, nivel + limites[1] / 100
+            incerteza = (limites[1] - limites[0]) / 2 / 100
+            confianca = float(
+                artefato.get("confianca_intervalo")
+                or (modelo.metadados or {}).get("confianca_intervalo")
+                or 0.95
+            )
+        else:
+            sigma = ((modelo.metadados or {}).get("desvio_residual_cm") or modelo.rmse_cm) / 100
+            inferior, superior, incerteza = nivel - 1.96 * sigma, nivel + 1.96 * sigma, 1.96 * sigma
         faixa = risco.classificar(nivel, limiares) if limiares else None
         horizontes.append(
             PrevisaoHorizonte(
@@ -220,8 +254,9 @@ def prever(
                 disponivel=True,
                 valido_para=(t + pd.Timedelta(hours=h)).to_pydatetime(),
                 nivel_m=round(nivel, 2),
-                incerteza_m=round(1.96 * sigma, 2),
-                intervalo_m=(round(nivel - 1.96 * sigma, 2), round(nivel + 1.96 * sigma, 2)),
+                incerteza_m=round(incerteza, 2),
+                intervalo_m=(round(inferior, 2), round(superior, 2)),
+                confianca=confianca,
                 faixa=faixa.value if isinstance(faixa, Faixa) else None,
                 modelo=_resumo(modelo),
                 extrapolacao=extrapola(artefato, entrada),

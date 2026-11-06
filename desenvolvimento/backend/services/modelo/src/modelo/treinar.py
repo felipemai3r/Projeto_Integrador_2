@@ -5,11 +5,11 @@ Sem --estacao treina todos os alvos (`modelo.features.ALVOS`), cada um isolado d
 Roda sob demanda (e diariamente no servidor). Mostra a validacao contra os baselines e diz,
 para cada horizonte, se foi publicado ou por que nao.
 
-Janela de treino: POR ALVO (`ConfigAlvo.janela_dias`). Rio dos Indios (DCSC-00043): ultimos 120
-dias, porque Boiteux e Ibirama so tem ~80 dias de serie. Revolver (DCSC-00174): todo o historico
-desde `INICIO_HISTORICO` (13/09/2025, inicio das series do painel municipal). `--dias N` (ultimos
-N dias) e `--desde AAAA-MM-DD` sobrescrevem o padrao de todos os alvos. A janela so decide
-quantos dados entram: o criterio de publicacao (RN07, `treino.py`) nao muda.
+Janela de treino: POR ALVO (`ConfigAlvo.janela_dias`). Rio dos Indios (DCSC-00043) e Revolver
+(DCSC-00174) usam todo o historico desde `INICIO_HISTORICO` (13/09/2025, inicio das series do
+painel municipal); o 00043 ja nao depende de Boiteux/Ibirama, que so tem ~4 meses (ADR 0006).
+`--dias N` (ultimos N dias) e `--desde AAAA-MM-DD` sobrescrevem o padrao de todos os alvos. A
+janela so decide quantos dados entram: o criterio de publicacao (RN07, `treino.py`) nao muda.
 """
 
 import argparse
@@ -34,16 +34,15 @@ from modelo.features import (
     vizinhos_nivel,
 )
 from modelo.registry import registrar
-from modelo.treino import Resultado, avaliar_horizonte
+from modelo.treino import REGIMES, Resultado, avaliar_horizonte
 
 log = logging.getLogger("modelo.treinar")
 
 INICIO_HISTORICO = date(2025, 9, 13)
 # Um ponto (chuva ou nivel vizinho) com menos que isso das horas da janela e deixado de fora das
-# variaveis. O treino exige linhas completas: uma coluna que so existe nos ultimos 80 dias
-# (ex.: nivel de Ibirama, que vem so da API REST) derrubaria TODAS as linhas mais antigas. Os
-# pontos descartados aparecem no log e, como o artefato guarda a lista de colunas, a inferencia
-# passa a nao exigi-los.
+# variaveis. Os pontos descartados aparecem no log e, como o artefato guarda a lista de colunas,
+# a inferencia passa a nao exigi-los. (O modelo aceita NaN, mas um ponto que quase nao existe so
+# acrescenta ruido; alem disso, treino.py descarta por dobra as colunas com < 50 valores.)
 MIN_COBERTURA_PONTO = 0.5
 
 
@@ -130,18 +129,30 @@ def formatar(resultados: list[Resultado]) -> str:
     def f(v: float | None) -> str:
         return f"{v:6.1f}" if v is not None else "   n/d"
 
+    def largura(r: Resultado) -> str:
+        """Largura total do intervalo (hi - lo, cm) em seco/chuva/chuva forte."""
+        if not r.intervalo_por_regime:
+            return "n/d"
+        return "/".join(f"{hi - lo:.1f}" for lo, hi in (r.intervalo_por_regime[g] for g in REGIMES))
+
     linhas = [
         f"{'horiz.':>6} {'horas':>7} {'dias':>5} {'modelo':>7} {'persist.':>9} "
-        f"{'tendenc.':>9}  decisao",
-        "-" * 100,
+        f"{'tendenc.':>9} {'alfa':>6} {'cobert.':>8} {'largura seco/chuva/forte':>26}  decisao",
+        "-" * 130,
     ]
     for r in resultados:
         decisao = "PUBLICADO" if r.publicar else "não publicado"
+        alfa = f"{r.alfa_intervalo:.4g}" if r.alfa_intervalo is not None else "n/d"
+        cobert = f"{r.cobertura_validacao:.1%}" if r.cobertura_validacao is not None else "n/d"
         linhas.append(
             f"{r.horizonte_h:>4} h {r.amostras:>7} {r.dias_uteis:>5.0f} {f(r.rmse_cm)} "
-            f"{f(r.rmse_persistencia_cm):>9} {f(r.rmse_tendencia_cm):>9}  {decisao}: {r.motivo}"
+            f"{f(r.rmse_persistencia_cm):>9} {f(r.rmse_tendencia_cm):>9} {alfa:>6} {cobert:>8} "
+            f"{largura(r):>26}  {decisao}: {r.motivo}"
         )
-    linhas.append("\n(RMSE em cm da variacao do nivel; menor e melhor)")
+    linhas.append(
+        "\n(RMSE em cm da variacao do nivel; menor e melhor. Largura = largura total do intervalo, "
+        "em cm,\n por regime de chuva; cobert. = cobertura nos ultimos 40% dos residuos)"
+    )
     return "\n".join(linhas)
 
 

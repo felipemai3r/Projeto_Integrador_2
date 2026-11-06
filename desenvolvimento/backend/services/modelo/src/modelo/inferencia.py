@@ -7,6 +7,7 @@ calcula, sinaliza extrapolacao e monta cenarios hipoteticos (CDU03).
 import pandas as pd
 
 from modelo.features import JANELAS_CHUVA_H, PONTOS_CHUVA, pontos_chuva
+from modelo.treino import regime_da_linha
 
 ROTULO_DE_CODIGO = PONTOS_CHUVA
 MARGEM_EXTRAPOLACAO = 0.0  # qualquer valor fora do intervalo visto no treino conta
@@ -63,29 +64,78 @@ def imputar_chuva(
 
 
 def prever_variacao_cm(artefato: dict, linha: pd.Series) -> float:
-    """Variacao prevista do nivel (cm) no horizonte do modelo."""
-    X = linha[artefato["colunas"]].to_frame().T.astype(float)
-    return float(artefato["pipeline"].predict(X)[0])
+    """Variacao prevista do nivel (cm) no horizonte do modelo.
+
+    Modelo novo (`aceita_nan`): coluna que a linha nao tem vira NaN (nunca zero), que o modelo
+    sabe tratar. Modelo antigo (Ridge): coluna ausente levanta KeyError, como sempre; a camada
+    acima so chega aqui com todas as colunas preenchidas.
+    """
+    colunas = artefato["colunas"]
+    amostra = linha.reindex(colunas) if artefato.get("aceita_nan") else linha[colunas]
+    return float(artefato["pipeline"].predict(amostra.to_frame().T.astype(float))[0])
+
+
+def obrigatorias_do_artefato(artefato: dict) -> list[str] | None:
+    """Colunas obrigatorias de um modelo que aceita NaN, ou None para o modelo antigo (Ridge),
+    que exige todas as `colunas`."""
+    if not artefato.get("aceita_nan"):
+        return None
+    return list(artefato.get("colunas_obrigatorias", []))
+
+
+def colunas_exigidas(artefato: dict) -> list[str]:
+    """Colunas que precisam estar preenchidas na linha para o modelo poder estimar.
+
+    Modelo novo (`aceita_nan`): so as obrigatorias, mais o nivel (a base da previsao); as demais
+    podem ser NaN. Modelo antigo (sem o campo): todas as `colunas`.
+    """
+    obrigatorias = obrigatorias_do_artefato(artefato)
+    if obrigatorias is None:
+        return list(artefato["colunas"])
+    return list(dict.fromkeys([*obrigatorias, "nivel_m"]))
 
 
 def colunas_faltando(artefato: dict, linha: pd.Series) -> list[str]:
     """Colunas que o modelo exige e a linha nao tem (ausentes ou NaN).
 
     Cada modelo so olha as proprias colunas: um modelo que nao usa uma serra nunca falha por
-    causa dela; um treinado com ela fica sem estimativa se ela estiver sem dado, em vez de errar
-    ou inventar.
+    causa dela; um modelo antigo treinado com ela fica sem estimativa se ela estiver sem dado,
+    em vez de errar ou inventar. O modelo novo so exige as obrigatorias (`colunas_exigidas`).
     """
-    return [c for c in artefato["colunas"] if c not in linha.index or pd.isna(linha[c])]
+    return [c for c in colunas_exigidas(artefato) if c not in linha.index or pd.isna(linha[c])]
 
 
 def extrapola(artefato: dict, linha: pd.Series) -> list[str]:
-    """Variaveis fora da faixa vista no treino. Lista vazia = dentro do que o modelo conhece."""
+    """Variaveis fora da faixa vista no treino. Lista vazia = dentro do que o modelo conhece.
+
+    Variavel sem valor (NaN) nao tem como extrapolar: fica de fora.
+    """
     fora = []
     for coluna, (minimo, maximo) in artefato.get("faixa_treino", {}).items():
         v = linha.get(coluna)
-        if v is not None and (v < minimo - MARGEM_EXTRAPOLACAO or v > maximo + MARGEM_EXTRAPOLACAO):
+        if v is None or pd.isna(v):
+            continue
+        if v < minimo - MARGEM_EXTRAPOLACAO or v > maximo + MARGEM_EXTRAPOLACAO:
             fora.append(coluna)
     return fora
+
+
+def intervalo_cm(
+    artefato: dict, linha: pd.Series, metadados: dict | None = None
+) -> tuple[float, float] | None:
+    """Limites (lo, hi) em cm a somar a variacao prevista, ou None se o modelo nao os tem.
+
+    Vem de `intervalo_por_regime` (no artefato; senao nos metadados do registro) e usa o regime
+    da linha, o mesmo da validacao (`treino.regime_da_linha`). None = modelo antigo: quem chama
+    usa +-1,96 desvios.
+    """
+    por_regime = artefato.get("intervalo_por_regime") or (metadados or {}).get(
+        "intervalo_por_regime"
+    )
+    if not por_regime:
+        return None
+    limites = por_regime.get(regime_da_linha(linha, artefato["colunas"]))
+    return (float(limites[0]), float(limites[1])) if limites else None
 
 
 def aplicar_cenario(
@@ -112,7 +162,10 @@ def aplicar_cenario(
             if col not in nova.index:
                 continue
             valor = mm * min(w, janela_h) / janela_h
-            nova[col] = valor if w <= janela_h else max(float(nova[col]), valor)
+            # janela maior que a do cenario: nunca menos do que ja choveu. Sem leitura (NaN), nao
+            # ha "ja choveu" a preservar e vale o cenario (max() com NaN devolveria NaN)
+            atual = nova[col]
+            nova[col] = valor if w <= janela_h or pd.isna(atual) else max(float(atual), valor)
     if {"chuva_emma_6h", "chuva_boiteux_6h", "emma_x_boiteux_6h"} <= set(nova.index):
         nova["emma_x_boiteux_6h"] = nova["chuva_emma_6h"] * nova["chuva_boiteux_6h"]
     if {"nivel_ibirama_m", "chuva_local_3h", "ibirama_x_chuva_local_3h"} <= set(nova.index):

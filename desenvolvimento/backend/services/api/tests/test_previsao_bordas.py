@@ -205,18 +205,67 @@ def test_mesma_hora_prefere_a_chuva_medida_a_estimada() -> None:
 
 def test_hora_estimada_mais_recente_vence_a_medida_mais_antiga() -> None:
     chuva, nivel = mundo(FIM)
-    chuva["DCSC-00036"] = chuva["DCSC-00036"].copy()
-    chuva["DCSC-00036"].iloc[-2:] = np.nan  # Vitor sem as 2 ultimas horas
+    chuva["DCSC-00015"] = chuva["DCSC-00015"].copy()
+    chuva["DCSC-00015"].iloc[-2:] = np.nan  # Witmarsum sem as 2 ultimas horas
     estimada = {c: v.copy() for c, v in chuva.items()}
-    estimada["DCSC-00036"] = estimada["DCSC-00036"].fillna(1.0)
-    horas = {"DCSC-00036": pd.date_range(end=FIM, periods=2, freq="1h")}
+    estimada["DCSC-00015"] = estimada["DCSC-00015"].fillna(1.0)
+    horas = {"DCSC-00015": pd.date_range(end=FIM, periods=2, freq="1h")}
     q = quadros(chuva, nivel, estimada=estimada, horas=horas)
     _, t, est = escolher_linha(q, todas(q), AGORA)
-    assert t == FIM and est == {"DCSC-00036": 2}
-    # um modelo que nao usa a Vitor nao recebe aviso de estimativa
-    sem_vitor = [c for c in todas(q) if "vitor" not in c]
-    _, t_sem, est_sem = escolher_linha(q, sem_vitor, AGORA)
+    assert t == FIM and est == {"DCSC-00015": 2}
+    # um modelo que nao usa Witmarsum nao recebe aviso de estimativa
+    sem_witmarsum = [c for c in todas(q) if "witmarsum" not in c]
+    _, t_sem, est_sem = escolher_linha(q, sem_witmarsum, AGORA)
     assert t_sem == FIM and est_sem == {}
+
+
+# ---------- escolher_linha: modelo que aceita NaN ----------
+
+OBRIGATORIAS = ["nivel_m", "taxa_1h_cm", "taxa_3h_cm_h"]
+
+
+def test_modelo_que_aceita_nan_so_exige_as_obrigatorias() -> None:
+    chuva, nivel = mundo(FIM)
+    chuva["DCSC-00015"] = chuva["DCSC-00015"].copy()
+    chuva["DCSC-00015"].iloc[-6:] = np.nan  # Witmarsum fora do ar ha 6 h
+    q = quadros(chuva, nivel)
+    assert escolher_linha(q, todas(q), AGORA) is None  # modelo antigo: precisa de tudo
+    linha, t, est = escolher_linha(q, todas(q), AGORA, OBRIGATORIAS)
+    assert t == FIM and est == {}
+    assert np.isnan(linha["chuva_witmarsum_1h"]) and not np.isnan(linha["chuva_local_1h"])
+
+
+def test_modelo_que_aceita_nan_continua_exigindo_nivel_e_taxas() -> None:
+    chuva, nivel = mundo(FIM)
+    nivel[PG] = nivel[PG].copy()
+    nivel[PG].iloc[-6:] = np.nan
+    q = quadros(chuva, nivel)
+    assert escolher_linha(q, todas(q), AGORA, OBRIGATORIAS) is None
+    assert escolher_linha(q, todas(q), AGORA, []) is None  # o nivel entra sempre
+
+
+def test_modelo_que_aceita_nan_prefere_a_hora_estimada_quando_deixa_menos_colunas_vazias() -> None:
+    chuva, nivel = mundo(FIM)
+    chuva["DCSC-00015"] = chuva["DCSC-00015"].copy()
+    chuva["DCSC-00015"].iloc[-2:] = np.nan
+    estimada = {c: v.copy() for c, v in chuva.items()}
+    estimada["DCSC-00015"] = estimada["DCSC-00015"].fillna(1.0)
+    horas = {"DCSC-00015": pd.date_range(end=FIM, periods=2, freq="1h")}
+    q = quadros(chuva, nivel, estimada=estimada, horas=horas)
+    linha, t, est = escolher_linha(q, todas(q), AGORA, OBRIGATORIAS)
+    assert t == FIM and est == {"DCSC-00015": 2}
+    assert not np.isnan(linha["chuva_witmarsum_1h"])
+    # um modelo que nao usa Witmarsum fica com a medida e sem aviso
+    sem = [c for c in todas(q) if "witmarsum" not in c]
+    linha2, _, est2 = escolher_linha(q, sem, AGORA, OBRIGATORIAS)
+    assert est2 == {} and np.isnan(linha2["chuva_witmarsum_1h"])
+
+
+def test_modelo_que_aceita_nan_empatando_em_colunas_vazias_fica_com_a_medida() -> None:
+    chuva, nivel = mundo(FIM)
+    q = quadros(chuva, nivel, estimada={c: v + 100.0 for c, v in chuva.items()}, horas={})
+    linha, _, est = escolher_linha(q, todas(q), AGORA, OBRIGATORIAS)
+    assert est == {} and linha["chuva_local_1h"] == pytest.approx(1.0)  # a medida, nao a +100
 
 
 def test_montar_quadros_sem_nivel_do_alvo_devolve_none(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -290,11 +339,15 @@ def publica(
     meta: dict | None = None,
     rmse: float = 5.0,
     colunas: tuple[str, ...] = ("nivel_m",),
+    extra: dict | None = None,
 ) -> Modelo:
+    """`extra`: campos do artefato novo (`aceita_nan`, `intervalo_por_regime`...)."""
     pipe = DummyRegressor(strategy="constant", constant=delta_cm)
     pipe.fit(pd.DataFrame({c: [1.0, 2.0] for c in colunas}), [delta_cm, delta_cm])
     caminho = tmp / f"{codigo}_{h}.joblib"
-    joblib.dump({"pipeline": pipe, "colunas": list(colunas), "faixa_treino": {}}, caminho)
+    joblib.dump(
+        {"pipeline": pipe, "colunas": list(colunas), "faixa_treino": {}, **(extra or {})}, caminho
+    )
     m = Modelo(
         estacao_id=estacao(s, codigo).id,
         horizonte_h=h,
@@ -371,6 +424,95 @@ def test_sem_desvio_residual_cai_no_rmse_do_modelo(
     com_linha(monkeypatch, 2.0)
     h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
     assert h3.incerteza_m == 0.49  # 1,96 * 25 cm
+
+
+# ---------- intervalo por regime (modelo novo) x +-1,96 sigma (modelo antigo) ----------
+
+POR_REGIME = {"seco": [-10.0, 12.0], "chuva": [-40.0, 55.0], "chuva_forte": [-70.0, 80.0]}
+NOVO = {"aceita_nan": True, "colunas_obrigatorias": ["nivel_m"], "intervalo_por_regime": POR_REGIME}
+COLUNAS_NOVO = ("nivel_m", "chuva_local_6h")
+
+
+def test_modelo_novo_usa_o_intervalo_assimetrico_do_regime_seco(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, extra=NOVO, rmse=99.0)
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": 0.0})
+    h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+    assert h3.nivel_m == 2.0
+    assert h3.intervalo_m == (1.9, 2.12)  # previsto + [-10, +12] cm
+    assert h3.incerteza_m == 0.11  # metade da largura: (12 + 10) / 2 / 100
+
+
+def test_regime_da_linha_define_a_largura_do_intervalo(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, extra=NOVO)
+    larguras = {}
+    for mm, regime in ((0.5, "seco"), (3.0, "chuva"), (25.0, "chuva_forte")):
+        com_linha(monkeypatch, 2.0, {"chuva_local_6h": mm})
+        h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+        lo, hi = POR_REGIME[regime]
+        assert h3.intervalo_m == (round(2.0 + lo / 100, 2), round(2.0 + hi / 100, 2))
+        larguras[regime] = h3.intervalo_m[1] - h3.intervalo_m[0]
+    assert larguras["seco"] < larguras["chuva"] < larguras["chuva_forte"]
+
+
+def test_cenario_de_chuva_forte_alarga_o_intervalo(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O regime vem da linha ja com o cenario aplicado (a chuva simulada), nao da observada."""
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, extra=NOVO)
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": 0.0})
+    seco = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+    sim = horizonte(prever(base, estacao(base, REVOLVER), AGORA, chuva_mm={PG: 50.0}), 3)
+    assert seco.incerteza_m == 0.11 and sim.incerteza_m == 0.75
+    assert sim.intervalo_m == (1.3, 2.8)
+
+
+def test_intervalo_por_regime_tambem_vale_se_so_os_metadados_o_tem(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publica(
+        base,
+        tmp_path,
+        REVOLVER,
+        3,
+        0.0,
+        colunas=COLUNAS_NOVO,
+        meta={"intervalo_por_regime": POR_REGIME, "desvio_residual_cm": 30.0},
+        extra={"aceita_nan": True, "colunas_obrigatorias": ["nivel_m"]},
+    )
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": 0.0})
+    assert horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3).intervalo_m == (1.9, 2.12)
+
+
+def test_modelo_novo_estima_com_chuva_em_branco_e_usa_o_regime_conservador(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, extra=NOVO)
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": np.nan})
+    h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+    assert h3.disponivel and h3.incerteza_m == 0.75  # sem saber se chove: chuva_forte
+
+
+def test_modelo_antigo_com_a_mesma_linha_em_branco_continua_sem_estimativa(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, meta={"desvio_residual_cm": 10})
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": np.nan})
+    h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+    assert not h3.disponivel and "Sem dados recentes" in h3.motivo
+
+
+def test_modelo_antigo_segue_com_1_96_sigma_simetrico_mesmo_com_chuva_forte(
+    base: Session, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Artefato sem os campos novos: nada muda (intervalo +-1,96 sigma, todas as colunas)."""
+    publica(base, tmp_path, REVOLVER, 3, 0.0, colunas=COLUNAS_NOVO, meta={"desvio_residual_cm": 10})
+    com_linha(monkeypatch, 2.0, {"chuva_local_6h": 80.0})
+    h3 = horizonte(prever(base, estacao(base, REVOLVER), AGORA), 3)
+    assert h3.incerteza_m == 0.2 and h3.intervalo_m == (1.8, 2.2)
 
 
 def test_horizonte_sem_modelo_explica_o_motivo_do_ultimo_treino(
