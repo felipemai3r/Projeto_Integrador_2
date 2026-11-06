@@ -35,7 +35,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from api import consultas, risco
-from api.schemas import ChuvaEstimada, PrevisaoHorizonte, PrevisaoOut, ResumoModelo
+from api.schemas import ChuvaEstimada, PontoCenario, PrevisaoHorizonte, PrevisaoOut, ResumoModelo
 
 HISTORICO_H = 24 * 8  # cobre a janela de 168 h das variaveis
 IDADE_MAXIMA_H = 3  # a linha usada por um modelo nao pode ser mais velha que isso
@@ -55,6 +55,21 @@ class Quadros:
 Linha = tuple[pd.Series, pd.Timestamp, dict[str, int]]
 
 
+# uma hora rotulada t so esta completa em t + 1h + 1 min (folga da leitura h001 que a fecha)
+FECHAMENTO_DA_HORA = pd.Timedelta(hours=1, minutes=1)
+
+
+def so_horas_fechadas(X: pd.DataFrame, agora: datetime) -> pd.DataFrame:
+    """Tira as horas que ainda nao terminaram em `agora`.
+
+    A linha `t` e o estado ao fim de [t, t+1h), e a chuva dela vem da leitura que fecha a hora
+    (ate 1 min depois). A hora corrente tem nivel parcial e chuva em branco (ou incompleta): o
+    modelo que aceita NaN a "aceitaria" e preveria sem saber a chuva, com o regime caindo em
+    chuva forte e o intervalo explodindo. No treino toda linha e hora completa.
+    """
+    return X.loc[X.index <= pd.Timestamp(agora) - FECHAMENTO_DA_HORA]
+
+
 def montar_quadros(s: Session, estacao: str, agora: datetime) -> Quadros | None:
     """Monta as variaveis das ultimas horas do alvo, ou None se nao ha nivel do proprio alvo.
 
@@ -72,8 +87,12 @@ def montar_quadros(s: Session, estacao: str, agora: datetime) -> Quadros | None:
         return None
     estimada, preenchidas = imputar_chuva(chuva)
     return Quadros(
-        medido=montar_features(chuva, nivel, alvo=estacao),
-        estimado=montar_features(estimada, nivel, alvo=estacao) if preenchidas else None,
+        medido=so_horas_fechadas(montar_features(chuva, nivel, alvo=estacao), agora),
+        estimado=(
+            so_horas_fechadas(montar_features(estimada, nivel, alvo=estacao), agora)
+            if preenchidas
+            else None
+        ),
         horas_estimadas=preenchidas,
     )
 
@@ -154,6 +173,15 @@ def _chuva_estimada(s: Session, horas_por_ponto: dict[str, int]) -> list[ChuvaEs
         ChuvaEstimada(codigo=c, nome=nomes.get(c, c), horas=n)
         for c, n in sorted(horas_por_ponto.items())
     ]
+
+
+def _pontos_cenario(s: Session, alvo: str) -> list[PontoCenario]:
+    """Pontos de chuva que o modelo do alvo usa. Chuva em outro ponto nao muda a previsao."""
+    codigos = list(pontos_chuva(alvo))
+    nomes = dict(
+        s.execute(select(Estacao.codigo, Estacao.nome).where(Estacao.codigo.in_(codigos))).all()
+    )
+    return [PontoCenario(codigo=c, nome=nomes.get(c, c)) for c in codigos]
 
 
 def _resumo(m: Modelo) -> ResumoModelo:
@@ -284,4 +312,5 @@ def prever(
         nivel_base_m=round(base_nivel, 2) if base_nivel is not None else None,
         horizontes=horizontes,
         chuva_estimada=_chuva_estimada(s, estimada),
+        pontos_cenario=_pontos_cenario(s, est.codigo),
     )

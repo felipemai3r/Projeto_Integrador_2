@@ -9,16 +9,24 @@ import { formatarDataHora, formatarNivel } from '../lib/formato'
 import styles from './Previsao.module.css'
 
 const ALVO = 'DCSC-00043'
-const PONTOS = [
-  { codigo: 'DCSC-00043', nome: 'Presidente Getúlio (na cidade)' },
-  { codigo: 'DCSC-00037', nome: 'Dona Emma' },
-  { codigo: 'DCSC-00021', nome: 'José Boiteux' },
-  { codigo: 'DCSC-00015', nome: 'Witmarsum' },
-  { codigo: 'DCSC-00036', nome: 'Vitor Meireles' },
-]
+// Nome amigavel por codigo. A LISTA de pontos vem da API (`pontos_cenario`): sao os pontos que o
+// modelo publicado usa. Chuva digitada num ponto fora do modelo seria ignorada em silencio.
+const NOMES: Record<string, string> = {
+  'DCSC-00043': 'Presidente Getúlio (na cidade)',
+  'DCSC-00037': 'Dona Emma',
+  'DCSC-00021': 'José Boiteux',
+  'DCSC-00015': 'Witmarsum',
+  'DCSC-00036': 'Vitor Meireles',
+  'DCSC-00174': 'Ribeirão Revólver (Creche)',
+  'DC-PEU-003': 'Serra dos Índios',
+  'DC-PEU-004': 'Serra Vencida',
+  'DC-PEU-002': 'Serra Mirador',
+}
+type Ponto = { codigo: string; nome: string }
+const nomeDoPonto = (p: Ponto) => NOMES[p.codigo] ?? p.nome.replace(/^(PCD|SDC-SC)\s+/, '')
 const JANELAS = [1, 3, 6, 12, 24]
 
-function Simulador() {
+function Simulador({ pontos }: { pontos: Ponto[] }) {
   const [chuva, setChuva] = useState<Record<string, string>>({})
   const [janela, setJanela] = useState(6)
   const [erroLocal, setErroLocal] = useState<string | null>(null)
@@ -59,9 +67,9 @@ function Simulador() {
         <strong>cenário hipotético</strong>: não muda nenhum dado e não é uma previsão.
       </p>
       <form className={styles.form} onSubmit={enviar} noValidate>
-        {PONTOS.map((p) => (
+        {pontos.map((p) => (
           <label key={p.codigo} className={styles.campo}>
-            {p.nome}, em milímetros
+            {nomeDoPonto(p)}, em milímetros
             <input
               inputMode="decimal"
               value={chuva[p.codigo] ?? ''}
@@ -129,7 +137,9 @@ export function Previsao() {
           <PrevisaoTabela previsao={data} />
         </>
       )}
-      <Simulador />
+      {data && (data.pontos_cenario?.length ?? 0) > 0 && (
+        <Simulador pontos={data.pontos_cenario ?? []} />
+      )}
     </div>
   )
 }

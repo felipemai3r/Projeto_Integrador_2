@@ -49,6 +49,17 @@ Em 12 h e 24 h, com quantis 2,5/97,5, a cobertura caiu para 92 a 93%: a chuva fu
 - A validação walk-forward (`TimeSeriesSplit(n_splits=5, gap=h)`), os baselines (persistência e tendência) e a RN07 ficam **como estão**. `DIAS_MINIMOS` volta a 60 (o valor da RN07; o 45 era temporário da demonstração).
 - **O modelo aceita NaN.** `preparar` passa a exigir só o alvo e as colunas obrigatórias `nivel_m`, `taxa_1h_cm`, `taxa_3h_cm_h`; as demais podem ser NaN (hora sem leitura continua sendo NaN, nunca zero). Em cada ajuste (cada dobra e o final) saem as colunas com menos de 50 valores não nulos no treino daquele ajuste, porque o HGB quebra com coluna vazia; o modelo final guarda a lista de colunas que de fato usou. As obrigatórias nunca saem.
 
+### 1.1 Revisão de 06/11/2026: perda quadrática, chuva monótona e só horas fechadas
+
+Um teste na tela de simulação mostrou o problema: 100 mm em todos os pontos mantinham o rio em "Normal". Medido no mesmo período de teste:
+
+- **A perda absoluta encolhia os extremos.** Ela aprende a mediana, e com poucas cheias a mediana da subida é quase zero. O cenário de 100 mm em 24 h previa +0,8 m, quando as cinco cheias reais acima de 3,5 m (chuva de 70 a 110 mm em 24 h) subiram de 2,1 a 2,7 m. Também havia respostas incoerentes: 100 mm previam menos subida que 50 mm.
+- **Decisão:** perda **quadrática**, folha mínima de **40** e **restrição monótona crescente em toda coluna de chuva** (`monotonic_cst`): mais chuva nunca prevê subida menor. O erro geral ficou praticamente igual (12 h: 24,7 cm contra 27,2 cm da persistência; 24 h: 33,8 contra 36,2), o viés nas subidas de 50 cm ou mais caiu (3 h: de −43 para −31 cm), e a resposta ao cenário passou a crescer com a chuva (7 pontos, 1 h: 10 mm → 2,50 m, 25 mm → 2,98 m, 100 mm → 3,64 m em 6 h, partindo de 1,97 m).
+- **Limite que continua:** modelo de árvores não extrapola. Acima do maior evento do histórico (30 a 64 mm em 1 h, conforme o ponto), a resposta satura. A API já marcava a extrapolação; agora a tela **não mostra a faixa** nesses casos e avisa que o nível real pode ser bem maior.
+- **Bug corrigido junto:** a API escolhia a hora corrente, ainda incompleta (nível parcial e chuva em branco). O modelo que aceita NaN a "aceitava", previa sem chuva e caía no regime de chuva forte, com intervalo enorme. Agora só entram horas já fechadas (`so_horas_fechadas`: a hora `t` vale a partir de `t + 1 h + 1 min`).
+- **Simulação:** a lista de pontos vem da API (`pontos_cenario`), com os pontos que o modelo publicado usa. Antes a tela pedia José Boiteux e Vitor Meireles, que o modelo do Índios não usa mais, e a chuva digitada neles era ignorada.
+- **Leitura do cenário:** o simulador supõe que a chuva já caiu, mas o rio ainda está no nível de agora. Para chuva distribuída em 24 h isso é pouco realista (o rio já teria subido), e o modelo tende a responder menos. Os cenários de 1 a 6 h representam melhor "a chuva que acabou de cair".
+
 ### 2. Variáveis (`features.py`)
 
 - Novas, a partir do nível do alvo e só com o passado: `taxa_6h_cm_h`, `taxa_24h_cm_h`, `nivel_min_24h_m` e `nivel_max_24h_m` (janela de 24 h com no mínimo 18 horas de dado). O teste de não vazamento cobre as quatro.

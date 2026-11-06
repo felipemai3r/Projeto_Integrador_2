@@ -65,7 +65,9 @@ def com_fator(monkeypatch: pytest.MonkeyPatch):
     ModeloFalso.historico = []
 
     def instalar(y: pd.Series, fator: float) -> None:
-        monkeypatch.setattr(treino, "novo_pipeline", lambda h=1: ModeloFalso(y, fator))
+        monkeypatch.setattr(
+            treino, "novo_pipeline", lambda h=1, colunas=None: ModeloFalso(y, fator)
+        )
 
     return instalar
 
@@ -283,7 +285,7 @@ def test_cada_dobra_descarta_as_colunas_ralas_do_proprio_treino(
             vistos.append(list(X.columns))
             return super().fit(X, y)
 
-    monkeypatch.setattr(treino, "novo_pipeline", lambda h=1: Espiao(y, 0.5))
+    monkeypatch.setattr(treino, "novo_pipeline", lambda h=1, colunas=None: Espiao(y, 0.5))
     r = avaliar_horizonte(X, y, 3)
     assert len(vistos) == N_DOBRAS + 1  # cinco dobras e o modelo final
     assert "tardia" not in vistos[0]  # a primeira dobra treina antes de ela existir
@@ -441,8 +443,8 @@ def test_pipeline_real_e_hgb_determinista_e_sem_early_stopping() -> None:
     modelo = treino.novo_pipeline(3)
     assert isinstance(modelo, HistGradientBoostingRegressor)
     p = modelo.get_params()
-    assert (p["loss"], p["max_iter"], p["learning_rate"]) == ("absolute_error", 600, 0.04)
-    assert (p["max_leaf_nodes"], p["min_samples_leaf"], p["l2_regularization"]) == (15, 80, 2.0)
+    assert (p["loss"], p["max_iter"], p["learning_rate"]) == ("squared_error", 600, 0.04)
+    assert (p["max_leaf_nodes"], p["min_samples_leaf"], p["l2_regularization"]) == (15, 40, 2.0)
     assert p["early_stopping"] is False and p["random_state"] == 0
 
 
@@ -494,3 +496,32 @@ def test_intervalo_de_80_porcento_e_mais_estreito_e_cobre_80() -> None:
     l80, alfa80, c80 = calibrar_intervalo(res, regimes, 0.80)
     assert c95 >= 0.95 and c80 >= 0.80 and alfa80 >= 0.05
     assert l80["seco"][1] - l80["seco"][0] < 0.6 * (l95["seco"][1] - l95["seco"][0])
+
+
+def test_restricao_monotona_so_nas_colunas_de_chuva() -> None:
+    cols = ["nivel_m", "taxa_1h_cm", "chuva_local_6h", "chuva_emma_24h"]
+    assert treino.restricoes_monotonas(cols) == {"chuva_local_6h": 1, "chuva_emma_24h": 1}
+    assert treino.restricoes_monotonas(["nivel_m"]) is None
+    assert treino.restricoes_monotonas(None) is None
+
+
+def test_mais_chuva_nunca_preve_subida_menor() -> None:
+    """Mesmo com dado ruidoso e nao monotono, o modelo treinado respeita a fisica."""
+    rng = np.random.default_rng(5)
+    n = 24 * 60
+    X = pd.DataFrame(
+        {
+            "nivel_m": rng.uniform(1, 3, n),
+            "taxa_1h_cm": rng.normal(0, 1, n),
+            "taxa_3h_cm_h": rng.normal(0, 1, n),
+            "chuva_local_6h": rng.gamma(0.5, 8, n),
+        }
+    )
+    # resposta com um "buraco" falso: chuva alta as vezes nao sobe (ruido do historico)
+    y = 3 * X["chuva_local_6h"] * np.where(rng.random(n) < 0.3, 0.1, 1.0) + rng.normal(0, 2, n)
+    m = treino.novo_pipeline(6, list(X.columns)).fit(X, y)  # type: ignore[attr-defined]
+    grade = pd.DataFrame(
+        {"nivel_m": 2.0, "taxa_1h_cm": 0.0, "taxa_3h_cm_h": 0.0, "chuva_local_6h": range(0, 80, 5)}
+    )
+    pred = m.predict(grade)  # type: ignore[attr-defined]
+    assert (np.diff(pred) >= -1e-9).all()

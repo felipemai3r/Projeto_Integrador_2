@@ -91,20 +91,37 @@ class Resultado:
     aceita_nan: bool = True  # marca o modelo novo: a inferencia tolera NaN fora das obrigatorias
 
 
-def novo_pipeline(horizonte_h: int = 1) -> object:
-    """Gradient boosting com perda absoluta: PONTO UNICO de construcao do estimador.
+def restricoes_monotonas(colunas: list[str] | None) -> dict[str, int] | None:
+    """Mais chuva nunca pode prever subida menor: toda coluna de chuva e monotona crescente.
 
-    Sem early stopping (o `auto` ligaria sozinho com mais de 10 mil linhas e tiraria uma fatia
-    do treino ao acaso, quebrando a ordem temporal) e com semente fixa: mesmo dado, mesmo modelo.
-    `horizonte_h` nao muda nada hoje; fica na assinatura porque o validador sempre o passa.
+    Sem isso o modelo aprendeu respostas incoerentes nos poucos eventos fortes (medido: 100 mm
+    em 24 h previam MENOS subida que 50 mm). A restricao e fisica, nao um ajuste fino.
+    """
+    if not colunas:
+        return None
+    return {c: 1 for c in colunas if c.startswith("chuva_")} or None
+
+
+def novo_pipeline(horizonte_h: int = 1, colunas: list[str] | None = None) -> object:
+    """Gradient boosting com perda QUADRATICA e chuva monotona: PONTO UNICO do estimador.
+
+    Perda quadratica, e nao absoluta: a absoluta aprende a mediana e, com poucas cheias no
+    historico, encolhia justamente os extremos (medido: o cenario de 100 mm em 24 h previa
+    +0,8 m, quando as cheias reais com essa chuva subiram 2 a 2,7 m). Folha minima de 40 para
+    os eventos raros formarem folhas proprias. Sem early stopping (o `auto` ligaria sozinho com
+    mais de 10 mil linhas e tiraria uma fatia do treino ao acaso, quebrando a ordem temporal) e
+    com semente fixa: mesmo dado, mesmo modelo. `colunas` = colunas que o `fit` vai receber,
+    para montar as restricoes monotonas; `horizonte_h` fica na assinatura porque o validador o
+    passa. ADR 0006, secao 1.1.
     """
     return HistGradientBoostingRegressor(
-        loss="absolute_error",
+        loss="squared_error",
         max_iter=600,
         learning_rate=0.04,
         max_leaf_nodes=15,
-        min_samples_leaf=80,
+        min_samples_leaf=40,
         l2_regularization=2.0,
+        monotonic_cst=restricoes_monotonas(colunas),
         early_stopping=False,
         random_state=0,
     )
@@ -232,7 +249,7 @@ def avaliar_horizonte(X: pd.DataFrame, y: pd.Series, horizonte_h: int) -> Result
     for treino, teste in cv.split(Xc):
         # cada dobra descarta as colunas ralas DO SEU treino (o teste nao entra na escolha)
         cols = colunas_usaveis(Xc.iloc[treino])
-        modelo = novo_pipeline(horizonte_h)
+        modelo = novo_pipeline(horizonte_h, cols)
         modelo.fit(Xc.iloc[treino][cols], yc.iloc[treino])  # type: ignore[attr-defined]
         pred = modelo.predict(Xc.iloc[teste][cols])  # type: ignore[attr-defined]
         real = yc.iloc[teste].to_numpy()
@@ -272,7 +289,7 @@ def avaliar_horizonte(X: pd.DataFrame, y: pd.Series, horizonte_h: int) -> Result
         r.publicar = True
         r.motivo = "Superou a persistência na validação."
     r.faixa_treino = {c: (float(Xc[c].min()), float(Xc[c].max())) for c in r.colunas}
-    final = novo_pipeline(horizonte_h)
+    final = novo_pipeline(horizonte_h, r.colunas)
     final.fit(Xc[r.colunas], yc)  # type: ignore[attr-defined]
     r.pipeline = final
     return r
