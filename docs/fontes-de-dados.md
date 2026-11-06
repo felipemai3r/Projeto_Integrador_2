@@ -33,7 +33,8 @@ Documento de apoio à [especificação completa](especificacao-completa.md). Reg
 | ANA HidroWebService | Série histórica longa de nível de rio | Exige cadastro | Retorna 401 sem token. Cadastro pendente |
 | CEMADEN | Chuva complementar | Portal e download | Não testado nesta rodada |
 | INMET | Estação meteorológica automática | API pública | Não testado nesta rodada |
-| Painel municipal PDC | Referência de parâmetros e limiares | Público | Consultado. Limiares extraídos |
+| Painel municipal PDC, portal | Referência de parâmetros e limiares | Público | Consultado. Limiares extraídos |
+| Painel municipal PDC, API | Série de 5 em 5 minutos de 7 estações, incluindo o Revólver e as 3 de serra, desde 13/09/2025 | Chave fornecida pela Defesa Civil municipal | Funciona. Validada em 05/11/2026 (seção 8.1) |
 
 O achado mais importante do levantamento: **a documentação de API que o professor forneceu está desatualizada**. A operação GraphQL `ListaEstacoes` descrita no material não existe mais na plataforma atual da Defesa Civil de SC, que foi migrada para outro fornecedor. A API REST anterior, por outro lado, continua no ar e é hoje a única via anônima para série histórica, ainda que com janela curta.
 
@@ -179,7 +180,7 @@ A janela começa entre 01/07/2026 e 03/07/2026, ou seja, **aproximadamente 78 a 
 
 Consequência direta para o projeto: os eventos de dezembro de 2020 e de 2023, que são os casos de referência do município, não podem ser recuperados por aqui. E cada dia que passa sem coleta é um dia perdido de forma definitiva.
 
-**Estação do Revólver.** DCSC-00174 aparece no inventário, mas as consultas de série retornaram vazio em todas as datas testadas. O painel municipal mostra o nível desse ponto, o que indica que o município recebe esse dado por outra via. Item a tratar com a Defesa Civil municipal.
+**Estação do Revólver.** DCSC-00174 aparece no inventário, mas as consultas de série nesta API retornaram vazio em todas as datas testadas. O painel municipal mostra o nível desse ponto, o que indicava que o município recebe esse dado por outra via. Resolvido: a API do painel municipal (seção 8.1) entrega a série completa dessa estação, desde 13/09/2025.
 
 ### 4.3 Barragens
 
@@ -271,14 +272,61 @@ O portal `pdc.presidentegetulio.sc.gov.br` foi inspecionado para levantar os par
 | Nome no painel | Estação correspondente | Situação na API pública |
 |---|---|---|
 | Centro | SDC-SC Presidente Getúlio (DCSC-00043) | Disponível |
-| Revólver | Creche Agostinho Senem (DCSC-00174) | No inventário, sem série |
-| Dona Emma | SDC-SC Dona Emma (DCSC-00037) | Disponível |
-| Witmarsum | SDC-SC Witmarsum (DCSC-00015) | Disponível |
-| Serra dos Índios | Posto de Saúde | Não está na API pública |
-| Serra Vencida | Escola Serra Vencida | Não está na API pública |
-| Serra Mirador | Mirante das Antenas | Não está na API pública |
+| Revólver | Creche Agostinho Senem (DC-PEU-001 na API do painel; no banco, DCSC-00174) | No inventário estadual, sem série; série completa na API do painel |
+| Dona Emma | SDC-SC Dona Emma (DCSC-00037) | Disponível; também na API do painel |
+| Witmarsum | SDC-SC Witmarsum (DCSC-00015) | Disponível; também na API do painel |
+| Serra dos Índios | Posto de Saúde (DC-PEU-003) | Não está na API pública estadual; série na API do painel |
+| Serra Vencida | Escola Serra Vencida (DC-PEU-004) | Não está na API pública estadual; série na API do painel |
+| Serra Mirador | Mirante das Antenas (DC-PEU-002) | Não está na API pública estadual; série na API do painel |
 
-A verificação foi feita por proximidade de coordenadas contra o inventário completo de 182 estações. As três estações de serra não têm correspondente dentro de um raio razoável, o que indica rede própria do município. Conseguir acesso a esses três pontos é relevante, porque eles cobrem a cabeceira das bacias urbanas, que é exatamente onde nasce a enxurrada. Isso está registrado como pendência PE06.
+A verificação foi feita por proximidade de coordenadas contra o inventário completo de 182 estações. As três estações de serra não têm correspondente dentro de um raio razoável, o que indica rede própria do município. Elas cobrem a cabeceira das bacias urbanas, que é exatamente onde nasce a enxurrada. O acesso a elas e ao Revólver, que era a pendência PE06, foi resolvido com a API do painel descrita a seguir.
+
+### 8.1 API do painel municipal (PDC)
+
+**Validada em 05/11/2026**, com chamadas reais. Pendência PE06 **resolvida**: a Defesa Civil municipal forneceu a chave de acesso.
+
+**Base:** `https://uizatcahxcyscjbkxnzp.supabase.co/functions/v1/stations-api`. Somente leitura. Limite de 120 chamadas por minuto.
+
+**Autenticação.** Cabeçalho `x-api-key` com a chave fornecida pela Defesa Civil municipal. A chave é um segredo: fica só em `desenvolvimento/.env` (variável `PDC_API_KEY`), nunca em código, teste, fixture, log ou documento. No compose, é repassada ao serviço `ingestor`. Sem chave, o coletor desta fonte não é agendado e o restante do sistema funciona como antes.
+
+**Endpoints:**
+
+| Endpoint | Retorno |
+|---|---|
+| `GET /stations` | `{"data": [{"sta_name", "sta_code"}], "count": 7}` |
+| `GET /latest` | `{"data": [uma leitura por estação]}` |
+| `GET /readings?code=&from=&to=&limit=&cursor=&fields=` | `{"data": [...], "next_cursor": string ou null}`. `from` e `to` em ISO 8601; `limit` de 1 a 1000; `fields` lista as colunas desejadas. Janela máxima de 31 dias por consulta (excedê-la devolve HTTP 400); sem `from` e `to`, vale as últimas 24 horas |
+
+**Comportamentos observados e tratados no adaptador:**
+
+- O **cursor é inclusivo**: a última linha de uma página reaparece no início da seguinte. Com `limit=1` o cursor nunca avança. O adaptador deduplica por `id`, recusa `limit` menor que 2 e para quando o cursor não avança.
+- Código de estação desconhecido devolve HTTP 200 com lista vazia, não erro.
+- As leituras vêm em ordem cronológica crescente.
+- Excesso de chamadas devolve HTTP 429; o adaptador espera e tenta de novo até 3 vezes, e espaça as chamadas em 0,6 s (no máximo 100 por minuto).
+
+**Estações:**
+
+| `sta_code` na API | Nome na API | Código no nosso banco | Observação |
+|---|---|---|---|
+| DC-PEU-001 | Creche Agostinho Senem | DCSC-00174 | Mesma estação física do "PCD ZAS Creche" (Ribeirão Revólver), coordenadas idênticas. Não há estação nova; as leituras vão para a DCSC-00174 |
+| DC-PEU-002 | Mirante das Antenas | DC-PEU-002 | "Serra Mirador". Só chuva. Papel de influência |
+| DC-PEU-003 | Posto de Saúde | DC-PEU-003 | "Serra dos Índios". Só chuva. Papel de influência |
+| DC-PEU-004 | Escola Serra Vencida | DC-PEU-004 | "Serra Vencida". Só chuva. Papel de influência |
+| DCSC-00037 | SDC-SC Dona Emma | DCSC-00037 | Já cadastrada |
+| DCSC-00043 | SDC-SC Presidente Getúlio | DCSC-00043 | Já cadastrada |
+| DCSC-00015 | SDC-SC Witmarsum | DCSC-00015 | Já cadastrada |
+
+**Campos de cada leitura:** `id`, `created_at`, `sta_timestamp`, `sta_code`, `sta_name`, `river_level` (m), `rainfall_1h` a `rainfall_168h` (mm), `temperature`, `humidity`, `wind_speed`, `wind_guts`, `wind_direction`, `atm_pressure`, `solar_radiation`, `feels_like`. Na prática só `river_level` e `rainfall_1h` são aproveitados; os acumulados de 3 h em diante vêm nulos, e os campos meteorológicos aparecem em alguns pontos (por exemplo, no Mirante das Antenas), mas não entram no modelo. Eles ficam apenas no payload bruto.
+
+**Semântica e armadilhas:**
+
+1. **Fuso.** `created_at` é UTC correto, por exemplo `2026-11-04T19:12:27.00648+00:00`. `sta_timestamp` vem em **hora local (-03:00), mas rotulado `+00:00`**, portanto 3 horas deslocado. O sistema usa `created_at` como `medido_em`. Conferido contra a API REST estadual: o nível de `created_at` bate minuto a minuto.
+2. **`rainfall_1h` é janela móvel**, a chuva acumulada na última hora, a mesma semântica do `h001` do GraphQL. Por isso é gravada como `chuva_h001_mm`, e **não** como `chuva_acumulada_mm`, que é o incremento de 5 minutos da API REST; gravar uma janela móvel ali faria o modelo, que soma incrementos, contar a chuva em dobro. Conferência: `rainfall_1h` às 16:47 UTC de 04/11/2026 era 7,6 mm e a soma dos incrementos da API REST nos 60 minutos anteriores era 7,8 mm.
+3. **Pico espúrio real na fonte.** Em 04/11/2026 às 19:12 UTC, DCSC-00043 registrou `rainfall_1h` de 248,28 mm, isolado entre leituras de 0,2 mm. A validação de plausibilidade (`quality.avaliar`) marca `chuva_h001_mm` acima de 150 mm como suspeita, e a leitura suspeita não entra nas consultas que exigem qualidade `ok`.
+4. **Duas fontes para as mesmas estações.** Para DCSC-00043, DCSC-00037, DCSC-00015 e DCSC-00174, a API do painel e o GraphQL estadual publicam a mesma medição física. Cada leitura guarda a sua `fonte`, então as duas séries coexistem sem conflito; as consultas que precisam de uma só fonte filtram por ela.
+5. **Retenção.** Histórico completo desde **13/09/2025** para todas as estações, a cada 5 minutos, sem janela deslizante conhecida. Isso é mais de um ano de dados, contra os cerca de 80 dias da API REST estadual (LD01).
+
+**Plano de coleta.** Coleta contínua a cada 5 minutos, janela das últimas 1 hora por estação, defasada alguns segundos dos outros jobs; reexecutar não duplica (`UNIQUE` e `ON CONFLICT DO NOTHING`). Carga histórica única, depois da subida do serviço: `python -m ingestor.carga_pdc` (janelas de 7 dias, ver `desenvolvimento/README.md`). Uma estação fora do ar não interrompe as demais. O canário diário de contrato inclui esta fonte.
 
 ---
 
@@ -291,6 +339,7 @@ Configuração proposta para o serviço de ingestão, considerando os limites e 
 | DCSC GraphQL | `Tags_data` | A cada 5 minutos | Uma chamada traz todas as estações, o que evita múltiplas requisições |
 | DCSC REST | `/api/estacoes/dados` | A cada 30 minutos, por estação configurada | Usado para preencher lacunas e garantir a granularidade de 5 minutos |
 | DCSC REST | `/api/barragens` | A cada 30 minutos | Volume pequeno |
+| API do painel municipal (PDC) | `/readings` | A cada 5 minutos, janela de 1 hora, por estação | Requer chave (`PDC_API_KEY`). Carga histórica desde 13/09/2025 com `ingestor.carga_pdc` |
 | DCSC REST | `/api/estacoes` | Diária | Inventário muda pouco |
 | Open-Meteo Forecast | `/v1/forecast` | A cada 1 hora, por ponto de influência | Previsão não muda em intervalo menor |
 | Open-Meteo Archive | `/v1/archive` | Carga inicial, depois mensal | Preenche o histórico longo de chuva |
@@ -298,7 +347,7 @@ Configuração proposta para o serviço de ingestão, considerando os limites e 
 
 **Carga inicial obrigatória:** no primeiro dia de operação, baixar os cerca de 80 dias disponíveis na API REST para todas as estações configuradas. Isso garante a única janela de histórico de 5 minutos que ainda existe.
 
-**Volume estimado:** 288 leituras por dia por estação, com 8 estações configuradas, resulta em aproximadamente 2.300 registros por dia, 70 mil por mês e 840 mil por ano. É volume pequeno para um banco relacional, e não exige infraestrutura especial.
+**Volume estimado:** 288 leituras por dia por estação, com 8 estações configuradas, resulta em aproximadamente 2.300 registros por dia, 70 mil por mês e 840 mil por ano. As 3 estações de serra da API do painel e a duplicação das séries por fonte elevam o total, sem mudar a conclusão. É volume pequeno para um banco relacional, e não exige infraestrutura especial.
 
 ---
 
@@ -310,10 +359,11 @@ Configuração proposta para o serviço de ingestão, considerando os limites e 
 | LD02 | Consulta histórica do GraphQL bloqueada para anônimo | Fecha a via mais completa de histórico | Pedido formal à Defesa Civil de SC (PE10) |
 | LD03 | ANA exige cadastro com prazo indefinido | Atrasa o acesso à série longa de nível | Solicitar imediatamente (PE09) e seguir sem ela enquanto isso |
 | LD04 | ERA5 suaviza picos de chuva convectiva | Subestima justamente os eventos de enxurrada | Usar só para contexto e regime, nunca como verdade de campo |
-| LD05 | Estação do Revólver sem série pública | Deixa a segunda estação alvo sem histórico próprio | Tratar com o município (PE06) e, enquanto isso, operar só com o tempo real |
-| LD06 | Três estações municipais fora da API pública | Perde cobertura de cabeceira | Solicitar acesso ao município (PE06) |
+| LD05 | Estação do Revólver sem série pública estadual | Deixava a segunda estação alvo sem histórico próprio | **Resolvida** pela API do painel municipal (PE06): série desde 13/09/2025 |
+| LD06 | Três estações municipais fora da API pública estadual | Perdia cobertura de cabeceira | **Resolvida** pela API do painel municipal (PE06) |
 | LD07 | Nenhuma das APIs tem contrato estável nem versionamento | Quebra silenciosa de integração | Adaptador isolado por fonte, validação de contrato e painel de qualidade (RNF11, RF36) |
 | LD08 | A documentação fornecida pelo professor já estava desatualizada | Mostra a velocidade com que essas fontes mudam | Registrar o contrato observado neste documento e revalidar periodicamente |
+| LD09 | A API do painel municipal depende de uma chave dada pelo município, sem contrato estável, e o `sta_timestamp` tem fuso errado | Quebra de integração ou erro de 3 h no horário | Usar só `created_at`; canário de contrato diário; chave só no `.env` (seção 8.1) |
 
 ---
 
@@ -324,7 +374,8 @@ Configuração proposta para o serviço de ingestão, considerando os limites e 
 | PE09 | Solicitar cadastro na API HidroWebService da ANA | Equipe | Imediato, por causa do prazo de resposta |
 | PE10 | Solicitar à Defesa Civil de SC o acesso ao histórico completo e à operação `Historic` | Equipe, com apoio do professor | Imediato |
 | PE05 | Confirmar limiares oficiais com a Defesa Civil municipal | Equipe | Antes da publicação do portal |
-| PE06 | Solicitar ao município o acesso aos dados das três estações de serra e da estação do Revólver | Equipe | Antes do treino do modelo |
+| PE06 | ~~Solicitar ao município o acesso aos dados das três estações de serra e da estação do Revólver~~ **Resolvida em 05/11/2026**: chave da API do painel recebida (seção 8.1) | Equipe | Concluída |
+| AC04 | Executar a carga histórica da API do painel municipal (`python -m ingestor.carga_pdc`) | Equipe | No mesmo dia em que a chave for configurada |
 | PE07 | Levantar com a Defesa Civil a lista de eventos de alagamento com data e hora | Equipe | Antes da avaliação do modelo |
 | AC01 | Subir o serviço de ingestão em ambiente estável e iniciar a coleta contínua | Equipe | Imediato, cada dia sem coleta é dado perdido |
 | AC02 | Executar a carga inicial dos 80 dias disponíveis | Equipe | No mesmo dia em que a ingestão subir |

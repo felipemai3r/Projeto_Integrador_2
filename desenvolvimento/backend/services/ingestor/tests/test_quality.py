@@ -33,6 +33,12 @@ def test_salto_maior_que_um_metro_em_cinco_minutos_e_suspeito() -> None:
     assert avaliar(leitura(Variavel.NIVEL_M, 2.5), AGORA, anterior) == Qualidade.OK
 
 
+def test_salto_com_jitter_de_carimbo_ainda_e_suspeito() -> None:
+    # a API municipal carimba com alguns ms a mais que 5 min entre leituras
+    anterior = (AGORA - timedelta(minutes=5, milliseconds=120), 1.8)
+    assert avaliar(leitura(Variavel.NIVEL_M, 3.0), AGORA, anterior) == Qualidade.SUSPEITA
+
+
 def test_salto_grande_apos_lacuna_longa_nao_e_suspeito() -> None:
     anterior = (AGORA - timedelta(hours=3), 1.8)
     assert avaliar(leitura(Variavel.NIVEL_M, 3.0), AGORA, anterior) == Qualidade.OK

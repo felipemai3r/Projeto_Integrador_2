@@ -6,7 +6,7 @@ Código do sistema, separado por camada para facilitar a orientação e a revis�
 |---|---|---|
 | `backend/db` | Migrações Alembic (esquema do banco) | Esquema inicial pronto |
 | `backend/services/common` | Pacote compartilhado: configuração, modelos, contratos, seed | Pronto |
-| `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens e Open-Meteo prontos |
+| `backend/services/ingestor` | Coleta das fontes, plausibilidade, gravação, cargas históricas, canário de contrato | GraphQL, REST, barragens, Open-Meteo e API do painel municipal prontos |
 | `backend/services/api` | API FastAPI: leitura, alertas, correlação, ocorrências com moderação, login | Pronta (porta 8000, docs em `/docs`) |
 | `backend/services/modelo` | Correlação defasada (RF13), treino, validação e previsão (CDU02, CDU03, CDU09) | Pronto ([ADR 0003](../docs/adr/0003-correlacao-defasada-primeiros-resultados.md), [ADR 0004](../docs/adr/0004-modelo-de-previsao-primeiros-resultados.md)). Publica sozinho quando a RN07 for atendida |
 | `frontend` | PWA em React, com o design Farol ([detalhes](frontend/README.md)) | Painel, histórico, mapa, registro de alagamento, moderação e Como funciona |
@@ -22,6 +22,13 @@ docker compose up --build        # sobe db, aplica migrações e seed, inicia a 
 
 # carga inicial do histórico disponível na API REST (uma vez; pode repetir sem duplicar)
 docker compose exec ingestor python -m ingestor.carga_inicial --dias 82
+
+# API do painel da Defesa Civil municipal (precisa de PDC_API_KEY no .env, fornecida pelo município).
+# Sem a chave, esse coletor não é agendado. Carga histórica desde 13/09/2025, em janelas de 7 dias,
+# idempotente (pode repetir). Opções: --desde AAAA-MM-DD, --estacao DC-PEU-002 (repetível),
+# --dias-janela N (1 a 31). Depois de mudar o .env: docker compose up -d ingestor
+docker compose exec ingestor python -m ingestor.carga_pdc
+docker compose exec ingestor python -m ingestor.carga_pdc --desde 2026-10-01 --estacao DC-PEU-002
 
 # análise de correlação defasada (grava o resultado e imprime a tabela)
 docker compose run --rm modelo python -m modelo.correlacao --estacao DCSC-00043

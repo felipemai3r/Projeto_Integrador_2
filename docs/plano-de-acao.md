@@ -61,7 +61,7 @@ Dados da coleta real: série de 5 minutos a partir de 22/07/2026 (21 dias já se
 | Risco | Por que importa | Resposta |
 |---|---|---|
 | Modelo sem dado suficiente (RI01, RI03) | 80 dias, poucos ou nenhum evento extremo | Entregar o pipeline, a correlação defasada e a avaliação honesta. A correlação é o resultado científico principal do semestre |
-| Estação do Revólver (DCSC-00174) **sem série pública** | Está no inventário mas não retorna histórico (fontes-de-dados, seção 8). A segunda estação alvo só terá tempo real | Tratar como estação "apenas observada" no painel; modelo e correlação começam pelo Rio dos Índios; PE06 |
+| Estação do Revólver (DCSC-00174) **sem série pública** (resolvido em 05/11/2026: série vem da API do painel municipal, ver fontes-de-dados seção 8.1) | Está no inventário mas não retorna histórico (fontes-de-dados, seção 8). A segunda estação alvo só terá tempo real | Tratar como estação "apenas observada" no painel; modelo e correlação começam pelo Rio dos Índios; PE06 |
 | GraphQL só aceita operação registrada, REST em domínio DDNS (`mks-unifique.ddns.net`) | Pode mudar ou sumir sem aviso | Adaptador isolado, canário diário de contrato, `bruto` em JSONB para reprocessar |
 | Push no iOS | Web Push no iPhone só funciona com o app instalado na tela inicial (iOS 16.4 ou superior) | Orientar instalação na tela de inscrição; documentar como limitação RE06 |
 | Alerta falso | Destrói a confiança em um produto de segurança | RN02, RN03, RN04, RN07 já cobrem; adicionar histerese (seção 4) |

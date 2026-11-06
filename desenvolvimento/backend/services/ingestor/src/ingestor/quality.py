@@ -14,7 +14,8 @@ from common.schemas import LeituraBruta
 
 NIVEL_MAX_M = 15.0
 SALTO_MAX_M = 1.0
-JANELA_SALTO = timedelta(minutes=5)
+# folga de 30 s: a API municipal carimba com jitter (5 min e alguns ms entre leituras)
+JANELA_SALTO = timedelta(minutes=5, seconds=30)
 CHUVA_H001_MAX_MM = 150.0
 TOLERANCIA_RELOGIO = timedelta(minutes=2)
 
