@@ -41,6 +41,7 @@ O sistema é uma **ferramenta de apoio**. A fonte oficial de alertas é sempre a
 | Defesa Civil SC, GraphQL | Leitura mais recente das estações (nível, chuva) | a cada 5 min |
 | Defesa Civil SC, API REST | Histórico em 5 min, usado para fechar lacunas | a cada 30 min |
 | Defesa Civil SC, barragens | Cota do reservatório e comportas da Barragem Norte | a cada 30 min |
+| Defesa Civil de Presidente Getúlio, API do painel | Nível e chuva de 1 h das estações municipais (Revólver e serras), com histórico desde 13/09/2025 | a cada 5 min |
 | Open-Meteo, previsão | Chuva prevista | a cada 1 h |
 | Open-Meteo, ERA5 | Reanálise de chuva horária desde nov/2020 (carga manual) | sob demanda |
 
@@ -51,7 +52,10 @@ Há ainda um "canário de contrato" diário (09:00 UTC) que avisa no log se algu
 | Estação | Código | Mede |
 |---|---|---|
 | Rio dos Índios (Presidente Getúlio) | DCSC-00043 | nível e chuva. **É o alvo principal** |
-| Ribeirão Revólver | DCSC-00174 | listada pela Defesa Civil, mas **sem série pública** |
+| Ribeirão Revólver (Creche Agostinho Senem) | DCSC-00174 | nível e chuva, pela API do painel municipal. **Segundo alvo** |
+| Serra dos Índios (Posto de Saúde) | DC-PEU-003 | só chuva (API municipal) |
+| Serra Vencida (Escola Serra Vencida) | DC-PEU-004 | só chuva (API municipal) |
+| Serra Mirador (Mirante das Antenas) | DC-PEU-002 | chuva (API municipal) |
 | Ibirama | DCSC-00020 | nível e chuva |
 | José Boiteux | DCSC-00021 | nível e chuva |
 | Dona Emma | DCSC-00037 | só chuva |
@@ -75,7 +79,8 @@ Só as leituras com qualidade `ok` entram na previsão.
 O modelo trabalha com **uma linha por hora**. As leituras de 5 minutos viram valores horários assim:
 
 - **Nível:** é a média das leituras da hora. A hora precisa ter pelo menos **6** leituras das ~12 esperadas.
-- **Chuva:** é a soma dos incrementos de 5 minutos. A hora precisa ter pelo menos **9 de 12** leituras (75%).
+- **Chuva:** é a soma dos incrementos de 5 minutos. A hora precisa ter pelo menos **9 de 12** leituras (75%). Quando não há incremento suficiente (por exemplo, antes do início da série REST, ou nas estações municipais), a hora usa a **chuva acumulada de 1 h** medida no fim da hora, entre 5 min antes e 1 min depois, só de pluviômetros (a reanálise ERA5 não entra). Uma leitura mais de 30 mm acima do máximo dos 10 minutos anteriores é descartada como pico espúrio. A regra só olha para trás, para dar o mesmo resultado no treino e na previsão ao vivo (ver [ADR 0005](adr/0005-novas-fontes-no-modelo-e-alvo-revolver.md)).
+- **Duas fontes na mesma estação:** antes de contar e agregar, as leituras viram **uma por intervalo de 5 minutos** (média dentro do intervalo), para que a mesma medição vinda do GraphQL, da REST e da API municipal não conte em dobro.
 
 Uma hora sem cobertura suficiente fica **vazia (desconhecida), nunca zero**. "Não sabemos se choveu" é diferente de "não choveu". Esse princípio vale para todo o sistema.
 
@@ -203,7 +208,7 @@ Os horizontes são **1, 3, 6, 12 e 24 horas**, e cada um tem um modelo próprio.
 |---|---|
 | Nível do alvo | nível (m), taxa em 1 h (cm), taxa média em 3 h (cm/h), aceleração (cm) |
 | Rios vizinhos | nível e taxa em 1 h de **José Boiteux** e **Ibirama** |
-| Chuva acumulada | para cada um dos 5 pontos (cidade, Dona Emma, José Boiteux, Witmarsum, Vitor Meireles), em **1, 3, 6, 12, 24, 48, 72 e 168 h** |
+| Chuva acumulada | em **1, 3, 6, 12, 24, 48, 72 e 168 h**, para os pontos de cada alvo. **Rio dos Índios:** cidade, Dona Emma, José Boiteux, Witmarsum e Vitor Meireles. **Ribeirão Revólver:** cidade, o pluviômetro do próprio Revólver e as serras dos Índios, Vencida e Mirador. Um ponto com menos de 50% de cobertura na janela de treino fica de fora |
 | Interações | chuva de 6 h em Dona Emma × chuva de 6 h em José Boiteux (hipótese de chuva simultânea nas cabeceiras); nível de Ibirama × chuva de 3 h na cidade (efeito de remanso) |
 | Hora do dia | seno e cosseno da hora (ciclo diário) |
 
@@ -343,7 +348,7 @@ Os textos usam linguagem simples, e a cor nunca vem sozinha: toda faixa tem íco
 
 ### Dados
 
-1. **Ribeirão Revólver não tem série pública de nível.** A estação existe na lista da Defesa Civil, mas não devolve leituras. Não há forma honesta de estimar o nível dele; o caminho é pedir a série à Defesa Civil municipal (PE06).
+1. **Previsão do Ribeirão Revólver ainda em treino.** A série do Revólver e das três estações de serra chegou em 05/11/2026 pela API do painel municipal (PE06 resolvida), com histórico desde 13/09/2025. O Revólver é treinado todo dia junto com o rio dos Índios e só é publicado quando atender à RN07. A tela Previsão ainda mostra só o rio dos Índios.
 2. **Histórico curto.** A fonte REST guarda dados só desde 03/07/2026, cerca de 3,5 meses, e nesse período **não houve cheia grande**. O modelo nunca viu um evento como o de dezembro de 2020.
 3. **Lacunas da fonte:** existem buracos que a própria Defesa Civil não tem, como 12 a 14/08, e esses não podem ser recuperados.
 4. **A chuva ERA5 é uma grade grossa.** O ponto do Revólver cai na mesma célula da cidade, então os valores são idênticos. Serve para histórico longo, não para detalhe local.
@@ -382,8 +387,9 @@ Os textos usam linguagem simples, e a cor nunca vem sozinha: toda faixa tem íco
 2. Colocar na tela Previsão a escolha da estação, mostrando "sem faixa oficial" quando faltarem limites.
 3. Voltar o mínimo de dias para 60 assim que o histórico permitir.
 4. Avisar a moderação por e-mail quando chegar um registro novo.
-5. Obter da Defesa Civil a série do Ribeirão Revólver e as cotas oficiais de Ibirama e José Boiteux.
-6. Usar os registros validados da população para calibrar quais níveis do rio correspondem a alagamento em cada rua.
+5. Obter da Defesa Civil as cotas oficiais de Ibirama e José Boiteux. (A série do Revólver e das serras já vem da API municipal.)
+6. Colocar na tela Previsão a escolha entre rio dos Índios e Revólver, e as serras na simulação.
+7. Usar os registros validados da população para calibrar quais níveis do rio correspondem a alagamento em cada rua.
 
 ---
 
