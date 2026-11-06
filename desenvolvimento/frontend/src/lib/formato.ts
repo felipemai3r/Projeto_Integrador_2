@@ -48,8 +48,10 @@ export function descreverTendencia(
   return tendencia === 'subindo' && (aceleracaoCmH2 ?? 0) >= 2 ? `${base} e acelerando` : base
 }
 
-export const nomeDaFonte = (codigo: string): string =>
-  codigo.startsWith('dcsc') ? 'Defesa Civil de SC' : codigo
+export const nomeDaFonte = (codigo: string): string => {
+  if (codigo === 'pdc_municipal') return 'Defesa Civil de Presidente Getúlio'
+  return codigo.startsWith('dcsc') ? 'Defesa Civil de SC' : codigo
+}
 
 /** Remove o prefixo tecnico do nome da fonte para texto corrido. */
 export const rotuloFonte = (nome: string): string => nome.replace(/^Defesa Civil SC, /, '')

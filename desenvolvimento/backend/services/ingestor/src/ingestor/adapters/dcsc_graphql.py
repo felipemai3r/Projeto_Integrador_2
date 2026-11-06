@@ -56,7 +56,10 @@ def normalizar(resposta: dict[str, Any]) -> list[LeituraBruta]:
         codigo, ts = est.get("codigo"), est.get("timestamp")
         if not codigo or not ts:
             continue  # estacao sem leitura corrente
-        medido_em = datetime.fromisoformat(ts)
+        try:
+            medido_em = datetime.fromisoformat(ts)
+        except (TypeError, ValueError) as e:
+            raise ContratoQuebrado(f"{codigo}: timestamp invalido: {ts!r}") from e
         dados = est.get("data") or {}
 
         rio = dados.get("rio") or {}
