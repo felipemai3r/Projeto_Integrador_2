@@ -6,7 +6,7 @@ calcula, sinaliza extrapolacao e monta cenarios hipoteticos (CDU03).
 
 import pandas as pd
 
-from modelo.features import JANELAS_CHUVA_H, PONTOS_CHUVA
+from modelo.features import JANELAS_CHUVA_H, PONTOS_CHUVA, pontos_chuva
 
 ROTULO_DE_CODIGO = PONTOS_CHUVA
 MARGEM_EXTRAPOLACAO = 0.0  # qualquer valor fora do intervalo visto no treino conta
@@ -68,6 +68,16 @@ def prever_variacao_cm(artefato: dict, linha: pd.Series) -> float:
     return float(artefato["pipeline"].predict(X)[0])
 
 
+def colunas_faltando(artefato: dict, linha: pd.Series) -> list[str]:
+    """Colunas que o modelo exige e a linha nao tem (ausentes ou NaN).
+
+    Cada modelo so olha as proprias colunas: um modelo que nao usa uma serra nunca falha por
+    causa dela; um treinado com ela fica sem estimativa se ela estiver sem dado, em vez de errar
+    ou inventar.
+    """
+    return [c for c in artefato["colunas"] if c not in linha.index or pd.isna(linha[c])]
+
+
 def extrapola(artefato: dict, linha: pd.Series) -> list[str]:
     """Variaveis fora da faixa vista no treino. Lista vazia = dentro do que o modelo conhece."""
     fora = []
@@ -79,17 +89,22 @@ def extrapola(artefato: dict, linha: pd.Series) -> list[str]:
 
 
 def aplicar_cenario(
-    linha: pd.Series, chuva_mm_por_ponto: dict[str, float], janela_h: int
+    linha: pd.Series,
+    chuva_mm_por_ponto: dict[str, float],
+    janela_h: int,
+    alvo: str | None = None,
 ) -> pd.Series:
     """Cenario: "e se nas ultimas `janela_h` horas tivesse chovido X mm em cada ponto?".
 
     Intensidade uniforme na janela. Janelas de chuva menores ou iguais a `janela_h` recebem a
     fracao proporcional; as maiores recebem pelo menos o total do cenario (nunca menos do que
     ja choveu de fato). Interacoes sao recalculadas. O nivel e a tendencia ficam como estao.
+    Com `alvo`, so os pontos de chuva desse alvo (`ConfigAlvo.pontos_chuva`) sao aplicados.
     """
     nova = linha.copy()
+    do_alvo = pontos_chuva(alvo) if alvo is not None else ROTULO_DE_CODIGO
     for codigo, mm in chuva_mm_por_ponto.items():
-        rotulo = ROTULO_DE_CODIGO.get(codigo)
+        rotulo = do_alvo.get(codigo)
         if rotulo is None:
             continue
         for w in JANELAS_CHUVA_H:

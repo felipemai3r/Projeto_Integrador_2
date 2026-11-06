@@ -4,24 +4,125 @@ REGRA DE OURO, sem excecao: toda variavel na hora `t` usa so dado ate `t`. Janel
 terminam em `t`; diferencas olham para tras; o alvo (futuro) e construido a parte e nunca entra
 em X. Ha teste que prova isso cortando a serie em `t` e comparando.
 
+Convencao do rotulo: a hora de rotulo `t` cobre [t, t+1h) e a linha `t` representa o estado ao
+FIM dessa hora (nivel medio e chuva de [t, t+1h), `valido_para = t + h`). A chuva de `t` e tudo
+que se sabe ate t+1h; o que acontece depois so entra no alvo. A chuva por h001 (dados.py) usa a
+leitura que fecha a hora, com folga de no maximo 1 min depois dela.
+
 Cada hora sem cobertura vira NaN (nunca zero). Linhas com NaN nao entram no treino.
 """
+
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 
 HORIZONTES_H = (1, 3, 6, 12, 24)
 JANELAS_CHUVA_H = (1, 3, 6, 12, 24, 48, 72, 168)
-ALVO = "DCSC-00043"
-# ponto de chuva -> rotulo curto usado nos nomes das variaveis
+ALVO = "DCSC-00043"  # alvo padrao (e o unico que existia antes do Revolver)
+# ponto de chuva -> rotulo curto usado nos nomes das variaveis. O rotulo e FIXO por estacao
+# (nao depende do alvo): o modelo salvo em artefato guarda os nomes das colunas, e a simulacao
+# (inferencia.aplicar_cenario) traduz codigo -> rotulo por este mesmo dicionario. Este e so o
+# registro de rotulos: QUAIS pontos entram em cada alvo e `ConfigAlvo.pontos_chuva`.
 PONTOS_CHUVA = {
     "DCSC-00043": "local",
     "DCSC-00037": "emma",
     "DCSC-00021": "boiteux",
     "DCSC-00015": "witmarsum",
     "DCSC-00036": "vitor",
+    # fontes novas (painel municipal): chuva do proprio Revolver e tres estacoes de serra
+    "DCSC-00174": "revolver",
+    "DC-PEU-003": "serra_indios",  # Serra dos Indios, cabeceira do rio dos Indios
+    "DC-PEU-004": "serra_vencida",  # Serra Vencida
+    "DC-PEU-002": "serra_mirador",  # Serra Mirador / Mirante das Antenas
 }
-NIVEL_VIZINHOS = {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}
+# Pontos de chuva do alvo padrao (rio dos Indios), na ordem de sempre. O conjunto e FIXO: o
+# retreino diario nao pode acrescentar variaveis ao modelo publicado sem uma decisao (ADR 0005).
+PONTOS_CHUVA_PADRAO = (
+    "DCSC-00043",
+    "DCSC-00037",
+    "DCSC-00021",
+    "DCSC-00015",
+    "DCSC-00036",
+)
+NIVEL_VIZINHOS = {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}  # vizinhos do alvo padrao
+
+
+@dataclass(frozen=True)
+class ConfigAlvo:
+    """O que muda de uma estacao-alvo para outra."""
+
+    codigo: str
+    nome: str
+    nivel_vizinhos: dict[str, str]  # estacao de nivel -> rotulo curto
+    # estacoes cuja chuva vira variavel deste alvo (ordem = ordem das colunas). O rotulo vem de
+    # PONTOS_CHUVA. Treino, inferencia, imputacao por vizinhos e simulacao usam so este conjunto.
+    pontos_chuva: tuple[str, ...] = PONTOS_CHUVA_PADRAO
+    interacoes: bool = True  # interacoes da hipotese do coordenador / remanso do Ibirama
+    # janela de treino padrao em dias; None = todo o historico (desde treinar.INICIO_HISTORICO).
+    # Depende de onde vem cada variavel do alvo: ver ADR 0005.
+    janela_dias: int | None = None
+
+
+ALVOS: dict[str, ConfigAlvo] = {
+    # 120 dias: Boiteux (chuva e nivel) e Ibirama (nivel) so tem ~80 dias de serie (API REST).
+    # Com janela longa cairiam por cobertura e o modelo perderia emma_x_boiteux_6h e o remanso do
+    # Ibirama, que sao as hipoteses centrais deste alvo.
+    # Chuva: exatamente os cinco pontos de sempre (as serras e o Revolver nao entram).
+    "DCSC-00043": ConfigAlvo(
+        "DCSC-00043",
+        "Rio dos Índios (Presidente Getúlio)",
+        NIVEL_VIZINHOS,
+        pontos_chuva=PONTOS_CHUVA_PADRAO,
+        janela_dias=120,
+    ),
+    # Ribeirao Revolver: bacia urbana pequena que desagua no rio dos Indios dentro da cidade.
+    # - O unico vizinho de nivel e o proprio rio dos Indios em Presidente Getulio (DCSC-00043):
+    #   com ele cheio, o Revolver escoa pior (remanso); e o nivel mais proximo e mais relevante.
+    # - Boiteux e Ibirama ficam de fora: sao pontos do Itajai do Norte/Itajai-Acu, com
+    #   propagacao de horas a dias, escala errada para uma bacia que responde em 1 a 6 h. O
+    #   efeito deles ja chega ao Revolver atraves do rio dos Indios.
+    # - Sem interacoes: a de Dona Emma x Boiteux e do rio grande, e a de Ibirama x chuva local
+    #   depende de um vizinho que o Revolver nao tem.
+    # - Chuva: o pluviometro do proprio Revolver, a chuva "local" (DCSC-00043, na cidade) e as
+    #   tres serras da cabeceira. Dona Emma e Witmarsum ficam de fora: estao no Itajai do Norte,
+    #   em outra bacia e a dezenas de km, e a bacia do Revolver responde em 1 a 6 h; seguem a
+    #   mesma logica que tirou Boiteux e Ibirama (escala errada) e custariam 16 colunas e linhas
+    #   completas por coisa que a chuva local e das serras ja cobre. Vitor (DCSC-00036) tambem.
+    "DCSC-00174": ConfigAlvo(
+        "DCSC-00174",
+        "Ribeirão Revólver",
+        {"DCSC-00043": "getulio"},
+        pontos_chuva=(
+            "DCSC-00043",
+            "DCSC-00174",
+            "DC-PEU-003",
+            "DC-PEU-004",
+            "DC-PEU-002",
+        ),
+        interacoes=False,
+        janela_dias=None,  # todas as variaveis vem do painel municipal, com 14 meses
+    ),
+}
+
+
+def config_alvo(codigo: str) -> ConfigAlvo:
+    """Configuracao do alvo. Estacao desconhecida usa os vizinhos do alvo padrao."""
+    if codigo in ALVOS:
+        return ALVOS[codigo]
+    return ConfigAlvo(codigo, codigo, NIVEL_VIZINHOS, PONTOS_CHUVA_PADRAO)
+
+
+def pontos_chuva(codigo: str) -> dict[str, str]:
+    """Pontos de chuva do alvo: codigo da estacao -> rotulo curto (rotulo fixo por estacao)."""
+    return {c: PONTOS_CHUVA[c] for c in config_alvo(codigo).pontos_chuva}
+
+
+def vizinhos_nivel(codigo: str) -> dict[str, str]:
+    """Estacoes de nivel vizinhas do alvo. Nunca inclui o proprio alvo."""
+    return {c: r for c, r in config_alvo(codigo).nivel_vizinhos.items() if c != codigo}
+
+
 MIN_COBERTURA_LONGA = 0.9  # janelas de 12 h ou mais toleram 10% de falha (reescaladas)
 JANELA_MIN_TOLERANTE_H = 12  # abaixo disso a janela exige todas as horas
 
@@ -45,26 +146,27 @@ def montar_features(
 ) -> pd.DataFrame:
     """Uma linha por hora `t`. `chuva` e `nivel` sao series horarias (UTC) por codigo de estacao."""
     cols: dict[str, pd.Series] = {}
+    cfg = config_alvo(alvo)
     n_alvo = nivel[alvo]
     cols["nivel_m"] = n_alvo
     cols["taxa_1h_cm"] = n_alvo.diff(1) * 100
     cols["taxa_3h_cm_h"] = n_alvo.diff(3) * 100 / 3
     cols["aceleracao_cm"] = cols["taxa_1h_cm"].diff(1)
 
-    for cod, rotulo in NIVEL_VIZINHOS.items():
+    for cod, rotulo in vizinhos_nivel(alvo).items():
         if cod in nivel:
             cols[f"nivel_{rotulo}_m"] = nivel[cod]
             cols[f"taxa_{rotulo}_1h_cm"] = nivel[cod].diff(1) * 100
 
-    for cod, rotulo in PONTOS_CHUVA.items():
+    for cod, rotulo in pontos_chuva(alvo).items():
         if cod in chuva:
             for j in JANELAS_CHUVA_H:
                 cols[f"chuva_{rotulo}_{j}h"] = chuva_acumulada(chuva[cod], j)
 
     # interacoes que testam a hipotese do coordenador e o remanso (secao 1.2)
-    if "chuva_emma_6h" in cols and "chuva_boiteux_6h" in cols:
+    if cfg.interacoes and "chuva_emma_6h" in cols and "chuva_boiteux_6h" in cols:
         cols["emma_x_boiteux_6h"] = cols["chuva_emma_6h"] * cols["chuva_boiteux_6h"]
-    if "nivel_ibirama_m" in cols and "chuva_local_3h" in cols:
+    if cfg.interacoes and "nivel_ibirama_m" in cols and "chuva_local_3h" in cols:
         cols["ibirama_x_chuva_local_3h"] = cols["nivel_ibirama_m"] * cols["chuva_local_3h"]
 
     df = pd.DataFrame(cols)
