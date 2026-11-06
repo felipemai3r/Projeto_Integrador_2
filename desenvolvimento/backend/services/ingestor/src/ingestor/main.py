@@ -14,6 +14,7 @@ from ingestor.adapters.dcsc_barragens import DcscBarragens
 from ingestor.adapters.dcsc_graphql import DcscGraphql
 from ingestor.adapters.dcsc_rest import DcscRest
 from ingestor.adapters.openmeteo import OpenMeteo, Ponto
+from ingestor.adapters.pdc import Pdc
 from ingestor.coleta import executar
 from ingestor.gravar import gravar_previsoes
 
@@ -21,8 +22,19 @@ log = logging.getLogger("ingestor")
 
 
 def estacoes_ativas() -> list[str]:
+    """Estacoes ativas da rede da Defesa Civil de SC (as unicas que a API REST estadual conhece).
+
+    As estacoes da rede municipal (DC-PEU-*) vem so pela API do painel; consulta-las na REST
+    gastaria chamadas a toa e faria o canario acusar falha falsa.
+    """
     with sessao() as s:
-        return list(s.scalars(select(Estacao.codigo).where(Estacao.ativa)))
+        return list(
+            s.scalars(
+                select(Estacao.codigo)
+                .where(Estacao.ativa, Estacao.codigo.like("DCSC-%"))
+                .order_by(Estacao.codigo)
+            )
+        )
 
 
 def verificar_silencio(limite_min: int = 15) -> None:
@@ -72,15 +84,28 @@ def main() -> None:
             "openmeteo_forecast", lambda: openmeteo.previsao(pontos_ativos()), gravar_previsoes
         )
 
+    # a chave e fornecida pela Defesa Civil municipal; sem ela essa fonte simplesmente nao roda
+    pdc = Pdc(cfg.pdc_api_url, cfg.pdc_api_key) if cfg.pdc_api_key else None
+    if pdc is None:
+        log.warning("PDC_API_KEY vazia: coletor da API do painel municipal nao sera agendado")
+
+    def coletar_pdc() -> None:
+        # janela de 1h cobre falhas curtas; reexecucao nao duplica (UNIQUE + ON CONFLICT)
+        if pdc is not None:
+            fim = datetime.now(UTC)
+            executar("pdc_municipal", lambda: pdc.coletar(fim - timedelta(hours=1), fim))
+
     def canario_de_contrato() -> None:
         """Compara a resposta real de cada fonte com a esperada e avisa quando mudar."""
         pontos = pontos_ativos()
         resultado = {
             "dcsc_graphql": graphql.verificar_contrato(),
             "dcsc_barragens": barragens.verificar_contrato(),
-            "dcsc_rest": DcscRest(cfg.dcsc_rest_url, [p[0] for p in pontos]).verificar_contrato(),
+            "dcsc_rest": DcscRest(cfg.dcsc_rest_url, estacoes_ativas()).verificar_contrato(),
             "openmeteo_forecast": openmeteo.verificar_contrato(pontos[0]),
         }
+        if pdc is not None:
+            resultado["pdc_municipal"] = pdc.verificar_contrato()
         for fonte, ok in resultado.items():
             nivel = logging.INFO if ok else logging.ERROR
             log.log(
@@ -111,6 +136,15 @@ def main() -> None:
         next_run_time=datetime.now(UTC) + timedelta(seconds=90),
         **kw,
     )
+    if pdc is not None:
+        # defasado dos demais jobs de 5 min (graphql roda no minuto zero)
+        sch.add_job(
+            coletar_pdc,
+            "interval",
+            minutes=5,
+            next_run_time=datetime.now(UTC) + timedelta(seconds=15),
+            **kw,
+        )
     sch.add_job(canario_de_contrato, "cron", hour=9, minute=0, **kw)
     sch.add_job(verificar_silencio, "interval", minutes=5, **kw)
     log.info("ingestor iniciado")

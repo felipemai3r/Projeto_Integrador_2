@@ -52,7 +52,7 @@ def test_saude(client: TestClient) -> None:
 
 def test_lista_estacoes_com_limiares(client: TestClient, base: Session) -> None:
     corpo = client.get("/api/estacoes").json()
-    assert len(corpo) == 8
+    assert len(corpo) == 11  # 8 da Defesa Civil de SC + 3 de serra da API municipal
     indios = next(e for e in corpo if e["codigo"] == "DCSC-00043")
     assert indios["limiares"] == {
         "atencao": 4.0,

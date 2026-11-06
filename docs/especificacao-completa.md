@@ -753,7 +753,7 @@ Pendências com a Defesa Civil municipal:
 | ID | Pendência |
 |---|---|
 | PE05 | Confirmar oficialmente os limiares das duas estações alvo. |
-| PE06 | Verificar se o município pode liberar o histórico das três estações próprias (Posto de Saúde, Escola Serra Vencida, Mirante das Antenas), que não estão na API pública da Defesa Civil de SC. |
+| PE06 | ~~Verificar se o município pode liberar o histórico das três estações próprias (Posto de Saúde, Escola Serra Vencida, Mirante das Antenas), que não estão na API pública da Defesa Civil de SC.~~ **Resolvida em 05/11/2026**: o município forneceu a chave da API do painel, que entrega essas três estações e a do Revólver desde 13/09/2025 (ver [fontes-de-dados](fontes-de-dados.md), seção 8.1). |
 | PE07 | Levantar a lista de eventos de alagamento com data e hora, para servir de rótulo na avaliação do modelo. |
 | PE08 | Acordar o fluxo de moderação dos registros da população. |
 

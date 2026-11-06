@@ -33,6 +33,10 @@ class Configuracao(BaseSettings):
 
     dcsc_graphql_url: str = "https://monitoramento.defesacivil.sc.gov.br/graphql"
     dcsc_rest_url: str = "https://api-dcsc.mks-unifique.ddns.net"
+    # API do painel da Defesa Civil de Presidente Getulio. A chave e fornecida pela Defesa Civil
+    # municipal; vazia, o coletor dessa fonte nao e agendado.
+    pdc_api_url: str = "https://uizatcahxcyscjbkxnzp.supabase.co/functions/v1/stations-api"
+    pdc_api_key: str = ""
     openmeteo_forecast_url: str = "https://api.open-meteo.com/v1/forecast"
     openmeteo_archive_url: str = "https://archive-api.open-meteo.com/v1/archive"
 
