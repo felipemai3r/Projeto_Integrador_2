@@ -90,11 +90,15 @@ class DcscRest(Adaptador):
         fim = fim or datetime.now(UTC)
         inicio = inicio or fim - timedelta(hours=2)
         resultado: list[LeituraBruta] = []
+        falhas = 0
         for codigo in self._estacoes:
             try:
                 resultado += self.coletar_estacao(codigo, inicio, fim)
             except FonteIndisponivel:
-                continue  # uma estacao fora do ar nao interrompe as demais (RNF05)
+                falhas += 1  # uma estacao fora do ar nao interrompe as demais (RNF05)
+        if self._estacoes and falhas == len(self._estacoes):
+            # tudo falhou: nao pode virar coleta "vazia", o log de auditoria precisa ver a falha
+            raise FonteIndisponivel(f"{self.codigo}: nenhuma estacao respondeu ({falhas})")
         return resultado
 
     def verificar_contrato(self) -> bool:

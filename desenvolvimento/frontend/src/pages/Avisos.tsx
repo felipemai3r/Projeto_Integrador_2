@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Botao } from '../components/Botao'
 import { Skeleton } from '../components/Skeleton'
+import { useEstacoes } from '../hooks/useDados'
 import { usePush } from '../hooks/usePush'
 import { api, ErroApi } from '../lib/api'
 import styles from './Avisos.module.css'
@@ -14,21 +15,47 @@ const FAIXAS = [
   { valor: 'alerta_alto', rotulo: 'Alerta alto' },
   { valor: 'extremo', rotulo: 'Risco extremo (limite ainda não definido)' },
 ]
-const ESTACOES = [
-  { valor: 'DCSC-00043', rotulo: 'Rio dos Índios' },
-  { valor: '', rotulo: 'Todos os rios' },
-]
+const RIO_PADRAO = 'DCSC-00043'
+
+interface OpcaoDeRio {
+  valor: string
+  rotulo: string
+}
+
+/** Rios que geram alerta (papel alvo) vindos da API, mais "todos": o cadastro manda, nao a tela. */
+function useEscolhaDeRio() {
+  const estacoes = useEstacoes()
+  const [escolha, setEscolha] = useState<string | null>(null)
+  const alvos = (Array.isArray(estacoes.data) ? estacoes.data : []).filter(
+    (e) => e.papel === 'alvo',
+  )
+  const opcoes: OpcaoDeRio[] = [
+    ...alvos.map((e) => ({ valor: e.codigo, rotulo: e.curso_dagua ?? e.nome })),
+    { valor: '', rotulo: 'Todos os rios' },
+  ]
+  const padrao = alvos.some((e) => e.codigo === RIO_PADRAO) ? RIO_PADRAO : ''
+  return {
+    estacao: escolha ?? padrao,
+    setEstacao: setEscolha,
+    opcoes,
+    carregando: estacoes.isPending,
+  }
+}
 
 const mensagemDeErro = (e: unknown, padrao: string) => (e instanceof ErroApi ? e.message : padrao)
 
 function Preferencias({
   estacao,
   setEstacao,
+  opcoes,
+  carregando,
   faixa,
   setFaixa,
 }: {
   estacao: string
   setEstacao: (v: string) => void
+  opcoes: OpcaoDeRio[]
+  carregando: boolean
   faixa: string
   setFaixa: (v: string) => void
 }) {
@@ -36,12 +63,14 @@ function Preferencias({
     <>
       <label className={styles.campo}>
         Qual rio
-        <select value={estacao} onChange={(e) => setEstacao(e.target.value)}>
-          {ESTACOES.map((o) => (
-            <option key={o.valor} value={o.valor}>
-              {o.rotulo}
-            </option>
-          ))}
+        <select value={estacao} disabled={carregando} onChange={(e) => setEstacao(e.target.value)}>
+          {carregando && <option value="">Carregando…</option>}
+          {!carregando &&
+            opcoes.map((o) => (
+              <option key={o.valor} value={o.valor}>
+                {o.rotulo}
+              </option>
+            ))}
         </select>
       </label>
       <label className={styles.campo}>
@@ -95,7 +124,7 @@ function LinkDoEmail() {
 function AvisosPorEmail() {
   const [email, setEmail] = useState('')
   const [faixa, setFaixa] = useState('alerta')
-  const [estacao, setEstacao] = useState('DCSC-00043')
+  const { estacao, setEstacao, opcoes, carregando } = useEscolhaDeRio()
   const envio = useMutation({
     mutationFn: () =>
       api.inscreverEmail({ email: email.trim(), estacao: estacao || null, faixa_minima: faixa }),
@@ -108,7 +137,8 @@ function AvisosPorEmail() {
       </h3>
       <p className={styles.apoio}>
         Funciona em qualquer aparelho. Enviamos um link de confirmação; sem confirmar, nada é
-        enviado. Todo aviso traz um link para cancelar, e ao cancelar o e-mail é apagado.
+        enviado e nada muda. Todo aviso traz um link para cancelar, e ao cancelar o e-mail é
+        apagado.
       </p>
       {envio.isSuccess ? (
         <p className={styles.ok} role="status">
@@ -135,10 +165,12 @@ function AvisosPorEmail() {
           <Preferencias
             estacao={estacao}
             setEstacao={setEstacao}
+            opcoes={opcoes}
+            carregando={carregando}
             faixa={faixa}
             setFaixa={setFaixa}
           />
-          <Botao type="submit" variante="primario" bloco disabled={envio.isPending}>
+          <Botao type="submit" variante="primario" bloco disabled={envio.isPending || carregando}>
             <Mail aria-hidden="true" size={20} />
             {envio.isPending ? 'Enviando…' : 'Receber avisos por e-mail'}
           </Botao>
@@ -156,7 +188,7 @@ function AvisosPorEmail() {
 function AvisosNoCelular() {
   const { situacao, erro, ocupado, inscrever, cancelar, testar } = usePush()
   const [faixa, setFaixa] = useState('alerta')
-  const [estacao, setEstacao] = useState('DCSC-00043')
+  const { estacao, setEstacao, opcoes, carregando } = useEscolhaDeRio()
 
   return (
     <section className={styles.secao} aria-labelledby="titulo-push">
@@ -210,10 +242,12 @@ function AvisosNoCelular() {
           <Preferencias
             estacao={estacao}
             setEstacao={setEstacao}
+            opcoes={opcoes}
+            carregando={carregando}
             faixa={faixa}
             setFaixa={setFaixa}
           />
-          <Botao type="submit" variante="primario" bloco disabled={ocupado}>
+          <Botao type="submit" variante="primario" bloco disabled={ocupado || carregando}>
             <BellRing aria-hidden="true" size={20} />
             {ocupado ? 'Ativando…' : 'Avisar quando subir'}
           </Botao>

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from common.config import obter_configuracao
 from common.enums import Faixa, Variavel
-from common.models import Estacao, Leitura
+from common.models import Estacao, Fonte, Leitura
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, literal_column, select
 from sqlalchemy.orm import Session
@@ -92,11 +92,13 @@ def serie(
     ).label("t")
     linhas = s.execute(
         select(balde, func.avg(Leitura.valor), func.max(Leitura.unidade))
+        .join(Fonte, Fonte.id == Leitura.fonte_id)
         .where(
             Leitura.estacao_id == est.id,
             Leitura.variavel == variavel.value,
             Leitura.qualidade == "ok",
             Leitura.valor.is_not(None),
+            Fonte.codigo != "openmeteo_archive",  # reanalise ERA5 nao e medicao
             Leitura.medido_em >= agora - timedelta(hours=horas),
             Leitura.medido_em <= agora,
         )
