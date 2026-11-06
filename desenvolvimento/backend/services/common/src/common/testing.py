@@ -1,6 +1,7 @@
 """Fixtures compartilhadas: banco de teste PostgreSQL real, criado do zero pelas migracoes."""
 
 import os
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -19,7 +20,10 @@ RAIZ = Path(__file__).resolve().parents[4]
 URL_ADMIN = os.environ.get(
     "TEST_ADMIN_URL", "postgresql+psycopg://pgetulio:troque_esta_senha@localhost:5432/postgres"
 )
-NOME_BANCO = "pgetulio_test"
+# TEST_DB_NAME permite duas suites em paralelo sem uma derrubar o banco da outra
+NOME_BANCO = os.environ.get("TEST_DB_NAME", "pgetulio_test")
+if not re.fullmatch(r"[a-z_][a-z0-9_]{0,62}", NOME_BANCO):
+    raise ValueError(f"TEST_DB_NAME invalido: {NOME_BANCO!r}")
 
 
 @pytest.fixture(scope="session")
