@@ -45,12 +45,16 @@ def idx(n: int) -> pd.DatetimeIndex:
 
 
 def mundo(n: int = 24 * 120, semente: int = 3):
-    """Chuva em todos os pontos (as serras chovem mais), nivel do PG, do Revolver e vizinhos."""
+    """Chuva em todos os pontos (as serras chovem mais), nivel do PG, do Revolver e vizinhos.
+
+    A chuva e frequente (30% das horas): o gradient boosting minimiza o erro absoluto e, com
+    chuva rara, aprenderia a variacao mediana (zero) e empataria com a persistencia.
+    """
     rng = np.random.default_rng(semente)
 
     def chuva(escala: float) -> pd.Series:
         return pd.Series(
-            np.where(rng.random(n) < 0.08, rng.gamma(2.0, 3.0 * escala, n), 0.0), idx(n)
+            np.where(rng.random(n) < 0.3, rng.gamma(2.0, 3.0 * escala, n), 0.0), idx(n)
         )
 
     c = {cod: chuva(1.0) for cod in PONTOS_CHUVA}
@@ -60,9 +64,18 @@ def mundo(n: int = 24 * 120, semente: int = 3):
     resp_r = np.zeros(n)
     resp_r[1:] = c[REVOLVER].to_numpy()[: n - 1] * 0.03
     resp_p = np.zeros(n)
-    resp_p[2:] = (c[PG] + c["DC-PEU-003"]).to_numpy()[: n - 2] * 0.01
-    nivel_r = pd.Series(1.0 + np.cumsum(resp_r - 0.004), idx(n)).clip(lower=0.5)
-    nivel_p = pd.Series(1.5 + np.cumsum(resp_p - 0.003), idx(n)).clip(lower=0.5)
+    resp_p[2:] = (c[PG] + c["DC-PEU-003"]).to_numpy()[: n - 2] * 0.02
+
+    def com_recessao(resposta: np.ndarray, base: float) -> pd.Series:
+        """Nivel que sobe com a chuva e volta ao normal (recessao): fica sempre limitado."""
+        v = np.empty(n)
+        v[0] = base
+        for i in range(1, n):
+            v[i] = v[i - 1] + resposta[i] - 0.15 * (v[i - 1] - base)
+        return pd.Series(v, idx(n))
+
+    nivel_r = com_recessao(resp_r, 1.0)
+    nivel_p = com_recessao(resp_p, 1.5)
     nivel = {
         PG: nivel_p,
         REVOLVER: nivel_r,
@@ -92,10 +105,28 @@ PONTOS_ANTIGOS = {
 }
 
 
-def test_pg_usa_exatamente_o_conjunto_antigo_de_pontos_de_chuva() -> None:
-    assert pontos_chuva(PG) == PONTOS_ANTIGOS
-    assert list(pontos_chuva(PG)) == list(PONTOS_ANTIGOS)  # mesma ordem das colunas
-    assert set(ALVOS[PG].pontos_chuva) == set(PONTOS_ANTIGOS)
+PONTOS_PG = {
+    "DCSC-00043": "local",
+    "DCSC-00037": "emma",
+    "DCSC-00015": "witmarsum",
+    "DCSC-00174": "revolver",
+    **SERRAS,
+}
+
+
+def test_pg_usa_o_conjunto_novo_com_serras_e_revolver_sem_boiteux_nem_vitor() -> None:
+    assert pontos_chuva(PG) == PONTOS_PG
+    assert list(pontos_chuva(PG)) == [
+        "DCSC-00043",
+        "DCSC-00037",
+        "DCSC-00015",
+        "DCSC-00174",
+        "DC-PEU-003",
+        "DC-PEU-004",
+        "DC-PEU-002",
+    ]  # mesma ordem das colunas
+    assert set(ALVOS[PG].pontos_chuva) == set(PONTOS_PG)
+    assert "DCSC-00021" not in PONTOS_PG and "DCSC-00036" not in PONTOS_PG
 
 
 def test_revolver_usa_local_revolver_e_serras_sem_emma_nem_witmarsum() -> None:
@@ -110,18 +141,27 @@ def test_alvo_desconhecido_usa_o_conjunto_padrao() -> None:
     assert pontos_chuva("DCSC-99999") == PONTOS_ANTIGOS
 
 
-def test_colunas_do_pg_com_todos_os_pontos_no_dicionario_sao_as_de_sempre() -> None:
-    """mundo() traz serras e Revolver; o retreino do PG nao pode ganhar colunas por causa delas."""
+def test_colunas_do_pg_sao_as_do_conjunto_novo_e_nao_ganham_pontos_so_por_existirem() -> None:
+    """mundo() traz tambem Boiteux e Vitor: o PG nao os usa, nem como chuva nem como nivel."""
     c, nivel = mundo(24 * 20)
     X = montar_features(c, nivel)
-    assert not any("serra" in col or "revolver" in col for col in X.columns)
+    assert not any(
+        "boiteux" in col or "vitor" in col or "ibirama" in col for col in X.columns
+    )  # nem chuva, nem nivel de vizinho, nem as interacoes
     esperadas = {
-        f"chuva_{r}_{j}h" for r in PONTOS_ANTIGOS.values() for j in (1, 3, 6, 12, 24, 48, 72, 168)
+        f"chuva_{r}_{j}h" for r in PONTOS_PG.values() for j in (1, 3, 6, 12, 24, 48, 72, 168)
     }
     assert esperadas <= set(X.columns)
     assert len([col for col in X.columns if col.startswith("chuva_")]) == len(esperadas)
+    assert "emma_x_boiteux_6h" not in X.columns and "ibirama_x_chuva_local_3h" not in X.columns
+    # so o nivel do proprio alvo: nenhuma coluna de nivel de vizinho
+    assert [col for col in X.columns if col.startswith("nivel_")] == [
+        "nivel_m",
+        "nivel_min_24h_m",
+        "nivel_max_24h_m",
+    ]
     pd.testing.assert_frame_equal(
-        X, montar_features({k: v for k, v in c.items() if k in PONTOS_ANTIGOS}, nivel)
+        X, montar_features({k: v for k, v in c.items() if k in PONTOS_PG}, nivel)
     )
 
 
@@ -133,10 +173,12 @@ def test_features_trazem_todas_as_janelas_das_serras() -> None:
             assert f"chuva_{rotulo}_{j}h" in X.columns
 
 
-def test_features_sem_as_serras_continuam_iguais_as_de_antes() -> None:
+def test_estacao_fora_de_alvos_continua_com_o_conjunto_e_as_interacoes_de_antes() -> None:
     c, nivel = mundo(24 * 20)
     so_antigas = {k: v for k, v in c.items() if k in PONTOS_ANTIGOS}
-    X = montar_features(so_antigas, nivel)
+    desconhecida = {"DCSC-99999": nivel[PG], "DCSC-00021": nivel["DCSC-00021"]}
+    desconhecida["DCSC-00020"] = nivel["DCSC-00020"]
+    X = montar_features(so_antigas, desconhecida, alvo="DCSC-99999")
     assert not any("serra" in col or "revolver" in col for col in X.columns)
     assert "emma_x_boiteux_6h" in X.columns and "ibirama_x_chuva_local_3h" in X.columns
 
@@ -166,7 +208,8 @@ def test_cada_alvo_tem_config_e_nunca_usa_o_proprio_nivel_como_vizinho() -> None
     for cod in ALVOS:
         assert cod not in vizinhos_nivel(cod)
     assert vizinhos_nivel(REVOLVER) == {PG: "getulio"}
-    assert vizinhos_nivel(PG) == {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}
+    assert vizinhos_nivel(PG) == {}  # Boiteux e Ibirama saíram do 00043 (ADR 0006)
+    assert vizinhos_nivel("DCSC-99999") == {"DCSC-00021": "boiteux", "DCSC-00020": "ibirama"}
 
 
 def test_features_do_revolver_usam_o_nivel_do_revolver_e_o_do_rio_dos_indios() -> None:
@@ -231,17 +274,18 @@ def test_modelo_sem_as_serras_continua_funcionando_com_linha_que_as_tem() -> Non
     assert cenario["chuva_serra_indios_6h"] == pytest.approx(30.0)
 
 
-def test_cenario_do_pg_ignora_pontos_que_nao_sao_do_alvo() -> None:
+def test_cenario_do_pg_aplica_serras_e_revolver_e_ignora_pontos_que_nao_sao_do_alvo() -> None:
     c, nivel = mundo()
-    linha = montar_features(c, nivel).dropna().iloc[-1]  # alvo PG: sem serras nem Revolver
+    linha = montar_features(c, nivel).dropna().iloc[-1]  # alvo PG: com serras e Revolver
     cenario = aplicar_cenario(linha, {PG: 10.0, "DC-PEU-003": 30.0, REVOLVER: 5.0}, 6, alvo=PG)
-    assert not any("serra" in col or "revolver" in col for col in cenario.index)
     assert cenario["chuva_local_6h"] == pytest.approx(10.0)
-    # com `alvo`, um ponto que nao e do alvo e ignorado mesmo que a linha tenha a coluna
-    com_serra = linha.copy()
-    com_serra["chuva_serra_indios_6h"] = 1.0
-    nova = aplicar_cenario(com_serra, {"DC-PEU-003": 30.0}, 6, alvo=PG)
-    assert nova["chuva_serra_indios_6h"] == 1.0
+    assert cenario["chuva_serra_indios_6h"] == pytest.approx(30.0)
+    assert cenario["chuva_revolver_6h"] == pytest.approx(5.0)
+    # com `alvo`, um ponto que nao e do alvo (Vitor) e ignorado mesmo que a linha tenha a coluna
+    com_vitor = linha.copy()
+    com_vitor["chuva_vitor_6h"] = 1.0
+    nova = aplicar_cenario(com_vitor, {"DCSC-00036": 30.0}, 6, alvo=PG)
+    assert nova["chuva_vitor_6h"] == 1.0
 
 
 def test_modelo_antigo_ignora_serra_sem_dado_mas_o_novo_recusa() -> None:
@@ -287,13 +331,13 @@ def test_imputacao_trata_as_serras_como_pontos_comuns() -> None:
 def test_janela_padrao_e_por_alvo_e_argumentos_sobrescrevem() -> None:
     fim = datetime(2026, 11, 5, 12, tzinfo=UTC)
     assert date(2025, 9, 13) == INICIO_HISTORICO
-    assert ALVOS[PG].janela_dias == 120  # comportamento anterior: Boiteux/Ibirama so tem ~80 dias
+    assert ALVOS[PG].janela_dias is None  # todo o historico (sem Boiteux/Ibirama, ADR 0006)
     assert ALVOS[REVOLVER].janela_dias is None  # todo o historico do painel
-    # padrao de cada alvo
-    assert inicio_da_janela(fim, padrao_dias=ALVOS[PG].janela_dias) == fim - timedelta(days=120)
-    assert inicio_da_janela(fim, padrao_dias=ALVOS[REVOLVER].janela_dias) == datetime(
-        2025, 9, 13, tzinfo=UTC
-    )
+    # padrao de cada alvo: ambos desde o inicio do historico do painel
+    for alvo in (PG, REVOLVER):
+        assert inicio_da_janela(fim, padrao_dias=ALVOS[alvo].janela_dias) == datetime(
+            2025, 9, 13, tzinfo=UTC
+        )
     # --dias / --desde sobrescrevem o padrao do alvo
     assert inicio_da_janela(fim, dias=30, padrao_dias=120) == fim - timedelta(days=30)
     assert inicio_da_janela(fim, desde=date(2026, 1, 1), padrao_dias=120) == datetime(

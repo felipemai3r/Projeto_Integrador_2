@@ -139,8 +139,19 @@ def test_rotulos_dos_pontos_de_chuva_sao_unicos_para_nao_colidir_colunas() -> No
 def test_pontos_de_chuva_de_cada_alvo_estao_no_cadastro_de_rotulos() -> None:
     for cod in (*ALVOS, "DCSC-99999"):
         assert set(pontos_chuva(cod)) <= set(PONTOS_CHUVA)
+    # rio dos Indios (ADR 0006): sem Boiteux (00021) e Vitor (00036); com Revolver e serras
+    assert list(pontos_chuva(PG)) == [
+        "DCSC-00043",
+        "DCSC-00037",
+        "DCSC-00015",
+        "DCSC-00174",
+        "DC-PEU-003",
+        "DC-PEU-004",
+        "DC-PEU-002",
+    ]
+    assert pontos_chuva(PG)["DCSC-00174"] == "revolver"  # o rotulo continua vindo de PONTOS_CHUVA
     antigos = {"DCSC-00043", "DCSC-00037", "DCSC-00021", "DCSC-00015", "DCSC-00036"}
-    assert set(pontos_chuva(PG)) == antigos  # o retreino do PG nao ganha variaveis
+    assert set(pontos_chuva("DCSC-99999")) == antigos  # estacao fora de ALVOS: conjunto padrao
 
 
 def test_todo_ponto_de_chuva_e_todo_alvo_existem_no_seed() -> None:
@@ -194,22 +205,77 @@ def test_todas_as_janelas_de_cada_ponto_presente_e_nenhuma_dos_ausentes() -> Non
 
 
 def test_ponto_de_outro_alvo_nao_vira_coluna_do_pg() -> None:
+    """Boiteux e Vitor nao sao pontos do PG (ADR 0006), mesmo presentes nos dados."""
     n = serie([1.0] * 200)
-    chuva = {PG: serie([0.0] * 200), "DC-PEU-002": serie([1.0] * 200), REVOLVER: serie([2.0] * 200)}
+    chuva = {
+        PG: serie([0.0] * 200),
+        "DCSC-00021": serie([1.0] * 200),
+        "DCSC-00036": serie([2.0] * 200),
+        "DC-PEU-002": serie([1.0] * 200),
+        REVOLVER: serie([2.0] * 200),
+    }
     X = montar_features(chuva, {PG: n})
-    assert not [c for c in X.columns if "serra" in c or "revolver" in c]
+    assert not [c for c in X.columns if "boiteux" in c or "vitor" in c]
+    assert "chuva_serra_mirador_6h" in X.columns and "chuva_revolver_6h" in X.columns
 
 
-def test_interacoes_do_rio_dos_indios_sao_o_produto_das_variaveis_de_origem() -> None:
+def test_interacoes_sao_o_produto_das_variaveis_de_origem_fora_de_alvos() -> None:
+    """As interacoes explicitas so existem para estacao fora de ALVOS (o PG deixou de te-las)."""
     n = serie(list(np.linspace(1, 2, 60)))
     chuva = {
         PG: serie([1.0] * 60),
         "DCSC-00037": serie([2.0] * 60),
         "DCSC-00021": serie([3.0] * 60),
     }
-    X = montar_features(chuva, {PG: n, "DCSC-00021": n, "DCSC-00020": n * 2})
+    nivel = {"DCSC-99999": n, "DCSC-00021": n, "DCSC-00020": n * 2}
+    X = montar_features(chuva, nivel, alvo="DCSC-99999")
     assert X["emma_x_boiteux_6h"].iloc[-1] == pytest.approx(12.0 * 18.0)
     assert X["ibirama_x_chuva_local_3h"].iloc[-1] == pytest.approx(2.0 * n.iloc[-1] * 3.0)
+
+
+def test_pg_nao_tem_interacoes_nem_vizinhos_de_nivel_mesmo_com_todos_os_dados() -> None:
+    n = serie(list(np.linspace(1, 2, 60)))
+    chuva = {c: serie([1.0] * 60) for c in PONTOS_CHUVA}
+    X = montar_features(chuva, {PG: n, "DCSC-00021": n, "DCSC-00020": n * 2})
+    assert ALVOS[PG].interacoes is False and ALVOS[PG].janela_dias is None
+    assert ALVOS[PG].nivel_vizinhos == {}
+    assert "emma_x_boiteux_6h" not in X.columns and "ibirama_x_chuva_local_3h" not in X.columns
+    assert not [c for c in X.columns if "ibirama" in c or "boiteux" in c or "vitor" in c]
+
+
+def test_novas_variaveis_de_tendencia_e_faixa_das_ultimas_24h() -> None:
+    n = 60
+    nivel = serie([1.0 + 0.05 * i for i in range(n)])  # sobe 5 cm por hora
+    X = montar_features({PG: serie([0.0] * n)}, {PG: nivel})
+    assert X["taxa_6h_cm_h"].iloc[6:].tolist() == pytest.approx([5.0] * (n - 6))
+    assert X["taxa_24h_cm_h"].iloc[24:].tolist() == pytest.approx([5.0] * (n - 24))
+    assert X["taxa_6h_cm_h"].iloc[:6].isna().all() and X["taxa_24h_cm_h"].iloc[:24].isna().all()
+    # minimo/maximo das ultimas 24 h INCLUINDO a hora t, e so com >= 18 horas de dado
+    assert X["nivel_min_24h_m"].iloc[:17].isna().all() and not np.isnan(
+        X["nivel_min_24h_m"].iloc[17]
+    )
+    assert X["nivel_min_24h_m"].iloc[40] == pytest.approx(nivel.iloc[17])  # janela [17, 40]
+    assert X["nivel_max_24h_m"].iloc[40] == pytest.approx(nivel.iloc[40])
+
+
+def test_novas_variaveis_de_nivel_nao_enxergam_o_futuro() -> None:
+    rng = np.random.default_rng(8)
+    n = 24 * 6
+    nivel = pd.Series(rng.normal(2, 0.3, n), horas(n))
+    chuva = {PG: pd.Series(rng.gamma(1.0, 2.0, n), horas(n))}
+    t = 24 * 4
+    completo = montar_features(chuva, {PG: nivel})
+    cortado = montar_features({PG: chuva[PG].iloc[: t + 1]}, {PG: nivel.iloc[: t + 1]})
+    novas = ["taxa_6h_cm_h", "taxa_24h_cm_h", "nivel_min_24h_m", "nivel_max_24h_m"]
+    pd.testing.assert_series_equal(
+        completo.iloc[t][novas], cortado.iloc[t][novas], check_names=False
+    )
+    adulterado = nivel.copy()
+    adulterado.iloc[t + 1 :] = 99.0
+    futuro = montar_features(chuva, {PG: adulterado})
+    pd.testing.assert_series_equal(
+        completo.iloc[t][novas], futuro.iloc[t][novas], check_names=False
+    )
 
 
 def test_interacoes_nao_existem_no_revolver_mesmo_com_todos_os_dados() -> None:

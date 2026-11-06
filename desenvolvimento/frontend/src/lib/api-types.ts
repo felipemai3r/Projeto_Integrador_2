@@ -866,6 +866,8 @@ export interface components {
                 number,
                 number
             ] | null;
+            /** Confianca */
+            confianca?: number | null;
             /** Faixa */
             faixa?: string | null;
             modelo?: components["schemas"]["ResumoModelo"] | null;

@@ -362,7 +362,7 @@ A construção é incremental, em três estágios, e cada estágio já entrega v
 
 **Estágio 2, modelo de referência.** Regressão regularizada (Ridge) por horizonte, com as variáveis da seção 9.2. É simples, interpretável, roda com pouco dado e serve de linha de base honesta para comparação.
 
-**Estágio 3, modelo não linear.** Gradient boosting (LightGBM) por horizonte, comparado ao estágio 2 na mesma partição temporal. Só substitui o modelo de referência se ganhar de forma consistente.
+**Estágio 3, modelo não linear.** Gradient boosting (LightGBM) por horizonte, comparado ao estágio 2 na mesma partição temporal. Só substitui o modelo de referência se ganhar de forma consistente. **Adotado em 06/11/2026** (HistGradientBoosting do scikit-learn): no mesmo período de teste, ganhou do Ridge em todos os horizontes, e em 24 h o Ridge ficou pior que a persistência ([ADR 0006](adr/0006-gradient-boosting-e-intervalo-por-regime.md)).
 
 Modelos de rede neural recorrente ficam como trabalho futuro, condicionados a volume de dados que o projeto ainda não tem.
 

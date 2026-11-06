@@ -53,6 +53,12 @@ describe('PrevisaoTabela', () => {
     expect(within(item).getByText(/05\/11,? 15:00/)).toBeInTheDocument()
   })
 
+  it('mostra o nivel de confianca que a API informa para o horizonte', () => {
+    render(<PrevisaoTabela previsao={previsao([disponivel(24, { confianca: 0.8 })])} />)
+    const item = screen.getByText('Daqui a 24 h').closest('li')!
+    expect(within(item).getByText(/\(80% de confiança\)/)).toBeInTheDocument()
+  })
+
   it('cenario hipotetico rotula a faixa como cenario e nao como previsao', () => {
     render(<PrevisaoTabela previsao={previsao([disponivel(3)], { origem: 'cenario' })} />)
     expect(screen.getByText(/Alerta \(cenário\)/)).toBeInTheDocument()

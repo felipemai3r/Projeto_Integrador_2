@@ -206,10 +206,10 @@ Os horizontes são **1, 3, 6, 12 e 24 horas**, e cada um tem um modelo próprio.
 
 | Grupo | Variáveis |
 |---|---|
-| Nível do alvo | nível (m), taxa em 1 h (cm), taxa média em 3 h (cm/h), aceleração (cm) |
-| Rios vizinhos | nível e taxa em 1 h de **José Boiteux** e **Ibirama** |
-| Chuva acumulada | em **1, 3, 6, 12, 24, 48, 72 e 168 h**, para os pontos de cada alvo. **Rio dos Índios:** cidade, Dona Emma, José Boiteux, Witmarsum e Vitor Meireles. **Ribeirão Revólver:** cidade, o pluviômetro do próprio Revólver e as serras dos Índios, Vencida e Mirador. Um ponto com menos de 50% de cobertura na janela de treino fica de fora |
-| Interações | chuva de 6 h em Dona Emma × chuva de 6 h em José Boiteux (hipótese de chuva simultânea nas cabeceiras); nível de Ibirama × chuva de 3 h na cidade (efeito de remanso) |
+| Nível do alvo | nível (m), taxa em 1 h (cm), taxa média em 3, 6 e 24 h (cm/h), aceleração (cm), nível mínimo e máximo das últimas 24 h |
+| Rios vizinhos | só o **Revólver** tem (o nível do rio dos Índios na cidade). José Boiteux e Ibirama saíram do rio dos Índios: a série deles é curta (ADR 0006) |
+| Chuva acumulada | em **1, 3, 6, 12, 24, 48, 72 e 168 h**, para os pontos de cada alvo. **Rio dos Índios:** cidade, Dona Emma, Witmarsum, o pluviômetro do Revólver e as três serras. **Ribeirão Revólver:** cidade, o pluviômetro do próprio Revólver e as serras dos Índios, Vencida e Mirador. Um ponto com menos de 50% de cobertura na janela de treino fica de fora |
+| Interações | nenhuma explícita: o gradient boosting aprende as interações sozinho (ADR 0006) |
 | Hora do dia | seno e cosseno da hora (ciclo diário) |
 
 **Lacunas nas janelas de chuva:**
@@ -221,9 +221,9 @@ O motivo é prático: uma única hora com poucas leituras não pode apagar a pre
 
 ### 6.3 Modelo
 
-- **Ridge**, uma regressão linear com regularização, sobre variáveis padronizadas (média 0, desvio 1).
-- A força da regularização (`alpha`) é escolhida automaticamente entre 0,1 e 1.000.000, por validação **em ordem temporal**. O motivo: com poucas semanas de dado, um modelo pouco regularizado "decorava" o treino e errava muito fora dele (medido: 120 cm de erro contra 46 cm da persistência em 12 h).
-- Linhas com qualquer variável desconhecida não entram no treino.
+- **Gradient boosting** (`HistGradientBoostingRegressor`, perda de erro absoluto, 600 árvores, semente fixa), no lugar do Ridge. Em 24 h o Ridge perdia para a persistência; o novo modelo vence nos cinco horizontes (ADR 0006).
+- O modelo **aceita variável desconhecida (NaN)**: só o alvo e as colunas obrigatórias (nível, taxa de 1 h e taxa de 3 h) precisam existir para a linha entrar no treino. Em cada ajuste saem as colunas com menos de 50 valores.
+- **Intervalo da previsão:** quantis dos erros fora da amostra, **por regime de chuva** (seco, chuva, chuva forte), com o nível do quantil calibrado para cobrir de fato o prometido: **95% até 6 h e 80% em 12 h e 24 h**, porque nesses horizontes a chuva que ainda vai cair domina o erro e um intervalo de 95% ficaria largo demais para orientar. A tela mostra o nível usado. Sem chuva o intervalo é bem mais estreito. Modelos antigos (Ridge) seguem com ±1,96 desvio.
 
 ### 6.4 Validação honesta (walk-forward)
 
@@ -240,7 +240,7 @@ O motivo é prático: uma única hora com poucas leituras não pode apagar a pre
 Um horizonte só é **publicado**, e só então aparece na tela, se:
 
 1. o modelo errar **pelo menos 5% menos** que a persistência; **e**
-2. houver dias suficientes de dado completo. O valor da RN07 é **60 dias**, mas está **temporariamente em 45** para a demonstração.
+2. houver dias suficientes de dado completo. O valor da RN07 é **60 dias**.
 
 Se não passar, a tela diz que a previsão está indisponível e por quê. Exemplo de hoje: "erro de 45,20 cm contra 45,90 cm de quem apenas repete o nível atual". **Nada é inventado.**
 
@@ -264,7 +264,7 @@ Os valores são o RMSE do modelo, com o da persistência entre parênteses. A te
 3. Para cada horizonte publicado:
    - **variação** = saída do modelo (cm);
    - **nível previsto** = nível atual + variação ÷ 100;
-   - **incerteza (95%)** = ± 1,96 × σ, onde σ é o desvio dos erros na validação (ou o RMSE, se o desvio não estiver disponível);
+   - **intervalo** = nível previsto + os quantis do erro do regime de chuva da linha (95% até 6 h, 80% em 12 e 24 h; veja o [ADR 0006](adr/0006-gradient-boosting-e-intervalo-por-regime.md)). Modelos antigos (Ridge) usam ± 1,96 × σ;
    - **faixa prevista** = classificação do nível previsto pelos limites da seção 3.1.
 4. **Extrapolação:** o sistema confere se alguma variável de hoje está **fora da faixa vista no treino** (por exemplo, uma chuva maior que qualquer chuva do histórico). Se estiver, a previsão sai marcada, porque o modelo está "chutando" fora do que conhece.
 
@@ -300,7 +300,7 @@ A simulação responde a uma pergunta hipotética: **"e se, nas últimas N horas
    - se *w* > N: `chuva_w = máximo(chuva real na janela w, X)`. A janela longa contém toda a chuva do cenário e nunca fica com menos do que já choveu de verdade.
 3. **Recalcula as interações** (Dona Emma × Boiteux em 6 h; Ibirama × cidade em 3 h).
 4. **Nível, tendência e rios vizinhos não mudam.** O cenário mexe só na chuva.
-5. **Aplica os mesmos modelos publicados** (seção 6.7) e devolve nível previsto, intervalo de 95%, faixa e o aviso de extrapolação.
+5. **Aplica os mesmos modelos publicados** (seção 6.7) e devolve nível previsto, intervalo (com o nível de confiança), faixa e o aviso de extrapolação.
 
 ### 7.3 Exemplo numérico
 
@@ -385,7 +385,7 @@ Os textos usam linguagem simples, e a cor nunca vem sozinha: toda faixa tem íco
 
 1. Fazer o `treinador` retreinar todas as estações com nível (Índios, Ibirama, Boiteux) e aumentar a janela de treino.
 2. Colocar na tela Previsão a escolha da estação, mostrando "sem faixa oficial" quando faltarem limites.
-3. Voltar o mínimo de dias para 60 assim que o histórico permitir.
+3. Voltar a testar Boiteux e Ibirama no rio dos Índios quando tiverem 1 ano de série, e guardar o histórico de previsões do Open-Meteo para a chuva prevista entrar nos horizontes de 12 e 24 h.
 4. Avisar a moderação por e-mail quando chegar um registro novo.
 5. Obter da Defesa Civil as cotas oficiais de Ibirama e José Boiteux. (A série do Revólver e das serras já vem da API municipal.)
 6. Colocar na tela Previsão a escolha entre rio dos Índios e Revólver, e as serras na simulação.

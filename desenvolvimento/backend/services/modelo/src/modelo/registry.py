@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from modelo.treino import Resultado
 
-ALGORITMO = "ridge"
+ALGORITMO = "hist_gradient_boosting"  # modelos antigos ficaram gravados como "ridge"
 
 
 def registrar(
@@ -45,6 +45,13 @@ def registrar(
             "colunas": r.colunas,
             "rmse_tendencia_cm": r.rmse_tendencia_cm,
             "desvio_residual_cm": r.desvio_residual_cm,
+            # intervalo por regime de chuva (ADR 0006); a API le daqui se o artefato nao tiver
+            "intervalo_por_regime": r.intervalo_por_regime,
+            "alfa_intervalo": r.alfa_intervalo,
+            "cobertura_validacao": r.cobertura_validacao,
+            "confianca_intervalo": r.confianca,
+            "colunas_obrigatorias": r.colunas_obrigatorias,
+            "aceita_nan": r.aceita_nan,
         },
     )
     s.add(m)
@@ -54,7 +61,19 @@ def registrar(
         destino.mkdir(parents=True, exist_ok=True)
         caminho = destino / f"{m.id}.joblib"
         joblib.dump(
-            {"pipeline": r.pipeline, "colunas": r.colunas, "faixa_treino": r.faixa_treino}, caminho
+            {
+                "pipeline": r.pipeline,
+                "colunas": r.colunas,
+                "faixa_treino": r.faixa_treino,
+                # modelo novo: aceita NaN fora das obrigatorias e tem intervalo por regime.
+                # Artefato antigo (Ridge) nao tem estes campos e segue com +-1,96 sigma.
+                "colunas_obrigatorias": r.colunas_obrigatorias,
+                "aceita_nan": r.aceita_nan,
+                "intervalo_por_regime": r.intervalo_por_regime,
+                "alfa_intervalo": r.alfa_intervalo,
+                "confianca_intervalo": r.confianca,
+            },
+            caminho,
         )
         m.caminho_artefato = str(caminho)
     return m

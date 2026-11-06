@@ -2,6 +2,8 @@
 
 Data: 05/11/2026. Complementa o ADR 0004 (não altera RN07 nem o critério de publicação). Código em `desenvolvimento/backend/services/modelo` (`dados.py`, `features.py`, `treinar.py`, `agendador.py`, `inferencia.py`) e `api/src/api/previsao.py`.
 
+> **Atualização (ADR 0006).** As seções 2 e 4 abaixo descrevem a decisão original para o rio dos Índios (cinco pontos de chuva e janela de 120 dias). O [ADR 0006](0006-gradient-boosting-e-intervalo-por-regime.md) a substitui: o `DCSC-00043` passa a usar todo o histórico, com as serras e o Revólver, sem Boiteux e Ibirama, e o modelo troca o Ridge por gradient boosting. O restante deste ADR (chuva por h001, Revólver, `escolher_linha`) continua valendo.
+
 ## Contexto
 
 A API do painel municipal passou a ser coletada a cada 5 min, com histórico desde 13/09/2025 (~14 meses; a API REST estadual só retém ~80 dias). Ela traz:
@@ -27,6 +29,8 @@ A chuva dessa fonte é a **acumulada na última hora** (`chuva_h001_mm`, janela 
 
 ### 2. Serras e Revólver como pontos de chuva
 
+> **Superado em parte pelo ADR 0006:** o rio dos Índios deixa de ter "exatamente o conjunto de antes" e passa a usar `DCSC-00043`, `DCSC-00037`, `DCSC-00015`, `DCSC-00174` e as três serras, sem Boiteux, Vitor e Ibirama. A decisão original segue abaixo, como registro.
+
 `PONTOS_CHUVA` passa a ser o **registro de rótulos** (`serra_indios`, `serra_vencida`, `serra_mirador`, `revolver` além dos cinco de sempre), fixos por estação. **Quais pontos entram em cada alvo** é propriedade do alvo: `ConfigAlvo.pontos_chuva` (função `features.pontos_chuva(alvo)`). Treino (`treinar`), `montar_features`, inferência (`api/previsao.py`), imputação por vizinhos e simulação (`aplicar_cenario(..., alvo=)`) usam o conjunto do alvo; estação fora de `ALVOS` usa o conjunto padrão.
 
 - **Rio dos Índios (`DCSC-00043`): exatamente o conjunto de antes**, `local`, `emma`, `boiteux`, `witmarsum`, `vitor`, com as mesmas colunas e as mesmas interações. O retreino diário não ganha variável nenhuma (sem este limite, o loop sobre todo o registro acrescentaria 32 colunas, das serras e do pluviômetro do Revólver, sem decisão; teste cobre). Incluir as serras no Índios fica como decisão futura, com validação própria.
@@ -48,6 +52,8 @@ A chuva dessa fonte é a **acumulada na última hora** (`chuva_h001_mm`, janela 
 Não se adicionou física além disso. Mesmos horizontes, mesmo Ridge, mesma validação e mesmo critério de publicação.
 
 ### 4. Janela de treino, por alvo
+
+> **Superado pelo ADR 0006:** o rio dos Índios passa a treinar com todo o histórico (`janela_dias=None`), porque Boiteux e Ibirama, que prendiam a janela em 120 dias, saíram do modelo (a série curta deles piorou a validação em 12 e 24 h). A "janela longa pendente" abaixo foi resolvida dessa forma, e não esperando as séries crescerem. A decisão original segue abaixo, como registro.
 
 A janela é propriedade do alvo (`ConfigAlvo.janela_dias`):
 

@@ -11,9 +11,12 @@ from modelo.inferencia import (
     MIN_VIZINHOS_IMPUTACAO,
     ROTULO_DE_CODIGO,
     aplicar_cenario,
+    colunas_exigidas,
     colunas_faltando,
     extrapola,
     imputar_chuva,
+    intervalo_cm,
+    obrigatorias_do_artefato,
     prever_variacao_cm,
 )
 
@@ -256,3 +259,106 @@ def test_lacuna_exatamente_no_limite_e_imputada() -> None:
     p["A"].iloc[-MAX_HORAS_IMPUTADAS:] = np.nan
     novo, horas_ = imputar_chuva(p)
     assert novo["A"].notna().all() and len(horas_["A"]) == MAX_HORAS_IMPUTADAS
+
+
+# ---------- modelo que aceita NaN (ADR 0006) x modelo antigo ----------
+
+
+class PipelineNaN:
+    """Guarda o que recebeu e soma ignorando NaN (como um modelo que lida com valor ausente)."""
+
+    def __init__(self) -> None:
+        self.recebido: pd.DataFrame | None = None
+
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        self.recebido = X
+        return np.array([float(np.nansum(X.to_numpy()))])
+
+
+def novo(colunas: list[str], obrigatorias: list[str], **extra) -> dict:  # noqa: ANN003
+    return {
+        "pipeline": PipelineNaN(),
+        "colunas": colunas,
+        "aceita_nan": True,
+        "colunas_obrigatorias": obrigatorias,
+        **extra,
+    }
+
+
+def test_modelo_novo_exige_so_as_obrigatorias_mais_o_nivel_e_o_antigo_exige_tudo() -> None:
+    a = novo(["nivel_m", "taxa_3h_cm_h", "chuva_local_6h"], ["taxa_3h_cm_h"])
+    assert obrigatorias_do_artefato(a) == ["taxa_3h_cm_h"]
+    assert colunas_exigidas(a) == ["taxa_3h_cm_h", "nivel_m"]
+    antigo = artefato(["nivel_m", "taxa_3h_cm_h", "chuva_local_6h"])
+    assert obrigatorias_do_artefato(antigo) is None  # sem `aceita_nan`: comportamento de sempre
+    assert colunas_exigidas(antigo) == ["nivel_m", "taxa_3h_cm_h", "chuva_local_6h"]
+
+
+def test_colunas_faltando_do_modelo_novo_ignora_chuva_vazia_mas_nao_a_obrigatoria() -> None:
+    a = novo(["nivel_m", "taxa_3h_cm_h", "chuva_local_6h"], ["nivel_m", "taxa_3h_cm_h"])
+    linha = pd.Series({"nivel_m": 2.0, "taxa_3h_cm_h": 1.0, "chuva_local_6h": np.nan})
+    assert colunas_faltando(a, linha) == []
+    assert colunas_faltando(a, linha.drop("chuva_local_6h")) == []
+    assert colunas_faltando(a, linha.where(linha.index != "taxa_3h_cm_h")) == ["taxa_3h_cm_h"]
+    # o modelo antigo, com a mesma linha, continua recusando a chuva vazia
+    assert colunas_faltando(artefato(list(a["colunas"])), linha) == ["chuva_local_6h"]
+
+
+def test_modelo_novo_recebe_nan_e_nunca_zero_nas_colunas_vazias_ou_ausentes() -> None:
+    a = novo(["nivel_m", "chuva_local_6h", "chuva_serra_indios_6h"], ["nivel_m"])
+    prever_variacao_cm(a, pd.Series({"nivel_m": 2.0, "chuva_local_6h": np.nan}))
+    recebido = a["pipeline"].recebido
+    assert list(recebido.columns) == ["nivel_m", "chuva_local_6h", "chuva_serra_indios_6h"]
+    assert recebido.iloc[0].isna().tolist() == [False, True, True]  # a ausente tambem vira NaN
+
+
+def test_extrapola_ignora_variavel_sem_valor() -> None:
+    a = artefato(["a", "b"], {"a": (0.0, 10.0), "b": (0.0, 10.0)})
+    assert extrapola(a, pd.Series({"a": np.nan, "b": 11.0})) == ["b"]
+    assert extrapola(a, pd.Series({"b": 5.0})) == []  # coluna ausente: nada a sinalizar
+
+
+def test_cenario_preenche_janela_longa_vazia_com_o_valor_do_cenario_sem_virar_nan() -> None:
+    linha = pd.Series({"chuva_local_1h": np.nan, "chuva_local_72h": np.nan, "nivel_m": 2.0})
+    nova = aplicar_cenario(linha, {"DCSC-00043": 12.0}, 6)
+    assert nova["chuva_local_1h"] == pytest.approx(2.0)
+    assert nova["chuva_local_72h"] == pytest.approx(12.0)  # sem leitura, nao ha o que preservar
+    assert nova["nivel_m"] == 2.0
+
+
+def test_cenario_deixa_nan_o_ponto_que_nao_esta_no_cenario() -> None:
+    linha = pd.Series({"chuva_local_6h": 1.0, "chuva_serra_indios_6h": np.nan})
+    nova = aplicar_cenario(linha, {"DCSC-00043": 12.0}, 6)
+    assert np.isnan(nova["chuva_serra_indios_6h"])  # nunca zero
+
+
+# ---------- intervalo_cm ----------
+
+POR_REGIME = {"seco": [-9.0, 9.5], "chuva": [-40.0, 55.0], "chuva_forte": [-70.0, 80.0]}
+
+
+def test_intervalo_cm_escolhe_o_regime_da_linha_pelas_chuvas_de_6h_do_modelo() -> None:
+    a = novo(["nivel_m", "chuva_local_6h", "chuva_serra_indios_6h"], ["nivel_m"])
+    a["intervalo_por_regime"] = POR_REGIME
+    seco = pd.Series({"chuva_local_6h": 0.0, "chuva_serra_indios_6h": 0.5})
+    assert intervalo_cm(a, seco) == (-9.0, 9.5)
+    chuva = pd.Series({"chuva_local_6h": 0.0, "chuva_serra_indios_6h": 3.0})
+    assert intervalo_cm(a, chuva) == (-40.0, 55.0)
+    forte = pd.Series({"chuva_local_6h": 12.0, "chuva_serra_indios_6h": 3.0})
+    assert intervalo_cm(a, forte) == (-70.0, 80.0)
+    # sem nenhuma chuva conhecida, o lado conservador
+    assert intervalo_cm(a, pd.Series({"nivel_m": 2.0})) == (-70.0, 80.0)
+
+
+def test_intervalo_cm_cai_nos_metadados_e_e_none_no_modelo_antigo() -> None:
+    a = novo(["nivel_m", "chuva_local_6h"], ["nivel_m"])  # artefato sem o intervalo
+    linha = pd.Series({"chuva_local_6h": 0.0})
+    assert intervalo_cm(a, linha) is None
+    assert intervalo_cm(a, linha, {}) is None and intervalo_cm(a, linha, None) is None
+    assert intervalo_cm(a, linha, {"intervalo_por_regime": POR_REGIME}) == (-9.0, 9.5)
+    assert intervalo_cm(artefato(["a"]), pd.Series({"a": 1.0})) is None
+
+
+def test_intervalo_cm_com_regime_ausente_no_dicionario_nao_chuta() -> None:
+    a = novo(["chuva_local_6h"], [], intervalo_por_regime={"seco": [-1.0, 1.0]})
+    assert intervalo_cm(a, pd.Series({"chuva_local_6h": 50.0})) is None

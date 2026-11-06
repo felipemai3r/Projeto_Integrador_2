@@ -115,10 +115,19 @@ def test_alvo_obrigatorio_fica_mesmo_com_pouca_cobertura_mas_nao_se_estiver_vazi
 def test_formatar_mostra_decisao_motivo_e_nd_para_metricas_ausentes() -> None:
     ok = Resultado(3, 480, 20.0, rmse_cm=4.0, rmse_persistencia_cm=8.0, rmse_tendencia_cm=6.5)
     ok.publicar, ok.motivo = True, "Superou a persistência na validação."
+    ok.alfa_intervalo, ok.cobertura_validacao = 0.015, 0.957
+    ok.intervalo_por_regime = {
+        "seco": [-9.0, 9.5],
+        "chuva": [-40.0, 55.0],
+        "chuva_forte": [-70.0, 80.0],
+    }
     nao = Resultado(24, 100, 4.2, motivo="Poucos dados para validar (100 horas completas).")
     texto = formatar([ok, nao])
     linhas = texto.splitlines()
     assert any("PUBLICADO: Superou" in ln and "4.0" in ln and "6.5" in ln for ln in linhas)
+    # alfa, cobertura e largura total do intervalo por regime (hi - lo)
+    ln_ok = next(ln for ln in linhas if "PUBLICADO: Superou" in ln)
+    assert "0.015" in ln_ok and "95.7%" in ln_ok and "18.5/95.0/150.0" in ln_ok
     assert any("não publicado: Poucos dados" in ln and "n/d" in ln for ln in linhas)
     assert "RMSE em cm" in texto
 
@@ -208,17 +217,19 @@ def test_pontos_de_chuva_sem_cobertura_nao_geram_colunas(ambiente) -> None:
 
 
 def test_retreino_do_pg_so_pede_os_pontos_de_chuva_do_pg(ambiente) -> None:
-    """Sem decisao, o retreino diario do rio dos Indios nao pode ganhar serras nem o Revolver."""
+    """O retreino diario do rio dos Indios so usa o conjunto do alvo: sem Boiteux nem Vitor."""
     visto, cadastro = ambiente
     n = 24 * 30
     cadastro["nivel"][PG] = serie_cheia(n)
-    for cod in (*pontos_chuva(PG), *pontos_chuva(REVOLVER)):
+    for cod in (*pontos_chuva(PG), *pontos_chuva(REVOLVER), "DCSC-00021", "DCSC-00036"):
         cadastro["chuva"][cod] = serie_cheia(n)  # todos com dado: nada sai por cobertura
+    cadastro["nivel"]["DCSC-00021"] = serie_cheia(n)
+    cadastro["nivel"]["DCSC-00020"] = serie_cheia(n)
     treinar.treinar(PG, dias=30, salvar=False)
     assert set(visto["pontos_pedidos"]) == set(pontos_chuva(PG))
     colunas = visto["colunas"][0]
-    assert not any("serra" in c or "revolver" in c for c in colunas)
-    assert any(c.startswith("chuva_vitor_") for c in colunas)
+    assert any("serra_indios" in c for c in colunas) and any("revolver" in c for c in colunas)
+    assert not any("vitor" in c or "boiteux" in c or "ibirama" in c for c in colunas)
 
 
 def test_treina_um_resultado_por_horizonte_e_salva_so_quando_pedido(ambiente) -> None:
@@ -235,11 +246,13 @@ def test_treina_um_resultado_por_horizonte_e_salva_so_quando_pedido(ambiente) ->
 def test_janela_e_hora_cheia_e_vem_do_padrao_do_alvo(ambiente) -> None:
     visto, cadastro = ambiente
     cadastro["nivel"][PG] = serie_cheia(24 * 30)
-    treinar.treinar(PG, salvar=False)  # padrao do rio dos Indios: 120 dias
+    treinar.treinar(PG, salvar=False)  # padrao do rio dos Indios: todo o historico
     ini, fim = visto["janelas"][0]
-    assert fim == FIM and ini == FIM - timedelta(days=120)
+    assert fim == FIM and ini == datetime(2025, 9, 13, tzinfo=UTC)
     assert {j for j in visto["janelas"]} == {(ini, fim)}  # todos os pontos usam a mesma janela
     assert len(visto["janelas"]) == len(pontos_chuva(PG))
+    treinar.treinar(PG, dias=120, salvar=False)  # --dias sobrescreve o padrao
+    assert visto["janelas"][-1][0] == FIM - timedelta(days=120)
 
 
 def test_revolver_sem_argumentos_usa_todo_o_historico_do_painel(ambiente) -> None:
