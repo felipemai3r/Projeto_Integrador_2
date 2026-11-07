@@ -171,7 +171,8 @@ describe('fotoProtegida', () => {
     const criar = vi.fn(() => 'blob:foto-1')
     URL.createObjectURL = criar
     try {
-      fetchFalso.mockResolvedValueOnce(new Response(new Blob(['x']), { status: 200 }))
+      // bytes, e nao Blob: no Node 22 (o do CI) o Response nativo nao aceita o Blob do jsdom
+      fetchFalso.mockResolvedValueOnce(new Response(new Uint8Array([120]), { status: 200 }))
       expect(await api.fotoProtegida('tk', 9)).toBe('blob:foto-1')
       expect(criar).toHaveBeenCalledTimes(1)
     } finally {
