@@ -214,5 +214,3 @@ Nunca cortar: coleta contínua, painel com fonte e horário, correlação defasa
 | Design | [`.claude/skills/farol-system`](../.claude/skills/farol-system/SKILL.md) | Farol DS: 9 fundamentos, tokens `--fa-*`, componentes React, voz, acessibilidade. Guia visual em `assets/guia-visual.html` |
 | Desenvolvimento | [padrao-de-desenvolvimento.md](padrao-de-desenvolvimento.md) | Git, commits, Python, TypeScript, API, testes, CI, segurança, definição de pronto |
 | Arquitetura | [arquitetura-desenvolvimento.md](arquitetura-desenvolvimento.md) | Serviços, banco, contêineres, roteiro |
-
-Para usar o design em uma conversa com o Claude Code, invoque a skill `farol-system` (por exemplo `/farol-system monte a tela do Painel`).

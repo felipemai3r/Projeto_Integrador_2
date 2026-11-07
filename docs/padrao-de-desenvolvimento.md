@@ -1,6 +1,6 @@
 # Padrão de desenvolvimento
 
-Regras de escrita e de processo do código do projeto. Vale para os dois membros da equipe e para qualquer ferramenta de apoio (incluindo o Claude Code). Em conflito entre este documento e o hábito pessoal, vale o documento; para mudar uma regra, altere o documento em um PR.
+Regras de escrita e de processo do código do projeto. Vale para os dois membros da equipe e para qualquer ferramenta de apoio. Em conflito entre este documento e o hábito pessoal, vale o documento; para mudar uma regra, altere o documento em um PR.
 
 Documentos relacionados: [arquitetura-desenvolvimento.md](arquitetura-desenvolvimento.md) (o que construir), [plano-de-acao.md](plano-de-acao.md) (quando), [Farol DS](../.claude/skills/farol-system/SKILL.md) (como a interface parece).
 
