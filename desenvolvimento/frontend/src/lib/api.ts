@@ -86,7 +86,7 @@ export const api = {
   moderar: (
     token: string,
     id: number,
-    corpo: { acao: string; tipo_impacto?: string; nota?: string },
+    corpo: { acao: string; tipo_impacto?: string; gravidade?: string; nota?: string },
   ) =>
     pedir<OcorrenciaOut>(
       `/ocorrencias/${id}`,

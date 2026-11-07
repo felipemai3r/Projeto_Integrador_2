@@ -152,9 +152,9 @@ export function ComoFunciona() {
         <p>Você não precisa de cadastro para usar o sistema. Guardamos só o necessário:</p>
         <ul className={styles.achados}>
           <li>
-            <strong>Registro de alagamento:</strong> o local, o horário, o tipo e o texto que você
-            escrever. Seu nome não é pedido nem aparece. Tiramos da foto os dados do aparelho e da
-            localização.
+            <strong>Registro de ocorrência</strong> (alagamento, deslizamento ou movimentação de
+            terra): o local, o horário, o tipo, a gravidade e o texto que você escrever. Seu nome
+            não é pedido nem aparece. Tiramos da foto os dados do aparelho e da localização.
           </li>
           <li>
             <strong>Avisos no celular:</strong> um endereço técnico gerado pelo seu navegador e as

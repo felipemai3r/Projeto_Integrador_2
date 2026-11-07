@@ -5,16 +5,29 @@ import { Botao, BotaoLink } from '../components/Botao'
 import { MapaBase } from '../components/MapaBase'
 import { SeletorDePonto, type Ponto } from '../components/SeletorDePonto'
 import { api, ErroApi } from '../lib/api'
-import { IMPACTOS, type TipoImpacto } from '../lib/impacto'
+import {
+  GRAVIDADES,
+  IMPACTOS,
+  exigeGravidade,
+  tiposDaCategoria,
+  type Gravidade,
+  type TipoImpacto,
+} from '../lib/impacto'
 import styles from './Registrar.module.css'
 
-const TIPOS = Object.keys(IMPACTOS) as TipoImpacto[]
+const GRUPOS = [
+  { titulo: 'Água', tipos: tiposDaCategoria('alagamento') },
+  { titulo: 'Terra e encosta', tipos: tiposDaCategoria('movimento_massa') },
+  { titulo: 'Outra situação', tipos: tiposDaCategoria('outro') },
+]
+const NIVEIS_DE_GRAVIDADE = Object.keys(GRAVIDADES) as Gravidade[]
 
 export function Registrar() {
   const [ponto, setPonto] = useState<Ponto | null>(null)
   const [agora, setAgora] = useState(true)
   const [quando, setQuando] = useState('')
   const [tipo, setTipo] = useState<TipoImpacto | ''>('')
+  const [gravidade, setGravidade] = useState<Gravidade | ''>('')
   const [descricao, setDescricao] = useState('')
   const [foto, setFoto] = useState<File | null>(null)
   // limite do campo de data: agora, no horario local (o servidor tambem recusa data futura)
@@ -44,8 +57,9 @@ export function Registrar() {
   function enviar(e: FormEvent) {
     e.preventDefault()
     setErroLocal(null)
-    if (!ponto) return setErroLocal('Toque no mapa para marcar onde alagou.')
+    if (!ponto) return setErroLocal('Toque no mapa para marcar onde aconteceu.')
     if (!tipo) return setErroLocal('Escolha o que aconteceu.')
+    if (terra && !gravidade) return setErroLocal('Diga até onde a terra chegou.')
     if (!agora && !quando)
       return setErroLocal('Informe quando foi, ou marque "Está acontecendo agora".')
     const dados = new FormData()
@@ -53,10 +67,13 @@ export function Registrar() {
     dados.set('longitude', String(ponto.lon))
     dados.set('ocorreu_em', (agora ? new Date() : new Date(quando)).toISOString())
     dados.set('tipo_impacto', tipo)
+    if (terra && gravidade) dados.set('gravidade', gravidade)
     if (descricao.trim()) dados.set('descricao', descricao.trim())
     if (foto) dados.set('foto', foto)
     envio.mutate(dados)
   }
+
+  const terra = exigeGravidade(tipo)
 
   if (envio.isSuccess) {
     return (
@@ -82,15 +99,16 @@ export function Registrar() {
 
   return (
     <form className={styles.form} onSubmit={enviar} noValidate>
-      <h2 className={styles.titulo}>Registrar alagamento</h2>
+      <h2 className={styles.titulo}>Registrar ocorrência</h2>
       <p className={styles.apoio}>
-        Não precisa de cadastro e o seu nome não aparece. Cada registro é conferido pela Defesa
-        Civil. Em situação de risco, ligue <strong>199</strong>.
+        Alagamento, deslizamento ou sinais de movimentação de terra. Não precisa de cadastro e o seu
+        nome não aparece. Cada registro é conferido pela Defesa Civil. Em situação de risco, ligue{' '}
+        <strong>199</strong>.
       </p>
 
       <fieldset className={styles.grupo}>
-        <legend>1. Onde alagou</legend>
-        <MapaBase rotulo="Mapa para marcar onde alagou. Toque no ponto.">
+        <legend>1. Onde aconteceu</legend>
+        <MapaBase rotulo="Mapa para marcar onde aconteceu. Toque no ponto.">
           <SeletorDePonto ponto={ponto} onChange={setPonto} />
         </MapaBase>
         <Botao variante="secundario" onClick={usarMinhaLocalizacao}>
@@ -126,22 +144,67 @@ export function Registrar() {
 
       <fieldset className={styles.grupo}>
         <legend>3. O que aconteceu</legend>
-        <div className={styles.tipos}>
-          {TIPOS.map((t) => {
-            const { rotulo, Icone } = IMPACTOS[t]
-            return (
-              <label key={t} className={styles.tipo}>
-                <input type="radio" name="tipo" checked={tipo === t} onChange={() => setTipo(t)} />
-                <Icone aria-hidden="true" size={24} />
-                <span>{rotulo}</span>
-              </label>
-            )
-          })}
-        </div>
+        {GRUPOS.map((g) => (
+          <div key={g.titulo} role="group" aria-labelledby={`grupo-${g.tipos[0]}`}>
+            <h3 id={`grupo-${g.tipos[0]}`} className={styles.subgrupo}>
+              {g.titulo}
+            </h3>
+            <div className={styles.tipos}>
+              {g.tipos.map((t) => {
+                const { rotulo, Icone, dica } = IMPACTOS[t]
+                return (
+                  <label key={t} className={styles.tipo}>
+                    <input
+                      type="radio"
+                      name="tipo"
+                      checked={tipo === t}
+                      onChange={() => setTipo(t)}
+                    />
+                    <Icone aria-hidden="true" size={24} />
+                    <span className={styles.textoTipo}>
+                      {rotulo}
+                      {dica && <small>{dica}</small>}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </fieldset>
 
+      {terra && (
+        <fieldset className={styles.grupo}>
+          <legend>4. Até onde chegou</legend>
+          <p role="note" className={styles.seguranca}>
+            Se a terra está se mexendo perto de você, saia do local e ligue <strong>199</strong>{' '}
+            antes de registrar.
+          </p>
+          <div className={styles.tipos}>
+            {NIVEIS_DE_GRAVIDADE.map((g) => {
+              const { rotulo, descricao, Icone } = GRAVIDADES[g]
+              return (
+                <label key={g} className={styles.tipo}>
+                  <input
+                    type="radio"
+                    name="gravidade"
+                    checked={gravidade === g}
+                    onChange={() => setGravidade(g)}
+                  />
+                  <Icone aria-hidden="true" size={24} />
+                  <span className={styles.textoTipo}>
+                    {descricao}
+                    <small>{rotulo}</small>
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+        </fieldset>
+      )}
+
       <fieldset className={styles.grupo}>
-        <legend>4. Se quiser, conte mais</legend>
+        <legend>{terra ? 5 : 4}. Se quiser, conte mais</legend>
         <label className={styles.campo}>
           Foto (opcional)
           <input

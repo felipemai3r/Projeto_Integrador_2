@@ -8,7 +8,7 @@ import { Skeleton } from '../components/Skeleton'
 import { useAlertasVigentes, useEstacoes, useNivelAtual, useQualidade } from '../hooks/useDados'
 import { api } from '../lib/api'
 import { formatarDataHora, formatarNivel, formatarPercentual, rotuloFonte } from '../lib/formato'
-import { rotuloDoImpacto } from '../lib/impacto'
+import { ehGravidade, GRAVIDADES, rotuloDoImpacto } from '../lib/impacto'
 import { descreverPeriodo, PERIODO_PADRAO, PERIODOS } from '../lib/periodos'
 import { nomeDaFaixa, seloDe } from '../lib/risco'
 import styles from './Relatorio.module.css'
@@ -148,13 +148,19 @@ export function Relatorio() {
       </section>
 
       <section aria-labelledby="r-registros">
-        <h3 id="r-registros">Alagamentos registrados pela população (confirmados)</h3>
+        <h3 id="r-registros">
+          Alagamentos, deslizamentos e movimentação de terra registrados pela população
+          (confirmados)
+        </h3>
         {ocorrencias.data?.length === 0 && <p>Nenhum registro confirmado no período.</p>}
         {ocorrencias.data && ocorrencias.data.length > 0 && (
           <ul className={styles.lista}>
             {ocorrencias.data.map((o) => (
               <li key={o.id}>
                 {formatarDataHora(o.ocorreu_em)}: {rotuloDoImpacto(o.tipo_impacto)}
+                {ehGravidade(o.gravidade)
+                  ? `, ${GRAVIDADES[o.gravidade].rotulo.toLowerCase()}`
+                  : ''}
                 {o.descricao ? ` (${o.descricao})` : ''}
               </li>
             ))}

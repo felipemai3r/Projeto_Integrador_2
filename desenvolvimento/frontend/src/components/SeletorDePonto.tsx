@@ -8,7 +8,7 @@ const ICONE = iconeDeMarcador(
   '<span style="display:block;width:20px;height:20px;border-radius:50%;background:var(--fa-color-action-primary);border:3px solid var(--fa-color-content-primary)"></span>',
 )
 
-/** Toque no mapa escolhe o ponto do alagamento. */
+/** Toque no mapa escolhe o ponto da ocorrência. */
 export function SeletorDePonto({
   ponto,
   onChange,

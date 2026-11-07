@@ -69,6 +69,68 @@ describe('Mapa', () => {
   })
 })
 
+describe('Mapa: deslizamento e movimentação de terra', () => {
+  const base = {
+    latitude: -27.04,
+    longitude: -49.62,
+    ocorreu_em: '2026-10-22T10:00:00Z',
+    descricao: null,
+    tem_foto: false,
+    criada_em: '2026-10-22T10:05:00Z',
+    status: 'validada',
+    curtidas: 0,
+  }
+  const registros = [
+    {
+      ...base,
+      id: 1,
+      tipo_impacto: 'agua_calcada',
+      categoria: 'alagamento',
+      gravidade: null,
+      contexto: { niveis: { 'DCSC-00043': { nivel_m: 3.1 } } },
+    },
+    {
+      ...base,
+      id: 2,
+      tipo_impacto: 'deslizamento',
+      categoria: 'movimento_massa',
+      gravidade: 'alta',
+      contexto: { chuva_24h_mm: { 'DCSC-00043': 40 }, chuva_72h_mm: { 'DCSC-00043': 112.5 } },
+    },
+  ]
+
+  it('mostra a classificação, a gravidade e a chuva dos dias anteriores', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => resposta(registros)),
+    )
+    renderizar(<Mapa />)
+    await waitFor(() => expect(screen.getAllByTestId('marcador')).toHaveLength(2))
+    expect(screen.getAllByText('Deslizamento de terra ou barranco').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Gravidade alta').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/40,00 mm em 24 horas, 112,50 mm em 3 dias/).length).toBeGreaterThan(
+      0,
+    )
+    // no alagamento continua valendo o nivel do rio
+    expect(screen.getAllByText(/rio dos Índios estava em 3,10 m/).length).toBeGreaterThan(0)
+  })
+
+  it('filtra o mapa por categoria', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => resposta(registros)),
+    )
+    renderizar(<Mapa />)
+    await waitFor(() => expect(screen.getAllByTestId('marcador')).toHaveLength(2))
+    await userEvent.click(screen.getByRole('radio', { name: 'Deslizamentos e terra' }))
+    expect(screen.getAllByTestId('marcador')).toHaveLength(1)
+    expect(screen.queryByText('Água na calçada')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'Alagamentos' }))
+    expect(screen.getAllByTestId('marcador')).toHaveLength(1)
+    expect(screen.queryByText('Gravidade alta')).not.toBeInTheDocument()
+  })
+})
+
 describe('Mapa: reacoes', () => {
   it('curte uma vez e envia o identificador anonimo do aparelho', async () => {
     const registro = {
@@ -107,7 +169,7 @@ describe('Registrar', () => {
     vi.stubGlobal('fetch', fetchFalso)
     renderizar(<Registrar />)
     await userEvent.click(screen.getByRole('button', { name: 'Enviar registro' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('marcar onde alagou')
+    expect(screen.getByRole('alert')).toHaveTextContent('marcar onde aconteceu')
     expect(fetchFalso).not.toHaveBeenCalled()
   })
 
@@ -133,6 +195,46 @@ describe('Registrar', () => {
     expect(corpo.get('tipo_impacto')).toBe('agua_calcada')
     expect(corpo.get('latitude')).toBe('-27.0455')
     expect(String(corpo.get('ocorreu_em'))).toMatch(/Z$/) // UTC, com fuso
+  })
+
+  it('deslizamento pede a gravidade, avisa para sair do local e envia a classificação', async () => {
+    const fetchFalso = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+      resposta({ id: 8, status: 'pendente', mensagem: 'Recebemos o seu registro.' }, 201),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    renderizar(<Registrar />)
+    expect(screen.queryByText('4. Até onde chegou')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'marcar ponto de teste' }))
+    await userEvent.click(screen.getByRole('radio', { name: /Deslizamento de terra/ }))
+    expect(screen.getByText('4. Até onde chegou')).toBeInTheDocument()
+    expect(screen.getByRole('note')).toHaveTextContent('saia do local')
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar registro' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('até onde a terra chegou')
+    expect(fetchFalso).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('radio', { name: /Atingiu casa/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar registro' }))
+    expect(await screen.findByText('Obrigado!')).toBeInTheDocument()
+    const corpo = fetchFalso.mock.calls[0]![1]!.body as FormData
+    expect(corpo.get('tipo_impacto')).toBe('deslizamento')
+    expect(corpo.get('gravidade')).toBe('alta')
+  })
+
+  it('alagamento não pede nem envia gravidade', async () => {
+    const fetchFalso = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () =>
+      resposta({ id: 9, status: 'pendente', mensagem: 'ok' }, 201),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    renderizar(<Registrar />)
+    await userEvent.click(screen.getByRole('button', { name: 'marcar ponto de teste' }))
+    // escolher terra e voltar para agua nao deixa gravidade para tras
+    await userEvent.click(screen.getByRole('radio', { name: /Queda de pedras/ }))
+    await userEvent.click(screen.getByRole('radio', { name: /Pequeno, não atingiu/ }))
+    await userEvent.click(screen.getByRole('radio', { name: /Água dentro de imóvel/ }))
+    expect(screen.queryByText('4. Até onde chegou')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar registro' }))
+    await screen.findByText('Obrigado!')
+    const corpo = fetchFalso.mock.calls[0]![1]!.body as FormData
+    expect(corpo.get('gravidade')).toBeNull()
   })
 
   it('mostra a mensagem do servidor quando o ponto esta fora do municipio', async () => {
@@ -240,5 +342,49 @@ describe('Moderacao', () => {
     expect(rejeitar).toBeDisabled()
     await userEvent.type(screen.getByLabelText(/Motivo/), 'Duplicado')
     expect(rejeitar).toBeEnabled()
+  })
+
+  it('reclassifica só a gravidade de um deslizamento', async () => {
+    const pendente = {
+      id: 6,
+      latitude: -27.04,
+      longitude: -49.62,
+      ocorreu_em: '2026-10-12T20:00:00Z',
+      tipo_impacto: 'deslizamento',
+      categoria: 'movimento_massa',
+      gravidade: 'baixa',
+      descricao: null,
+      tem_foto: false,
+      status: 'pendente',
+      contexto: null,
+      criada_em: '2026-10-12T20:05:00Z',
+    }
+    sessionStorage.setItem(
+      'fa-sessao',
+      JSON.stringify({
+        token: 't',
+        nome: 'Leo',
+        papel: 'moderador',
+        expira_em: '2999-01-01T00:00:00Z',
+      }),
+    )
+    const fetchFalso = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
+      async (_url, init) =>
+        init?.method === 'PATCH'
+          ? resposta({ ...pendente, gravidade: 'alta' })
+          : resposta([pendente]),
+    )
+    vi.stubGlobal('fetch', fetchFalso)
+    renderizar(<Moderacao />)
+    expect(await screen.findByText('Gravidade baixa')).toBeInTheDocument()
+    const reclassificar = screen.getByRole('button', { name: 'Reclassificar' })
+    expect(reclassificar).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Gravidade'), 'alta')
+    await userEvent.click(reclassificar)
+    const patch = fetchFalso.mock.calls.find(([, init]) => init?.method === 'PATCH')!
+    expect(JSON.parse(patch[1]!.body as string)).toEqual({
+      acao: 'reclassificar',
+      gravidade: 'alta',
+    })
   })
 })

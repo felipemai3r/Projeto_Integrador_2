@@ -329,3 +329,93 @@ def test_filtro_por_horas(client: TestClient, base: Session) -> None:
     client.post("/api/ocorrencias", data=dados(ocorreu_em=antigo))
     assert len(client.get("/api/ocorrencias?com_pendentes=true&horas=6").json()) == 1
     assert len(client.get("/api/ocorrencias?com_pendentes=true&horas=24").json()) == 2
+
+
+# ---------- deslizamento e movimentacao de terra ----------
+
+
+def test_movimento_de_massa_exige_gravidade(client: TestClient, base: Session) -> None:
+    r = client.post("/api/ocorrencias", data=dados(tipo_impacto="deslizamento"))
+    assert r.status_code == 422 and "gravidade" in r.json()["detail"]
+    r = client.post("/api/ocorrencias", data=dados(tipo_impacto="deslizamento", gravidade="enorme"))
+    assert r.status_code == 422
+
+
+def test_movimento_de_massa_sai_classificado_no_mapa(client: TestClient, base: Session) -> None:
+    for tipo, grav in [("deslizamento", "alta"), ("queda_rocha", "baixa")]:
+        r = client.post("/api/ocorrencias", data=dados(tipo_impacto=tipo, gravidade=grav))
+        assert r.status_code == 201
+    client.post(
+        "/api/ocorrencias", data=dados(tipo_impacto="movimentacao_terra", gravidade="media")
+    )
+    lista = client.get("/api/ocorrencias?com_pendentes=true").json()
+    assert {(o["tipo_impacto"], o["categoria"], o["gravidade"]) for o in lista} == {
+        ("deslizamento", "movimento_massa", "alta"),
+        ("queda_rocha", "movimento_massa", "baixa"),
+        ("movimentacao_terra", "movimento_massa", "media"),
+    }
+
+
+def test_alagamento_ignora_gravidade(client: TestClient, base: Session) -> None:
+    client.post("/api/ocorrencias", data=dados(gravidade="alta"))
+    o = base.scalars(select(Ocorrencia)).one()
+    assert o.gravidade is None
+    item = client.get("/api/ocorrencias?com_pendentes=true").json()[0]
+    assert item["categoria"] == "alagamento" and item["gravidade"] is None
+
+
+def test_filtro_por_categoria(client: TestClient, base: Session) -> None:
+    client.post("/api/ocorrencias", data=dados())
+    client.post("/api/ocorrencias", data=dados(tipo_impacto="deslizamento", gravidade="media"))
+    client.post("/api/ocorrencias", data=dados(tipo_impacto="outro"))
+    url = "/api/ocorrencias?com_pendentes=true&categoria="
+    assert [o["tipo_impacto"] for o in client.get(url + "movimento_massa").json()] == [
+        "deslizamento"
+    ]
+    assert [o["tipo_impacto"] for o in client.get(url + "alagamento").json()] == [
+        "via_intransitavel"
+    ]
+    assert [o["tipo_impacto"] for o in client.get(url + "outro").json()] == ["outro"]
+    assert len(client.get("/api/ocorrencias?com_pendentes=true").json()) == 3
+    assert client.get(url + "terremoto").status_code == 422
+
+
+def test_reclassificar_so_a_gravidade_fica_no_historico(client: TestClient, base: Session) -> None:
+    oid = client.post(
+        "/api/ocorrencias", data=dados(tipo_impacto="deslizamento", gravidade="baixa")
+    ).json()["id"]
+    h = cabecalho(base)
+    r = client.patch(
+        f"/api/ocorrencias/{oid}", json={"acao": "reclassificar", "gravidade": "alta"}, headers=h
+    )
+    assert r.status_code == 200
+    assert (r.json()["tipo_impacto"], r.json()["gravidade"]) == ("deslizamento", "alta")
+    hist = client.get(f"/api/ocorrencias/{oid}/historico", headers=h).json()
+    assert (hist[0]["gravidade_anterior"], hist[0]["gravidade_nova"]) == ("baixa", "alta")
+    # mesma gravidade e mesmo tipo: nada a reclassificar
+    r = client.patch(
+        f"/api/ocorrencias/{oid}", json={"acao": "reclassificar", "gravidade": "alta"}, headers=h
+    )
+    assert r.status_code == 422
+
+
+def test_reclassificar_entre_categorias_ajusta_a_gravidade(
+    client: TestClient, base: Session
+) -> None:
+    oid = _registrar(client)  # via_intransitavel, sem gravidade
+    h = cabecalho(base)
+    url = f"/api/ocorrencias/{oid}"
+    # virar deslizamento sem dizer a gravidade nao pode
+    r = client.patch(url, json={"acao": "reclassificar", "tipo_impacto": "deslizamento"}, headers=h)
+    assert r.status_code == 422
+    r = client.patch(
+        url,
+        json={"acao": "reclassificar", "tipo_impacto": "deslizamento", "gravidade": "media"},
+        headers=h,
+    )
+    assert (r.json()["categoria"], r.json()["gravidade"]) == ("movimento_massa", "media")
+    # voltar para alagamento limpa a gravidade
+    r = client.patch(url, json={"acao": "reclassificar", "tipo_impacto": "agua_imovel"}, headers=h)
+    assert (r.json()["categoria"], r.json()["gravidade"]) == ("alagamento", None)
+    m = base.scalars(select(Moderacao).order_by(Moderacao.id.desc())).first()
+    assert m is not None and (m.gravidade_anterior, m.gravidade_nova) == ("media", None)

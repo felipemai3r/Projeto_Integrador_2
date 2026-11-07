@@ -6,25 +6,51 @@ import { Marker, Popup } from 'react-leaflet'
 import { BotaoLink } from '../components/Botao'
 import { MapaBase, iconeDeMarcador } from '../components/MapaBase'
 import { SegmentedControl } from '../components/SegmentedControl'
+import { SeloGravidade } from '../components/SeloGravidade'
 import { Skeleton } from '../components/Skeleton'
 import { api, ErroApi, type OcorrenciaOut } from '../lib/api'
 import { idDoDispositivo, jaReagi, marcarReacao, type TipoReacao } from '../lib/dispositivo'
-import { formatarDataHora, formatarNivel } from '../lib/formato'
+import { formatarDataHora, formatarMm, formatarNivel } from '../lib/formato'
 import { PERIODO_PADRAO, PERIODOS } from '../lib/periodos'
-import { IMPACTOS, rotuloDoImpacto, type TipoImpacto } from '../lib/impacto'
+import {
+  CATEGORIAS,
+  IMPACTOS,
+  categoriaDoTipo,
+  ehGravidade,
+  rotuloDoImpacto,
+  type Categoria,
+  type TipoImpacto,
+} from '../lib/impacto'
 import styles from './Mapa.module.css'
 
 const MOTIVOS = [
-  { valor: 'falso', rotulo: 'Não alagou / informação falsa' },
+  { valor: 'falso', rotulo: 'Não aconteceu / informação falsa' },
   { valor: 'local_errado', rotulo: 'Local errado' },
   { valor: 'improprio', rotulo: 'Conteúdo impróprio' },
   { valor: 'outro', rotulo: 'Outro motivo' },
 ]
 
+type Filtro = 'todas' | Categoria
+
+const FILTROS: { valor: Filtro; rotulo: string }[] = [
+  { valor: 'todas', rotulo: 'Todas' },
+  { valor: 'alagamento', rotulo: CATEGORIAS.alagamento.plural },
+  { valor: 'movimento_massa', rotulo: CATEGORIAS.movimento_massa.plural },
+]
+
+/** Estacao da cidade: referencia de nivel e de chuva no detalhe de cada registro. */
+const ESTACAO_CIDADE = 'DCSC-00043'
+
+/** Forma diz a categoria (circulo = agua, quadrado = terra); o icone diz o tipo. */
 function icone(tipo: string, pendente: boolean) {
   const Icone = IMPACTOS[(tipo in IMPACTOS ? tipo : 'outro') as TipoImpacto].Icone
+  const classes = [
+    styles.marcador,
+    categoriaDoTipo(tipo) === 'movimento_massa' && styles.terra,
+    pendente && styles.pendente,
+  ]
   return iconeDeMarcador(
-    pendente ? `${styles.marcador} ${styles.pendente}` : styles.marcador!,
+    classes.filter(Boolean).join(' '),
     renderToStaticMarkup(<Icone size={20} strokeWidth={2} />),
   )
 }
@@ -134,23 +160,53 @@ function Reacoes({ o }: { o: OcorrenciaOut }) {
   )
 }
 
+interface Contexto {
+  niveis?: Record<string, { nivel_m: number }>
+  chuva_24h_mm?: Record<string, number>
+  chuva_72h_mm?: Record<string, number>
+}
+
+/** Agua: o nivel do rio na hora. Terra: a chuva acumulada antes, que encharca a encosta. */
+function FraseDeContexto({ o }: { o: OcorrenciaOut }) {
+  const ctx = o.contexto as Contexto | null
+  if (o.categoria === 'movimento_massa') {
+    const mm72 = ctx?.chuva_72h_mm?.[ESTACAO_CIDADE]
+    const mm24 = ctx?.chuva_24h_mm?.[ESTACAO_CIDADE]
+    if (mm72 == null && mm24 == null) return null
+    return (
+      <p className={styles.contexto}>
+        Chuva na cidade antes do registro:{' '}
+        {[
+          mm24 != null && `${formatarMm(mm24)} mm em 24 horas`,
+          mm72 != null && `${formatarMm(mm72)} mm em 3 dias`,
+        ]
+          .filter(Boolean)
+          .join(', ')}
+        .
+      </p>
+    )
+  }
+  const nivel = ctx?.niveis?.[ESTACAO_CIDADE]
+  if (!nivel) return null
+  return (
+    <p className={styles.contexto}>
+      Nesse momento, o rio dos Índios estava em {formatarNivel(nivel.nivel_m)} m.
+    </p>
+  )
+}
+
 function Detalhes({ o }: { o: OcorrenciaOut }) {
-  const nivel = (o.contexto as { niveis?: Record<string, { nivel_m: number }> } | null)?.niveis?.[
-    'DCSC-00043'
-  ]
   return (
     <div className={styles.detalhes}>
+      <span className={styles.categoria}>{CATEGORIAS[categoriaDoTipo(o.tipo_impacto)].rotulo}</span>
       <strong className={styles.tipo}>{rotuloDoImpacto(o.tipo_impacto)}</strong>
+      {ehGravidade(o.gravidade) && <SeloGravidade gravidade={o.gravidade} />}
       {o.status === 'pendente' && (
         <span className={styles.selo}>Aguardando conferência da Defesa Civil</span>
       )}
       <span className={styles.quando}>{formatarDataHora(o.ocorreu_em)}</span>
       {o.descricao && <p className={styles.descricao}>{o.descricao}</p>}
-      {nivel && (
-        <p className={styles.contexto}>
-          Nesse momento, o rio dos Índios estava em {formatarNivel(nivel.nivel_m)} m.
-        </p>
-      )}
+      <FraseDeContexto o={o} />
       {o.tem_foto && (
         <img
           className={styles.foto}
@@ -166,27 +222,36 @@ function Detalhes({ o }: { o: OcorrenciaOut }) {
 
 export function Mapa() {
   const [horas, setHoras] = useState(PERIODO_PADRAO)
-  const { data, isPending, isError } = useQuery({
+  const [filtro, setFiltro] = useState<Filtro>('todas')
+  const {
+    data: todas,
+    isPending,
+    isError,
+  } = useQuery({
     queryKey: ['ocorrencias', horas],
     queryFn: () => api.ocorrencias(horas),
   })
+  const data = todas?.filter((o) => filtro === 'todas' || o.categoria === filtro)
+  const nomeDoFiltro = filtro === 'todas' ? 'ocorrência' : CATEGORIAS[filtro].rotulo.toLowerCase()
 
   return (
     <div className={styles.pagina}>
       <div className={styles.topo}>
-        <h2 className={styles.titulo}>Onde alagou</h2>
+        <h2 className={styles.titulo}>Mapa de ocorrências</h2>
         <BotaoLink to="/registrar" variante="destaque">
-          Registrar alagamento
+          Registrar ocorrência
         </BotaoLink>
       </div>
       <p className={styles.apoio}>
-        Registros de quem mora aqui. Cada aviso aparece no mapa assim que é enviado, marcado como
-        &ldquo;aguardando conferência&rdquo; até a Defesa Civil confirmar. Curta se você também viu,
-        ou denuncie se a informação estiver errada.
+        Alagamentos, deslizamentos e sinais de movimentação de terra registrados por quem mora aqui.
+        Cada aviso aparece no mapa assim que é enviado, marcado como &ldquo;aguardando
+        conferência&rdquo; até a Defesa Civil confirmar. Curta se você também viu, ou denuncie se a
+        informação estiver errada.
       </p>
+      <SegmentedControl rotulo="Mostrar" opcoes={FILTROS} valor={filtro} onChange={setFiltro} />
       <SegmentedControl rotulo="Período" opcoes={PERIODOS} valor={horas} onChange={setHoras} />
 
-      <MapaBase rotulo="Mapa dos alagamentos registrados">
+      <MapaBase rotulo="Mapa das ocorrências registradas">
         {data?.map((o) => (
           <Marker
             key={o.id}
@@ -202,11 +267,22 @@ export function Mapa() {
 
       <ul className={styles.legenda} aria-label="Legenda do mapa">
         <li>
-          <span className={styles.amostra} aria-hidden="true" /> Confirmado pela Defesa Civil
+          <span className={styles.amostra} aria-hidden="true" /> Alagamento (círculo)
         </li>
         <li>
-          <span className={`${styles.amostra} ${styles.pendente}`} aria-hidden="true" /> Aguardando
-          conferência
+          <span className={`${styles.amostra} ${styles.terra}`} aria-hidden="true" /> Deslizamento
+          ou movimentação de terra (quadrado)
+        </li>
+        <li>
+          <span className={`${styles.amostra} ${styles.neutra}`} aria-hidden="true" /> Preenchido:
+          confirmado pela Defesa Civil
+        </li>
+        <li>
+          <span
+            className={`${styles.amostra} ${styles.neutra} ${styles.pendente}`}
+            aria-hidden="true"
+          />{' '}
+          Contorno tracejado: aguardando conferência
         </li>
       </ul>
 
@@ -214,8 +290,8 @@ export function Mapa() {
       {isError && <p>Não conseguimos carregar os registros agora.</p>}
       {data && data.length === 0 && (
         <p className={styles.vazio}>
-          Nenhum alagamento registrado neste período. Se alagou perto de você, registre: leva menos
-          de um minuto.
+          Nenhum registro de {nomeDoFiltro} neste período. Se aconteceu perto de você, registre:
+          leva menos de um minuto.
         </p>
       )}
       {data && data.length > 0 && (

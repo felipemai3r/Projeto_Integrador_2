@@ -26,14 +26,18 @@ from api.deps import obter_agora, obter_sessao
 from api.fotos import FotoInvalida, tratar_e_salvar
 from api.limite import LimiteTaxa, exigir, ip_do_cliente
 from api.schemas import (
+    GRAVIDADES,
     MOTIVOS_DENUNCIA,
     TIPOS_IMPACTO,
+    TIPOS_MOVIMENTO_MASSA,
+    TIPOS_POR_CATEGORIA,
     ModeracaoIn,
     ModeracaoOut,
     OcorrenciaCriada,
     OcorrenciaOut,
     ReacaoIn,
     ReacaoOut,
+    categoria_do_tipo,
 )
 from api.seguranca import exigir_moderador, usuario_opcional
 
@@ -46,6 +50,15 @@ DENUNCIAS_PARA_OCULTAR = 3
 SessaoDep = Annotated[Session, Depends(obter_sessao)]
 AgoraDep = Annotated[datetime, Depends(obter_agora)]
 STATUS = ("pendente", "validada", "rejeitada")
+
+
+def _gravidade_valida(tipo: str, gravidade: str | None) -> str | None:
+    """Movimento de massa exige gravidade; nos demais tipos ela nao se aplica e fica nula."""
+    if tipo in TIPOS_MOVIMENTO_MASSA:
+        if gravidade not in GRAVIDADES:
+            raise HTTPException(422, "Informe a gravidade: baixa, média ou alta.")
+        return gravidade
+    return None
 
 
 class Reacoes:
@@ -80,6 +93,8 @@ def _saida(
         longitude=o.longitude,
         ocorreu_em=o.ocorreu_em,
         tipo_impacto=o.tipo_impacto,
+        categoria=categoria_do_tipo(o.tipo_impacto),
+        gravidade=o.gravidade,
         descricao=None if ocultar_conteudo else o.descricao,
         tem_foto=o.foto_path is not None and not ocultar_conteudo,
         status=o.status,
@@ -102,13 +117,19 @@ async def registrar(
     longitude: Annotated[float, Form(ge=-180, le=180)],
     ocorreu_em: Annotated[datetime, Form()],
     tipo_impacto: Annotated[str, Form()],
+    gravidade: Annotated[str | None, Form()] = None,
     descricao: Annotated[str | None, Form(max_length=500)] = None,
     foto: Annotated[UploadFile | None, File()] = None,
 ) -> OcorrenciaCriada:
-    """Registro anonimo de alagamento (CDU04). Entra como pendente e passa por moderacao (RN05)."""
+    """Registro anonimo de alagamento ou movimento de massa (CDU04).
+
+    Entra como pendente e passa por moderacao (RN05). Deslizamento, queda de pedras e
+    movimentacao de terra exigem `gravidade` (baixa, media, alta); nos demais ela e ignorada.
+    """
     exigir(limite_registro, ip_do_cliente(req), agora)
     if tipo_impacto not in TIPOS_IMPACTO:
         raise HTTPException(422, "Escolha o tipo de impacto.")
+    gravidade = _gravidade_valida(tipo_impacto, gravidade)
     if ocorreu_em.tzinfo is None:
         raise HTTPException(422, "Informe a data e a hora com o fuso horário.")
     ocorreu_em = ocorreu_em.astimezone(UTC)
@@ -133,6 +154,7 @@ async def registrar(
         longitude=longitude,
         ocorreu_em=ocorreu_em,
         tipo_impacto=tipo_impacto,
+        gravidade=gravidade,
         descricao=(descricao or "").strip() or None,
         foto_path=nome_foto,
         status="pendente",
@@ -159,30 +181,32 @@ def listar(
     dias: Annotated[int, Query(ge=1, le=3650)] = 365,
     horas: Annotated[int | None, Query(ge=1, le=87600)] = None,
     com_pendentes: bool = False,
+    categoria: str | None = None,
 ) -> list[OcorrenciaOut]:
     """Publico: so validadas. Pendentes e rejeitadas exigem login de quem modera.
 
     `com_pendentes` (so com status=validada) inclui no mapa os avisos ainda nao conferidos,
     para sinalizar na hora; para o publico eles vao sem descricao e sem foto. Um pendente com
     muitas denuncias sai do mapa publico ate a moderacao olhar. `horas` substitui `dias`.
+    `categoria` (alagamento | movimento_massa | outro) filtra pela classificacao do tipo.
     """
     if status not in STATUS:
         raise HTTPException(422, "Status inválido.")
+    if categoria is not None and categoria not in TIPOS_POR_CATEGORIA:
+        raise HTTPException(422, "Categoria inválida.")
     if status != "validada" and usuario is None:
         raise HTTPException(401, "Entre para ver registros em análise.")
     status_incluidos = (
         ["validada", "pendente"] if com_pendentes and status == "validada" else [status]
     )
-    linhas = s.scalars(
-        select(Ocorrencia)
-        .where(
-            Ocorrencia.status.in_(status_incluidos),
-            Ocorrencia.ocorreu_em
-            >= agora - (timedelta(hours=horas) if horas else timedelta(days=dias)),
-        )
-        .order_by(Ocorrencia.ocorreu_em.desc())
-        .limit(500)
-    ).all()
+    consulta = select(Ocorrencia).where(
+        Ocorrencia.status.in_(status_incluidos),
+        Ocorrencia.ocorreu_em
+        >= agora - (timedelta(hours=horas) if horas else timedelta(days=dias)),
+    )
+    if categoria:
+        consulta = consulta.where(Ocorrencia.tipo_impacto.in_(TIPOS_POR_CATEGORIA[categoria]))
+    linhas = s.scalars(consulta.order_by(Ocorrencia.ocorreu_em.desc()).limit(500)).all()
     reacoes = Reacoes(s, [o.id for o in linhas])
     publico = usuario is None
     return [
@@ -228,9 +252,9 @@ def moderar(
     s: SessaoDep,
     moderador: Annotated[Usuario, Depends(exigir_moderador)],
 ) -> OcorrenciaOut:
-    """Valida, rejeita ou reclassifica. Todo passo fica no historico (RF26)."""
+    """Valida, rejeita ou reclassifica (tipo e/ou gravidade). Tudo fica no historico (RF26)."""
     o = _obter(s, id_)
-    status_novo, tipo_novo = o.status, o.tipo_impacto
+    status_novo, tipo_novo, gravidade_nova = o.status, o.tipo_impacto, o.gravidade
     if dados.acao == "validar":
         status_novo = "validada"
     elif dados.acao == "rejeitar":
@@ -238,9 +262,16 @@ def moderar(
             raise HTTPException(422, "Explique o motivo da rejeição.")
         status_novo = "rejeitada"
     elif dados.acao == "reclassificar":
-        if dados.tipo_impacto not in TIPOS_IMPACTO or dados.tipo_impacto == o.tipo_impacto:
-            raise HTTPException(422, "Escolha um tipo de impacto diferente do atual.")
-        tipo_novo = dados.tipo_impacto
+        if dados.tipo_impacto is not None:
+            if dados.tipo_impacto not in TIPOS_IMPACTO:
+                raise HTTPException(422, "Escolha um tipo de impacto válido.")
+            tipo_novo = dados.tipo_impacto
+        if tipo_novo in TIPOS_MOVIMENTO_MASSA:
+            gravidade_nova = _gravidade_valida(tipo_novo, dados.gravidade or o.gravidade)
+        else:
+            gravidade_nova = None
+        if (tipo_novo, gravidade_nova) == (o.tipo_impacto, o.gravidade):
+            raise HTTPException(422, "Escolha um tipo ou uma gravidade diferente do atual.")
     else:
         raise HTTPException(422, "Ação inválida.")
 
@@ -253,10 +284,12 @@ def moderar(
             status_novo=status_novo,
             tipo_anterior=o.tipo_impacto,
             tipo_novo=tipo_novo,
+            gravidade_anterior=o.gravidade,
+            gravidade_nova=gravidade_nova,
             nota=(dados.nota or "").strip() or None,
         )
     )
-    o.status, o.tipo_impacto = status_novo, tipo_novo
+    o.status, o.tipo_impacto, o.gravidade = status_novo, tipo_novo, gravidade_nova
     o.moderado_por, o.moderado_em = moderador.nome, datetime.now(UTC)
     s.flush()
     return _saida(o, Reacoes(s, [o.id]), moderador=True)
@@ -281,6 +314,8 @@ def historico(
             status_novo=m.status_novo,
             tipo_anterior=m.tipo_anterior,
             tipo_novo=m.tipo_novo,
+            gravidade_anterior=m.gravidade_anterior,
+            gravidade_nova=m.gravidade_nova,
             nota=m.nota,
             em=m.em,
         )

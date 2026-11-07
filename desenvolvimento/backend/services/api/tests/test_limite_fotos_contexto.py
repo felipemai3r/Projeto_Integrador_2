@@ -16,7 +16,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from api.contexto import MIN_LEITURAS_CHUVA_24H, TOLERANCIA_NIVEL, contexto_hidrologico
+from api.contexto import (
+    MIN_LEITURAS_CHUVA_24H,
+    MIN_LEITURAS_CHUVA_72H,
+    TOLERANCIA_NIVEL,
+    contexto_hidrologico,
+)
 from api.fotos import LADO_MAX, TAMANHO_MAX, FotoInvalida, tratar_e_salvar
 from api.limite import LimiteTaxa, exigir, ip_do_cliente
 from api.seguranca import hash_senha
@@ -233,7 +238,12 @@ def leituras(
 
 
 def test_sem_nenhum_dado_diz_indisponivel(base: Session) -> None:
-    assert contexto_hidrologico(base, T0) == {"disponivel": False, "niveis": {}, "chuva_24h_mm": {}}
+    assert contexto_hidrologico(base, T0) == {
+        "disponivel": False,
+        "niveis": {},
+        "chuva_24h_mm": {},
+        "chuva_72h_mm": {},
+    }
 
 
 def test_nivel_mais_proximo_dentro_de_20_minutos_vence_o_mais_distante(base: Session) -> None:
@@ -331,6 +341,18 @@ def test_contexto_so_com_chuva_ja_conta_como_disponivel(base: Session) -> None:
     )
     ctx = contexto_hidrologico(base, T0)
     assert ctx["disponivel"] is True and ctx["niveis"] == {}
+
+
+def test_chuva_72h_exige_691_leituras_de_864_e_soma_os_tres_dias(base: Session) -> None:
+    assert MIN_LEITURAS_CHUVA_72H == 691
+    ini = T0 - timedelta(hours=71, minutes=55)
+    leituras(base, "DCSC-00043", "chuva_acumulada_mm", serie_chuva(ini, 690))
+    ctx = contexto_hidrologico(base, T0)
+    assert "DCSC-00043" not in ctx["chuva_72h_mm"]
+    leituras(
+        base, "DCSC-00043", "chuva_acumulada_mm", [(ini + timedelta(seconds=300 * 690 + 1), 0.1)]
+    )
+    assert contexto_hidrologico(base, T0)["chuva_72h_mm"]["DCSC-00043"] == pytest.approx(69.1)
 
 
 # ---------- token ----------

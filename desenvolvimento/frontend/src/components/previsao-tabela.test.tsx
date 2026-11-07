@@ -28,6 +28,7 @@ const previsao = (
   nivel_base_m: 0.81,
   horizontes,
   chuva_estimada: [],
+  pontos_cenario: [],
   aviso: 'Estimativa de apoio.',
   ...extra,
 })

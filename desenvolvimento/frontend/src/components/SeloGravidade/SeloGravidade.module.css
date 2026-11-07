@@ -1,0 +1,26 @@
+.selo {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--fa-space-4);
+  padding: var(--fa-space-2, 2px) var(--fa-space-8);
+  border: 1px solid;
+  border-radius: var(--fa-shape-status-pill);
+  font-size: var(--fa-type-texto-sm-size);
+  font-weight: 600;
+}
+.baixa {
+  border-color: var(--fa-color-feedback-info-border);
+  background: var(--fa-color-feedback-info-surface);
+  color: var(--fa-color-feedback-info-content);
+}
+.media {
+  border-color: var(--fa-color-feedback-warning-border);
+  background: var(--fa-color-feedback-warning-surface);
+  color: var(--fa-color-feedback-warning-content);
+}
+.alta {
+  border-color: var(--fa-color-feedback-danger-border);
+  background: var(--fa-color-feedback-danger-surface);
+  color: var(--fa-color-feedback-danger-content);
+}

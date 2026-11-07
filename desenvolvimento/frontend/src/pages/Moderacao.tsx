@@ -1,11 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Botao } from '../components/Botao'
+import { SeloGravidade } from '../components/SeloGravidade'
 import { Skeleton } from '../components/Skeleton'
 import { useSessao } from '../hooks/useSessao'
 import { api, ErroApi, type OcorrenciaOut } from '../lib/api'
 import { formatarDataHora, formatarMm, formatarNivel } from '../lib/formato'
-import { IMPACTOS, rotuloDoImpacto, type TipoImpacto } from '../lib/impacto'
+import {
+  CATEGORIAS,
+  GRAVIDADES,
+  IMPACTOS,
+  categoriaDoTipo,
+  ehGravidade,
+  exigeGravidade,
+  rotuloDoImpacto,
+  type Gravidade,
+  type TipoImpacto,
+} from '../lib/impacto'
 import styles from './Moderacao.module.css'
 
 function Login({ entrar }: { entrar: (e: string, s: string) => Promise<void> }) {
@@ -30,7 +41,7 @@ function Login({ entrar }: { entrar: (e: string, s: string) => Promise<void> }) 
   return (
     <form className={styles.login} onSubmit={enviar}>
       <h2 className={styles.titulo}>Área da Defesa Civil</h2>
-      <p>Entre para conferir os registros de alagamento.</p>
+      <p>Entre para conferir os registros de alagamento e de movimentação de terra.</p>
       <label className={styles.campo}>
         E-mail
         <input
@@ -84,7 +95,7 @@ function Foto({ token, id }: { token: string; id: number }) {
 }
 
 const ROTULO_MOTIVO: Record<string, string> = {
-  falso: 'não alagou',
+  falso: 'não aconteceu',
   local_errado: 'local errado',
   improprio: 'conteúdo impróprio',
   outro: 'outro motivo',
@@ -109,10 +120,20 @@ function Cartao({
 }) {
   const [nota, setNota] = useState('')
   const [novoTipo, setNovoTipo] = useState<TipoImpacto | ''>('')
+  const [novaGravidade, setNovaGravidade] = useState<Gravidade | ''>('')
   const [erro, setErro] = useState<string | null>(null)
+  // gravidade so vale para deslizamento e movimentacao de terra (o tipo que vai ficar)
+  const pedeGravidade = exigeGravidade(novoTipo || o.tipo_impacto)
+  const podeReclassificar =
+    (novoTipo !== '' || (pedeGravidade && novaGravidade !== '')) &&
+    (!pedeGravidade || novaGravidade !== '' || o.gravidade != null)
   const acao = useMutation({
-    mutationFn: (corpo: { acao: string; tipo_impacto?: string; nota?: string }) =>
-      api.moderar(token, o.id, corpo),
+    mutationFn: (corpo: {
+      acao: string
+      tipo_impacto?: string
+      gravidade?: string
+      nota?: string
+    }) => api.moderar(token, o.id, corpo),
     onSuccess: aoModerar,
     onError: (e) => setErro(e instanceof ErroApi ? e.message : 'Não conseguimos salvar agora.'),
   })
@@ -126,7 +147,13 @@ function Cartao({
   return (
     <li className={styles.cartao}>
       <div>
+        <p className={styles.meta}>{CATEGORIAS[categoriaDoTipo(o.tipo_impacto)].rotulo}</p>
         <strong>{rotuloDoImpacto(o.tipo_impacto)}</strong>
+        {ehGravidade(o.gravidade) && (
+          <p>
+            <SeloGravidade gravidade={o.gravidade} />
+          </p>
+        )}
         <p className={styles.meta}>
           Ocorreu em {formatarDataHora(o.ocorreu_em)} · enviado em {formatarDataHora(o.criada_em)}
         </p>
@@ -162,7 +189,7 @@ function Cartao({
         <label className={styles.campo}>
           Reclassificar como
           <select value={novoTipo} onChange={(e) => setNovoTipo(e.target.value as TipoImpacto)}>
-            <option value="">Escolha…</option>
+            <option value="">Manter o tipo atual</option>
             {(Object.keys(IMPACTOS) as TipoImpacto[])
               .filter((t) => t !== o.tipo_impacto)
               .map((t) => (
@@ -172,10 +199,36 @@ function Cartao({
               ))}
           </select>
         </label>
+        {pedeGravidade && (
+          <label className={styles.campo}>
+            Gravidade
+            <select
+              value={novaGravidade}
+              onChange={(e) => setNovaGravidade(e.target.value as Gravidade)}
+            >
+              <option value="">
+                {o.gravidade && exigeGravidade(o.tipo_impacto) ? 'Manter a atual' : 'Escolha…'}
+              </option>
+              {(Object.keys(GRAVIDADES) as Gravidade[])
+                .filter((g) => g !== o.gravidade)
+                .map((g) => (
+                  <option key={g} value={g}>
+                    {GRAVIDADES[g].rotulo}: {GRAVIDADES[g].descricao.toLowerCase()}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
         <Botao
           variante="secundario"
-          disabled={!novoTipo || acao.isPending}
-          onClick={() => acao.mutate({ acao: 'reclassificar', tipo_impacto: novoTipo })}
+          disabled={!podeReclassificar || acao.isPending}
+          onClick={() =>
+            acao.mutate({
+              acao: 'reclassificar',
+              tipo_impacto: novoTipo || undefined,
+              gravidade: (pedeGravidade && novaGravidade) || undefined,
+            })
+          }
         >
           Reclassificar
         </Botao>

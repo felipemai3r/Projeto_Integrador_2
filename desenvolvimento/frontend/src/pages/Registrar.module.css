@@ -83,6 +83,31 @@
   border-radius: var(--fa-shape-control-md);
   cursor: pointer;
 }
+.subgrupo {
+  margin: 0 0 var(--fa-space-8);
+  color: var(--fa-color-content-secondary);
+  font: var(--fa-type-rotulo-md-weight) var(--fa-type-rotulo-md-size) / 1.25
+    var(--fa-font-family-base);
+}
+.textoTipo {
+  display: grid;
+  gap: var(--fa-space-2, 2px);
+}
+.textoTipo small {
+  color: var(--fa-color-content-secondary);
+  font-size: var(--fa-type-texto-sm-size);
+}
+.seguranca {
+  margin: 0;
+  padding: var(--fa-space-inset-md);
+  border: 1px solid var(--fa-color-feedback-warning-border);
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-feedback-warning-surface);
+  color: var(--fa-color-feedback-warning-content);
+}
+.tipo svg {
+  flex: none;
+}
 .tipo input {
   position: absolute;
   inset: 0;

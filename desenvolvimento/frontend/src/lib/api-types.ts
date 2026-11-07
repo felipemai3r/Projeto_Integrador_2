@@ -305,12 +305,16 @@ export interface paths {
          *     `com_pendentes` (so com status=validada) inclui no mapa os avisos ainda nao conferidos,
          *     para sinalizar na hora; para o publico eles vao sem descricao e sem foto. Um pendente com
          *     muitas denuncias sai do mapa publico ate a moderacao olhar. `horas` substitui `dias`.
+         *     `categoria` (alagamento | movimento_massa | outro) filtra pela classificacao do tipo.
          */
         get: operations["listar_api_ocorrencias_get"];
         put?: never;
         /**
          * Registrar
-         * @description Registro anonimo de alagamento (CDU04). Entra como pendente e passa por moderacao (RN05).
+         * @description Registro anonimo de alagamento ou movimento de massa (CDU04).
+         *
+         *     Entra como pendente e passa por moderacao (RN05). Deslizamento, queda de pedras e
+         *     movimentacao de terra exigem `gravidade` (baixa, media, alta); nos demais ela e ignorada.
          */
         post: operations["registrar_api_ocorrencias_post"];
         delete?: never;
@@ -351,7 +355,7 @@ export interface paths {
         head?: never;
         /**
          * Moderar
-         * @description Valida, rejeita ou reclassifica. Todo passo fica no historico (RF26).
+         * @description Valida, rejeita ou reclassifica (tipo e/ou gravidade). Tudo fica no historico (RF26).
          */
         patch: operations["moderar_api_ocorrencias__id___patch"];
         trace?: never;
@@ -406,7 +410,11 @@ export interface paths {
         };
         /**
          * Acumulada
-         * @description Chuva acumulada por janela em cada estacao, a ultima leitura do GraphQL (RF17).
+         * @description Chuva acumulada por janela em cada estacao, a ultima leitura medida de cada janela (RF17).
+         *
+         *     Fontes: GraphQL (todas as janelas) e painel municipal (so a de 1 h, e e a unica das estacoes
+         *     DC-PEU-*). Vale a leitura mais recente por estacao e janela; janela sem dado volta nula.
+         *     Nunca a reanalise ERA5, que nao e medicao.
          */
         get: operations["acumulada_api_chuva_acumulada_get"];
         put?: never;
@@ -509,6 +517,8 @@ export interface components {
             ocorreu_em: string;
             /** Tipo Impacto */
             tipo_impacto: string;
+            /** Gravidade */
+            gravidade?: string | null;
             /** Descricao */
             descricao?: string | null;
             /** Foto */
@@ -731,6 +741,8 @@ export interface components {
             acao: string;
             /** Tipo Impacto */
             tipo_impacto?: string | null;
+            /** Gravidade */
+            gravidade?: string | null;
             /** Nota */
             nota?: string | null;
         };
@@ -748,6 +760,10 @@ export interface components {
             tipo_anterior: string;
             /** Tipo Novo */
             tipo_novo: string;
+            /** Gravidade Anterior */
+            gravidade_anterior?: string | null;
+            /** Gravidade Nova */
+            gravidade_nova?: string | null;
             /** Nota */
             nota: string | null;
             /**
@@ -808,6 +824,10 @@ export interface components {
             ocorreu_em: string;
             /** Tipo Impacto */
             tipo_impacto: string;
+            /** Categoria */
+            categoria: string;
+            /** Gravidade */
+            gravidade: string | null;
             /** Descricao */
             descricao: string | null;
             /** Tem Foto */
@@ -836,6 +856,16 @@ export interface components {
             denuncias?: number | null;
             /** Motivos Denuncia */
             motivos_denuncia?: string[] | null;
+        };
+        /**
+         * PontoCenario
+         * @description Ponto de chuva que o modelo do alvo usa: o que faz sentido preencher na simulacao.
+         */
+        PontoCenario: {
+            /** Codigo */
+            codigo: string;
+            /** Nome */
+            nome: string;
         };
         /** PontoSerie */
         PontoSerie: {
@@ -877,16 +907,6 @@ export interface components {
              */
             extrapolacao: string[];
         };
-        /**
-         * PontoCenario
-         * @description Ponto de chuva que o modelo do alvo usa: o que faz sentido preencher na simulacao.
-         */
-        PontoCenario: {
-            /** Codigo */
-            codigo: string;
-            /** Nome */
-            nome: string;
-        };
         /** PrevisaoOut */
         PrevisaoOut: {
             /** Estacao */
@@ -908,7 +928,7 @@ export interface components {
              * Pontos Cenario
              * @default []
              */
-            pontos_cenario?: components["schemas"]["PontoCenario"][];
+            pontos_cenario: components["schemas"]["PontoCenario"][];
             /**
              * Aviso
              * @default Estimativa de apoio, não é um alerta oficial. A fonte oficial é a Defesa Civil de Presidente Getúlio.
@@ -1521,6 +1541,7 @@ export interface operations {
                 dias?: number;
                 horas?: number | null;
                 com_pendentes?: boolean;
+                categoria?: string | null;
             };
             header?: never;
             path?: never;

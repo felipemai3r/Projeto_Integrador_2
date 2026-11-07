@@ -188,6 +188,8 @@ class Ocorrencia(Base):
     longitude: Mapped[float] = mapped_column(Double)
     ocorreu_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     tipo_impacto: Mapped[str] = mapped_column(Text)
+    # so em movimento de massa (deslizamento etc.): baixa | media | alta
+    gravidade: Mapped[str | None] = mapped_column(Text)
     descricao: Mapped[str | None] = mapped_column(Text)
     foto_path: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text, default="pendente", server_default="pendente")
@@ -263,6 +265,8 @@ class Moderacao(Base):
     status_novo: Mapped[str] = mapped_column(Text)
     tipo_anterior: Mapped[str] = mapped_column(Text)
     tipo_novo: Mapped[str] = mapped_column(Text)
+    gravidade_anterior: Mapped[str | None] = mapped_column(Text)
+    gravidade_nova: Mapped[str | None] = mapped_column(Text)
     nota: Mapped[str | None] = mapped_column(Text)
     em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

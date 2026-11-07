@@ -99,7 +99,23 @@ class AlertaOut(BaseModel):
     aviso: str = "Estimativa de apoio. A fonte oficial é a Defesa Civil de Presidente Getúlio."
 
 
-TIPOS_IMPACTO = ("via_intransitavel", "agua_calcada", "agua_imovel", "outro")
+# Classificacao das ocorrencias em duas categorias. Movimento de massa segue o grupo 1.1.3 da
+# COBRADE (quedas e rolamentos, deslizamentos, subsidencias), em palavras do morador.
+TIPOS_ALAGAMENTO = ("via_intransitavel", "agua_calcada", "agua_imovel")
+TIPOS_MOVIMENTO_MASSA = ("deslizamento", "queda_rocha", "movimentacao_terra")
+TIPOS_IMPACTO = (*TIPOS_ALAGAMENTO, *TIPOS_MOVIMENTO_MASSA, "outro")
+TIPOS_POR_CATEGORIA = {
+    "alagamento": TIPOS_ALAGAMENTO,
+    "movimento_massa": TIPOS_MOVIMENTO_MASSA,
+    "outro": ("outro",),
+}
+# baixa: nao atingiu casa nem rua; media: atingiu rua, quintal ou muro; alta: atingiu casa ou
+# ha pessoas em risco
+GRAVIDADES = ("baixa", "media", "alta")
+
+
+def categoria_do_tipo(tipo: str) -> str:
+    return next((c for c, tipos in TIPOS_POR_CATEGORIA.items() if tipo in tipos), "outro")
 
 
 class LoginIn(BaseModel):
@@ -122,6 +138,8 @@ class OcorrenciaOut(BaseModel):
     longitude: float
     ocorreu_em: datetime
     tipo_impacto: str
+    categoria: str  # alagamento | movimento_massa | outro
+    gravidade: str | None  # so em movimento_massa: baixa | media | alta
     descricao: str | None
     tem_foto: bool
     status: str
@@ -143,6 +161,7 @@ class OcorrenciaCriada(BaseModel):
 class ModeracaoIn(BaseModel):
     acao: str  # validar | rejeitar | reclassificar
     tipo_impacto: str | None = None
+    gravidade: str | None = None  # reclassificar: muda so a gravidade, ou junto com o tipo
     nota: str | None = None
 
 
@@ -153,6 +172,8 @@ class ModeracaoOut(BaseModel):
     status_novo: str
     tipo_anterior: str
     tipo_novo: str
+    gravidade_anterior: str | None = None
+    gravidade_nova: str | None = None
     nota: str | None
     em: datetime
 

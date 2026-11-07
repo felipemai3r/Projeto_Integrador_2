@@ -1,0 +1,1 @@
+export { SeloGravidade } from './SeloGravidade'

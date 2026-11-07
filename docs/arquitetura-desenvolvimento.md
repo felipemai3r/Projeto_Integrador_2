@@ -243,13 +243,16 @@ CREATE TABLE ocorrencia (
     latitude        DOUBLE PRECISION NOT NULL,
     longitude       DOUBLE PRECISION NOT NULL,
     ocorreu_em      TIMESTAMPTZ NOT NULL,
-    tipo_impacto    TEXT NOT NULL,            -- via_intransitavel | agua_calcada | agua_imovel | outro
+    tipo_impacto    TEXT NOT NULL,            -- alagamento: via_intransitavel | agua_calcada | agua_imovel
+                                              -- movimento de massa (COBRADE 1.1.3): deslizamento |
+                                              --   queda_rocha | movimentacao_terra; ou outro
+    gravidade       TEXT,                     -- só movimento de massa: baixa | media | alta
     descricao       TEXT,
     foto_path       TEXT,
     status          TEXT NOT NULL DEFAULT 'pendente',  -- pendente | validada | rejeitada
     moderado_por    TEXT,
     moderado_em     TIMESTAMPTZ,
-    contexto        JSONB,                    -- nível e chuva vigentes no momento informado
+    contexto        JSONB,                    -- nível e chuva (24 h e 72 h) vigentes no momento informado
     criada_em       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

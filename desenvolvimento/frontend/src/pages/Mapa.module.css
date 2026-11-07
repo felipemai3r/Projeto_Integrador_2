@@ -50,6 +50,11 @@
 .tipo {
   font-weight: 700;
 }
+.categoria {
+  color: var(--fa-color-content-tertiary);
+  font-size: var(--fa-type-texto-sm-size);
+  font-weight: 600;
+}
 .quando {
   color: var(--fa-color-content-secondary);
 }
@@ -80,6 +85,17 @@
   border-color: var(--fa-color-action-primary);
   background: var(--fa-color-surface-base);
   color: var(--fa-color-action-primary);
+}
+/* deslizamento e movimentacao de terra: quadrado, em tom escuro, para nao confundir com agua */
+.terra {
+  border-radius: var(--fa-shape-surface-sm);
+  background: var(--fa-color-surface-inverted);
+  color: var(--fa-color-content-inverted);
+}
+.terra.pendente {
+  border-color: var(--fa-color-surface-inverted);
+  background: var(--fa-color-surface-base);
+  color: var(--fa-color-content-primary);
 }
 .selo {
   justify-self: start;
@@ -114,7 +130,17 @@
   border: 3px solid var(--fa-color-action-primary);
   background: var(--fa-color-action-primary);
 }
+.amostra.terra {
+  border-color: var(--fa-color-surface-inverted);
+  background: var(--fa-color-surface-inverted);
+  border-radius: var(--fa-shape-status-sm);
+}
+.amostra.neutra {
+  border-color: var(--fa-color-content-secondary);
+  background: var(--fa-color-content-secondary);
+}
 .amostra.pendente {
+  border-style: dashed;
   background: var(--fa-color-surface-base);
 }
 .reacoes {
